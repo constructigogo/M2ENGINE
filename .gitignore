@@ -1,2 +1,3 @@
 /shaders/generated/*
+*.bin
 .idea
