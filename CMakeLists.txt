@@ -42,7 +42,7 @@ add_subdirectory(libraries/)
 
 
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/Engine/*.cpp ${PROJECT_SOURCE_DIR}/Engine/*.h)
-file(GLOB_RECURSE INC_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/includes/*.h ${PROJECT_SOURCE_DIR}/src/*.cpp)
+#file(GLOB_RECURSE INC_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/includes/*.h ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 bgfx_compile_shader_to_header(
         TYPE VERTEX
@@ -90,7 +90,7 @@ foreach(SHADER_FILE ${SHADERS_FILES})
 endforeach ()
 
 if(PROJECT_IS_TOP_LEVEL OR TRUE)
-    add_executable(Engine main.cpp Core.h ${SRC_FILES} ${INC_FILES} ${RESULTS})
+    add_executable(Engine main.cpp Core.h ${SRC_FILES} ${RESULTS})
     set_property(TARGET Engine PROPERTY ENABLE_EXPORTS 1)
 else ()
     #add_library(Engine main.cpp ${SRC_FILES} ${INC_FILES} ${RESULTS})

@@ -5,6 +5,7 @@
 #ifndef ENGINE_APP_H
 #define ENGINE_APP_H
 
+#include "CoreInc.h"
 #include <bgfx/bgfx.h>
 #include <bgfx/platform.h>
 #include <GLFW/glfw3.h>
@@ -18,7 +19,7 @@
 
 
 namespace Engine {
-    class App {
+    class ENGINE_API App {
     public:
         explicit App(int width=1024, int height= 768, const char *title="blabla");
 
