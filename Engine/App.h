@@ -22,13 +22,13 @@ namespace Engine {
     public:
         App(int width, int height, const char *title);
 
-        ~App();
+        virtual ~App();
 
-        int init();
+        virtual int init();
 
-        void run();
+        virtual void run();
 
-        void cleanup();
+        virtual void cleanup();
 
     protected:
         bool debugMode = true;
