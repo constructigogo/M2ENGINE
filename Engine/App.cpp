@@ -42,7 +42,7 @@ static void glfw_keyCallback(GLFWwindow *window, int key, int scancode, int acti
 }
 
 
-Engine::App::App(int width, int height, const char *title) : width(width), height(height) {}
+Engine::App::App(int width=1024, int height= 768, const char *title="blabla") : width(width), height(height) {}
 
 int Engine::App::init() {
 
@@ -53,7 +53,7 @@ int Engine::App::init() {
     if (!glfwInit())
         return 1;
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    currentWindow = glfwCreateWindow(1024, 768, "helloworld", nullptr, nullptr);
+    currentWindow = glfwCreateWindow(width, height, "don't look here", nullptr, nullptr);
     if (!currentWindow)
         return 1;
     KeyInput::setupKeyInputs(currentWindow);
