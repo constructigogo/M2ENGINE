@@ -73,19 +73,19 @@ foreach(SHADER_FILE ${SHADERS_FILES})
         set(EXT_TYPE "FRAGMENT")
     endif ()
 
-    list(APPEND RESULTS ${CMAKE_SOURCE_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin)
+    list(APPEND RESULTS ${PROJECT_SOURCE_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin)
     _bgfx_shaderc_parse(
         RESULT
         FILE ${SHADER_FILE_ABSOLUTE}
-        OUTPUT ${CMAKE_SOURCE_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin
+        OUTPUT ${PROJECT_SOURCE_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin
         ${EXT_TYPE}
         ${SHADER_PLATFORM}
-        VARYING_DEF ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
+        VARYING_DEF ${PROJECT_SOURCE_DIR}/shaders/varying.def.sc
     )
     add_custom_command(
-            OUTPUT ${CMAKE_SOURCE_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin
+            OUTPUT ${PROJECT_SOURCE_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin
             COMMAND shaderc ${RESULT}
-            DEPENDS ${CMAKE_SOURCE_DIR}/shaders/varying.def.sc
+            DEPENDS ${PROJECT_SOURCE_DIR}/shaders/varying.def.sc
     )
 endforeach ()
 
