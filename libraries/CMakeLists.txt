@@ -1,0 +1,7 @@
+add_subdirectory(glad/)
+add_subdirectory(glm/)
+add_subdirectory(glfw-3.3.8/)
+add_subdirectory(assimp/)
+add_subdirectory(bgfx.cmake/)
+add_subdirectory(entt/)
+add_subdirectory(spdlog/)
