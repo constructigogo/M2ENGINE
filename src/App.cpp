@@ -5,6 +5,8 @@
 #include "bx/math.h"
 #include <stdio.h>
 #include "Mesh.h"
+#include "Mesh.h"
+#include "Log.h"
 #include "entry/entry.h"
 #include "bgfx/embedded_shader.h"
 #include "bx/timer.h"
@@ -43,6 +45,9 @@ static void glfw_keyCallback(GLFWwindow *window, int key, int scancode, int acti
 Engine::App::App(int width, int height, const char *title) : width(width), height(height) {}
 
 int Engine::App::init() {
+
+    Log::Init();
+
     // Create a GLFW window without an OpenGL context.
     glfwSetErrorCallback(glfw_errorCallback);
     if (!glfwInit())
