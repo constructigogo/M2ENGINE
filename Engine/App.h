@@ -51,6 +51,9 @@ namespace Engine {
         //bgfx::ShaderHandle fsh;
         bgfx::ProgramHandle program;
     };
+
+    App* CreateApp();
+
 }
 
 
