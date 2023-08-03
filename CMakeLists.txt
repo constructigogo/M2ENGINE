@@ -41,7 +41,7 @@ include_directories(OpenGL)
 add_subdirectory(libraries/)
 
 
-file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/src/*.cpp ${PROJECT_SOURCE_DIR}/src/*.h)
+file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/Engine/*.cpp ${PROJECT_SOURCE_DIR}/Engine/*.h)
 file(GLOB_RECURSE INC_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/includes/*.h ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 bgfx_compile_shader_to_header(
@@ -89,11 +89,14 @@ foreach(SHADER_FILE ${SHADERS_FILES})
     )
 endforeach ()
 
-file(GLOB_RECURSE SHADERS_BUILD CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/shaders/generated/*.h)
+if(PROJECT_IS_TOP_LEVEL OR TRUE)
+    add_executable(Engine main.cpp ${SRC_FILES} ${INC_FILES} ${RESULTS})
+    set_property(TARGET Engine PROPERTY ENABLE_EXPORTS 1)
+else ()
+    #add_library(Engine main.cpp ${SRC_FILES} ${INC_FILES} ${RESULTS})
+endif()
 
 
-
-add_executable(Engine main.cpp ${SRC_FILES} ${INC_FILES} ${RESULTS})
 #target_include_dir(Engine)
 target_link_libraries(Engine PUBLIC assimp)
 target_link_libraries(Engine PUBLIC bgfx)

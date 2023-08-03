@@ -2,7 +2,7 @@
  * Copyright 2011-2019 Branimir Karadzic. All rights reserved.
  * License: https://github.com/bkaradzic/bgfx#license-bsd-2-clause
  */
-#include "src/App.h"
+#include "Engine/App.h"
 #include "entry/entry.h"
 #include <iostream>
 
