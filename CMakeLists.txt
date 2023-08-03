@@ -103,7 +103,7 @@ target_link_libraries(Engine PUBLIC EnTT::EnTT)
 target_link_libraries(Engine PUBLIC glad)
 target_link_libraries(Engine PUBLIC glfw)
 target_link_libraries(Engine PUBLIC glm::glm)
-target_link_libraries(Engine PUBLIC spdlog::spdlog)
+target_link_libraries(Engine PUBLIC spdlog)
 target_link_libraries(Engine PUBLIC example-common)
 
 target_link_libraries(Engine PUBLIC OpenGL::GL)
