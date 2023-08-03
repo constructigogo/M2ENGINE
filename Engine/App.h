@@ -20,7 +20,7 @@
 namespace Engine {
     class App {
     public:
-        App(int width, int height, const char *title);
+        explicit App(int width=1024, int height= 768, const char *title="blabla");
 
         virtual ~App();
 

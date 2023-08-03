@@ -42,7 +42,7 @@ static void glfw_keyCallback(GLFWwindow *window, int key, int scancode, int acti
 }
 
 
-Engine::App::App(int width=1024, int height= 768, const char *title="blabla") : width(width), height(height) {}
+Engine::App::App(int width, int height, const char *title) : width(width), height(height) {}
 
 int Engine::App::init() {
 
