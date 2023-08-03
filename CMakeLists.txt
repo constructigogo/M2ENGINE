@@ -89,11 +89,11 @@ foreach(SHADER_FILE ${SHADERS_FILES})
     )
 endforeach ()
 
-if(PROJECT_IS_TOP_LEVEL OR TRUE)
+if(PROJECT_IS_TOP_LEVEL)
     add_executable(Engine main.cpp Core.h ${SRC_FILES} ${RESULTS})
-    set_property(TARGET Engine PROPERTY ENABLE_EXPORTS 1)
 else ()
-    #add_library(Engine main.cpp ${SRC_FILES} ${INC_FILES} ${RESULTS})
+    add_library(Engine STATIC main.cpp Core.h ${SRC_FILES} ${RESULTS})
+    #set_property(TARGET Engine PROPERTY ENABLE_EXPORTS 1)
 endif()
 
 
