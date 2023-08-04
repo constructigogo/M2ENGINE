@@ -17,12 +17,13 @@ namespace Engine {
         CMeshRenderer();
         CMeshRenderer* setMesh(std::shared_ptr<BaseMesh>, CTransformMobility mobility);
         CMeshRenderer* setMaterial(bgfx::ProgramHandle _material);
-        void start();
+        void start() override;
 
-        void cleanup() ;
-        ~CMeshRenderer();
+        void cleanup() override ;
+        ~CMeshRenderer() override;
     private :
         friend class Renderer;
+        friend class CRigidBody;
         std::shared_ptr<BaseMesh> mesh;
         CTransform * transform;
         bgfx::ProgramHandle material;

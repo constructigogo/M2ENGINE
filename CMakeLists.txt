@@ -59,40 +59,62 @@ bgfx_compile_shader_to_header(
 )
 
 file(GLOB_RECURSE SHADERS_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/shaders/*.frag ${PROJECT_SOURCE_DIR}/shaders/*.vert)
-set(RESULTS "")
-foreach(SHADER_FILE ${SHADERS_FILES})
 
-    get_filename_component(SHADER_FILE_BASENAME ${SHADER_FILE} NAME)
-    get_filename_component(SHADER_FILE_NAME_WE ${SHADER_FILE} NAME_WE)
-    get_filename_component(SHADER_FILE_ABSOLUTE ${SHADER_FILE} ABSOLUTE)
-    get_filename_component(SHADER_FILE_EXT ${SHADER_FILE} EXT)
-    set(EXT_TYPE "")
-    if (${SHADER_FILE_EXT} STREQUAL ".vert")
-        set(EXT_TYPE "VERTEX")
-    elseif (${SHADER_FILE_EXT} STREQUAL ".frag")
-        set(EXT_TYPE "FRAGMENT")
-    endif ()
-
-    list(APPEND RESULTS ${PROJECT_SOURCE_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin)
-    _bgfx_shaderc_parse(
-        RESULT
-        FILE ${SHADER_FILE_ABSOLUTE}
-        OUTPUT ${PROJECT_SOURCE_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin
-        ${EXT_TYPE}
-        ${SHADER_PLATFORM}
-        VARYING_DEF ${PROJECT_SOURCE_DIR}/shaders/varying.def.sc
-    )
-    add_custom_command(
-            OUTPUT ${PROJECT_SOURCE_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin
-            COMMAND shaderc ${RESULT}
-            DEPENDS ${PROJECT_SOURCE_DIR}/shaders/varying.def.sc
-    )
-endforeach ()
 
 if(PROJECT_IS_TOP_LEVEL)
-    add_executable(Engine main.cpp Core.h ${SRC_FILES} ${RESULTS})
+    set(SHADER_BUILD_DIR ${PROJECT_SOURCE_DIR})
 else ()
-    add_library(Engine STATIC main.cpp Core.h ${SRC_FILES} ${RESULTS})
+    set(SHADER_BUILD_DIR ${CMAKE_BINARY_DIR})
+endif()
+
+
+
+
+
+function(engine_build_shaders SHADER_OUT FILES)
+    set(RES "")
+    foreach(SHADER_FILE ${FILES})
+        message("building shader " ${SHADER_FILE})
+        get_filename_component(SHADER_FILE_BASENAME ${SHADER_FILE} NAME)
+        get_filename_component(SHADER_FILE_NAME_WE ${SHADER_FILE} NAME_WE)
+        get_filename_component(SHADER_FILE_ABSOLUTE ${SHADER_FILE} ABSOLUTE)
+        get_filename_component(SHADER_FILE_EXT ${SHADER_FILE} EXT)
+        set(EXT_TYPE "")
+        if (${SHADER_FILE_EXT} STREQUAL ".vert")
+            set(EXT_TYPE "VERTEX")
+        elseif (${SHADER_FILE_EXT} STREQUAL ".frag")
+            set(EXT_TYPE "FRAGMENT")
+        endif ()
+
+        list(APPEND RES ${SHADER_BUILD_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin)
+        _bgfx_shaderc_parse(
+                RESULT
+                FILE ${SHADER_FILE_ABSOLUTE}
+                OUTPUT ${SHADER_BUILD_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin
+                ${EXT_TYPE}
+                ${SHADER_PLATFORM}
+                VARYING_DEF ${PROJECT_SOURCE_DIR}/shaders/varying.def.sc
+        )
+        add_custom_command(
+                OUTPUT ${SHADER_BUILD_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin
+                COMMAND shaderc ${RESULT}
+                DEPENDS ${PROJECT_SOURCE_DIR}/shaders/varying.def.sc
+        )
+    endforeach ()
+    message("building shaders " ${RES})
+    set(${SHADER_OUT} ${RES} PARENT_SCOPE)
+endfunction()
+
+engine_build_shaders(SHADER_RESULTS "${SHADERS_FILES}")
+message("building results " ${SHADER_RESULTS})
+
+
+
+if(PROJECT_IS_TOP_LEVEL)
+    add_executable(Engine main.cpp Core.h ${SRC_FILES} ${SHADER_RESULTS})
+else ()
+    set(SHADER_BUILD_DIR ${CMAKE_BINARY_DIR})
+    add_library(Engine STATIC main.cpp Core.h ${SRC_FILES} ${SHADER_RESULTS})
     #set_property(TARGET Engine PROPERTY ENABLE_EXPORTS 1)
 endif()
 

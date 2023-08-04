@@ -26,6 +26,12 @@ namespace Engine {
         }
     }
 
+    void Component::processFixedUpdate(double delta) {
+        for (const auto &item: _instances) {
+            item->fixedUpdate(delta);
+        }
+    }
+
     void Component::processUpdate(double delta) {
         for (const auto &item: _instances) {
             item->update(delta);

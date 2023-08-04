@@ -48,9 +48,11 @@ namespace Engine {
         int width, height;
         int64_t m_timeOffset;
 
+        double lastFixedFrame =0;
+
         //bgfx::ShaderHandle vsh;
         //bgfx::ShaderHandle fsh;
-        bgfx::ProgramHandle program;
+        bgfx::ProgramHandle debugProgram;
     };
 
     App* CreateApp();

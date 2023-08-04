@@ -13,8 +13,7 @@ using namespace Engine;
 void BaseMesh::loadMesh(const std::string &Filename) {
     Assimp::Importer Importer;
 
-    const aiScene *pScene = Importer.ReadFile(Filename.c_str(), aiProcess_Triangulate | aiProcess_FlipUVs |
-                                                                aiProcess_JoinIdenticalVertices);
+    const aiScene *pScene = Importer.ReadFile(Filename.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
     if (pScene) {
         std::cout << "reading mesh : " << Filename.c_str() << std::endl;
         initFromScene(pScene, Filename);
@@ -44,23 +43,23 @@ void BaseMesh::initFromScene(const aiScene *pScene, const std::string &Filename)
                 subMeshes[i].vertexesData.begin(),
                 subMeshes[i].vertexesData.end());
 
-        for (const auto & index:subMeshes[i].indices) {
-            indicesAllData.emplace_back(offset+index);
+        for (const auto &index: subMeshes[i].indices) {
+            indicesAllData.emplace_back(offset + index);
         }
 
 
     }
 
     vly.begin()
-            .add(bgfx::Attrib::Position,3,bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Normal,3,bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::TexCoord0,2,bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
+            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
+            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
             .end();
 
-    VBH = bgfx::createVertexBuffer(bgfx::makeRef(vertexesAllData.data(),vertexesAllData.size()*sizeof(vertexData)),vly);
-    IBH = bgfx::createIndexBuffer(bgfx::makeRef(indicesAllData.data(),indicesAllData.size() *sizeof(uint16_t)));
-
+    VBH = bgfx::createVertexBuffer(bgfx::makeRef(vertexesAllData.data(), vertexesAllData.size() * sizeof(vertexData)),
+                                   vly);
+    IBH = bgfx::createIndexBuffer(bgfx::makeRef(indicesAllData.data(), indicesAllData.size() * sizeof(uint16_t)));
 
 
 }
@@ -90,7 +89,7 @@ void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
                 glNorm,
                 glTex,
                 0
-                );
+        );
         verts.emplace_back(pPos->x, pPos->y, pPos->z);
     }
 
@@ -120,14 +119,14 @@ bool BaseMesh::SubMesh::init(const std::vector<vertexData> &Vertices, const std:
     NumVertices = Vertices.size();
 
     vly.begin()
-        .add(bgfx::Attrib::Position,3,bgfx::AttribType::Float)
-        .add(bgfx::Attrib::Normal,3,bgfx::AttribType::Float, true)
-        .add(bgfx::Attrib::TexCoord0,2,bgfx::AttribType::Float)
-        .add(bgfx::Attrib::Color0,   4, bgfx::AttribType::Uint8, true)
-        .end();
+            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
+            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+            .end();
 
-    VBH = bgfx::createVertexBuffer(bgfx::copy(vertexesData.data(),vertexesData.size()*sizeof(vertexData)),vly);
-    IBH = bgfx::createIndexBuffer(bgfx::copy(indices.data(),indices.size() *sizeof(uint16_t)));
+    VBH = bgfx::createVertexBuffer(bgfx::copy(vertexesData.data(), vertexesData.size() * sizeof(vertexData)), vly);
+    IBH = bgfx::createIndexBuffer(bgfx::copy(indices.data(), indices.size() * sizeof(uint16_t)));
 
 
     return true;

@@ -28,6 +28,7 @@
 #include "Components/CMeshRenderer.h"
 #include "Renderer.h"
 #include "Time.h"
+#include "Components/CRigidBody.h"
 
 static bool s_showStats = false;
 
@@ -86,14 +87,14 @@ int Engine::App::init() {
 
     renderer = new Renderer();
 
-    program = bgfx::createProgram(
+    debugProgram = bgfx::createProgram(
             Data::loadShaderBin("v_simple_inst.vert"),
             Data::loadShaderBin("f_simple_inst.frag"),
             false
     );
-    assert(isValid(program));
+    assert(isValid(debugProgram));
 
-    auto dyn = bgfx::createProgram(
+    debugProgram = bgfx::createProgram(
             Data::loadShaderBin("v_simple.vert"),
             Data::loadShaderBin("f_simple.frag"),
             false
@@ -129,8 +130,9 @@ int Engine::App::init() {
                 testMesh->addComponent<CTransform>()->setPosition(
                         {(-max / 2) * offset + x * 4.0, (-max / 2) * offset + y * 4.0, (-max / 2) * offset + z * 4.0});
                 testMesh->addComponent<CMeshRenderer>()
-                        ->setMesh(Data::loadMesh("data/backpack.obj"), MOVABLE)
-                        ->setMaterial(dyn);
+                        ->setMesh(Data::loadMesh("data/bbox.obj"), MOVABLE)
+                        ->setMaterial(debugProgram);
+                testMesh->addComponent<CRigidBody>();
             }
         }
     }
@@ -203,8 +205,15 @@ void Engine::App::run() {
             bgfx::setDebug(s_showStats ? BGFX_DEBUG_STATS : BGFX_DEBUG_TEXT);
         }
 
+        double fixedRate = 30;
+        double fixedDelta = 1.0/fixedRate;
 
         Component::processStart();
+        lastFixedFrame+=time->getDeltaTime();
+        while(lastFixedFrame>=fixedDelta){
+            Component::processFixedUpdate(fixedDelta);
+            lastFixedFrame-=fixedDelta;
+        }
         Component::processUpdate(time->getDeltaTime());
         Component::processLateUpdate(time->getDeltaTime());
 
@@ -217,37 +226,7 @@ void Engine::App::run() {
         bx::mtxProj(proj, 60.0f, float(width) / float(height), 0.1f, 250.0f, bgfx::getCaps()->homogeneousDepth);
         bgfx::setViewTransform(kClearView, view, proj);
         bgfx::setViewRect(kClearView, 0, 0, uint16_t(width), uint16_t(height));
-        //std::cout<<"time "<<bx::getHPCounter() <<"freq " <<(bx::getHPFrequency())<<std::endl;
-        /*
-        float time = (float) ((bx::getHPCounter() - m_timeOffset) / double(bx::getHPFrequency()));
-        for (uint32_t yy = 0; yy < 1; ++yy) {
-            for (uint32_t xx = 0; xx < 1; ++xx) {
-                float mtx[16];
-                bx::mtxRotateXY(mtx, time + xx * 0.21f, time + yy * 0.37f);
-                mtx[12] = -15.0f + float(xx) * 3.0f;
-                mtx[13] = -15.0f + float(yy) * 3.0f;
-                mtx[14] = 0.0f;
 
-                // Set model matrix for rendering.
-                bgfx::setTransform(mtx);
-
-                // Set vertex and index buffer.
-                bgfx::setVertexBuffer(0, test.subMeshes[0].getVbh());
-                bgfx::setIndexBuffer(test.subMeshes[0].getIbh());
-
-                // Set render states.
-                bgfx::setState(BGFX_STATE_DEFAULT);
-
-                // Submit primitive for rendering to view 0.
-                bgfx::submit(0, program);
-            }
-        }
-        */
-
-        //bgfx::setVertexBuffer(0, test.VBH);
-        //bgfx::setIndexBuffer(test.IBH);
-
-        //bgfx::submit(kClearView, program, 0);
 
         KeyInput::updateInputs();
 
@@ -262,7 +241,7 @@ void Engine::App::cleanup() {
 }
 
 Engine::App::~App() {
-    bgfx::destroy(program);
+    bgfx::destroy(debugProgram);
     bgfx::shutdown();
     glfwTerminate();
 }

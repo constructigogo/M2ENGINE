@@ -19,7 +19,6 @@ void Renderer::render() {
         float mtx[16];
         //bx::mtxTranslate(mtx, pos.x, pos.y, pos.z);
         bx::mtxFromQuaternion(mtx,rot,pos);
-
         bgfx::setState(0
                        | BGFX_STATE_WRITE_RGB
                        | BGFX_STATE_WRITE_A

@@ -41,8 +41,7 @@ namespace Engine {
             unsigned int MaterialIndex;
         };
 
-        std::vector<vertexData> vertexesAllData;
-        std::vector<uint16_t> indicesAllData;
+
         bgfx::VertexLayout vly;
 
     public:
@@ -51,7 +50,8 @@ namespace Engine {
         std::vector<SubMesh> subMeshes;
 
         void loadMesh(const std::string &Filename);
-
+        std::vector<vertexData> vertexesAllData;
+        std::vector<uint16_t> indicesAllData;
         bgfx::VertexBufferHandle VBH;
         bgfx::IndexBufferHandle IBH;
 
