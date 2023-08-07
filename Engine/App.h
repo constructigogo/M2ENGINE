@@ -19,7 +19,10 @@
 
 
 namespace Engine {
-    class ENGINE_API App {
+
+    class Physic;
+
+    class App {
     public:
         explicit App(int width=1024, int height= 768, const char *title="blabla");
 

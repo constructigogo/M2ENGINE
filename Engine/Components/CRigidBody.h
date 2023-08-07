@@ -8,11 +8,17 @@
 #include "Component.h"
 #include "CTransform.h"
 #include "CMeshRenderer.h"
+#include "../Physic.h"
 
 namespace Engine {
 
+    class Physic;
+
     class CRigidBody : public Component {
     public:
+
+        CRigidBody();
+
         void start() override;
 
         void fixedUpdate(double delta) override;
@@ -21,21 +27,41 @@ namespace Engine {
 
         void lateUpdate(double delta) override;
 
+        void addForce() {} //TODO
+
+        bool affectedByGravity=true;
+
     private:
+
+        friend Physic;
+
         void computeTensor();
+        void computeAuxilaries ();
+        void computeForces(double delta);
 
+        void physicUpdate(double delta);
 
-        CTransform * transform;
-        CMeshRenderer * meshRenderer;
+        CMeshRenderer *meshRenderer;
 
-        float mass=1;
-        glm::vec3 speed;
-        glm::vec3 momentum;
-        glm::vec3 kinetic;
-        glm::vec3 force;
-        glm::vec3 angular;
-        glm::vec3 torque;
-        glm::mat3 tensor;
+        /* Constant */
+        float mass = 1;
+        glm::mat3 tensor;    /* Ibody */
+        glm::mat3 tensorInv; /* Inverses of Ibody */
+
+        /* State variables */
+        CTransform *transform; /* position : x(t) */ /* rotation : q(t) */
+        glm::vec3 LinMomentum; /* P(t) */
+        glm::vec3 AngMomentum; /* L(t) */
+
+        /* Derived quantities (auxiliary variables) */
+        glm::mat3 Iinv;     /* I−1(t) */
+        glm::mat3 R;        /* R(t) */
+        glm::vec3 velocity; /* v(t) */
+        glm::vec3 angular;  /* w(t) */
+
+        /* Computed quantities */
+        glm::vec3 force;  /* F(t) */
+        glm::vec3 torque; /* τ(t) */
     };
 
 } // Engine

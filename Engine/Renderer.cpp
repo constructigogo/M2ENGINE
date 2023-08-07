@@ -17,8 +17,8 @@ void Renderer::render() {
         const bx::Quaternion & rot = mesh->transform->getRotation();
 
         float mtx[16];
-        //bx::mtxTranslate(mtx, pos.x, pos.y, pos.z);
-        bx::mtxFromQuaternion(mtx,rot,pos);
+        bx::mtxFromQuaternion(mtx,rot);
+        bx::mtxTranslate(mtx, pos.x, pos.y, pos.z);
         bgfx::setState(0
                        | BGFX_STATE_WRITE_RGB
                        | BGFX_STATE_WRITE_A

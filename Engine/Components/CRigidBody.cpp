@@ -6,8 +6,13 @@
 #include <unordered_set>
 #include "CRigidBody.h"
 #include "../Log.h"
+#include "../utils.h"
 
 namespace Engine {
+    CRigidBody::CRigidBody() {
+        Physic::registerBody(this);
+    }
+
     void CRigidBody::start() {
         transform = getParent()->getComponent<CTransform>();
         if (!transform) {
@@ -65,4 +70,34 @@ namespace Engine {
         std::cout << tensor[1][0] << " " << tensor[1][1] << " " << tensor[1][2]<< " " << std::endl;
         std::cout << tensor[2][0] << " " << tensor[2][1] << " " << tensor[2][2]<< " " << std::endl;
     }
+
+    void CRigidBody::computeAuxilaries() {
+        velocity = LinMomentum / mass;
+        R= Utils::bxQuaternionToMat(bx::normalize(transform->getRotation()));
+        Iinv = R * tensorInv * glm::transpose(R);
+        angular = Iinv * AngMomentum;
+    }
+
+    void CRigidBody::computeForces(double delta) {
+        //TODO COMPUTE FORCES
+        force.x=0;
+        force.y=0;
+        force.z=0;
+        if(affectedByGravity){
+            //force += World.gravity TODO
+            force+= glm::vec3 {0.0,-0.5,0.0};
+        }
+    }
+
+    void CRigidBody::physicUpdate(double delta) {
+        auto fdelta = (float)delta;
+        transform->translate(fdelta * velocity);
+        if (transform->getPosition().y <0){
+            transform->Position.y=0;
+        }
+        //TODO ROTATION
+        LinMomentum+=fdelta*force;
+        AngMomentum+=fdelta*torque;
+    }
+
 } // Engine

@@ -28,3 +28,21 @@ const bx::Vec3 &Engine::CTransform::getScale() const {
     return Scale;
 }
 
+void Engine::CTransform::translate(const bx::Vec3 &position) {
+    Position.x += position.x;
+    Position.y += position.y;
+    Position.z += position.z;
+}
+
+void Engine::CTransform::translate(const float &x, const float &y, const float &z) {
+    Position.x += x;
+    Position.y += y;
+    Position.z += z;
+}
+
+void Engine::CTransform::translate(const glm::vec3 &position) {
+    Position.x += position.x;
+    Position.y += position.y;
+    Position.z += position.z;
+}
+

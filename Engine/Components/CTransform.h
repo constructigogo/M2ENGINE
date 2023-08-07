@@ -18,9 +18,15 @@ enum CTransformMobility {
 };
 
 namespace Engine {
+
+    class CRigidBody;
+
     class CTransform : public Component{
     private:
-        std::shared_ptr<CTransform> Parent;
+
+        friend CRigidBody;
+
+        std::shared_ptr<CTransform*> Parent;
 
         bx::Vec3 Position = bx::Vec3(bx::InitZero);
         bx::Quaternion Rotation = bx::Quaternion(bx::InitZero);
@@ -34,6 +40,9 @@ namespace Engine {
 
         void setPosition(const bx::Vec3 &position);
         void setPosition(const float &x,const float &y,const float &z);
+        void translate(const bx::Vec3 &position);
+        void translate(const glm::vec3 &position);
+        void translate(const float &x,const float &y,const float &z);
 
         const bx::Vec3 &getPosition() const;
 

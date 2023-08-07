@@ -29,6 +29,7 @@
 #include "Renderer.h"
 #include "Time.h"
 #include "Components/CRigidBody.h"
+#include "Physic.h"
 
 static bool s_showStats = false;
 
@@ -121,14 +122,14 @@ int Engine::App::init() {
             ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC)
             ->setMaterial(program);
 */
-    int max = 1;
+    int max = 0;
     float offset = 4.0;
     for (int x = 0; x < max; ++x) {
         for (int y = 0; y < max; ++y) {
             for (int z = 0; z < max; ++z) {
                 testMesh = new Object();
                 testMesh->addComponent<CTransform>()->setPosition(
-                        {(-max / 2) * offset + x * 4.0, (-max / 2) * offset + y * 4.0, (-max / 2) * offset + z * 4.0});
+                        {(-max / 2) * offset + x * 4.0, ((-max / 2) * offset + y * 4.0)+5, ((-max / 2) * offset + z * 4.0)});
                 testMesh->addComponent<CMeshRenderer>()
                         ->setMesh(Data::loadMesh("data/bbox.obj"), MOVABLE)
                         ->setMaterial(debugProgram);
@@ -136,6 +137,13 @@ int Engine::App::init() {
             }
         }
     }
+
+    testMesh = new Object();
+    testMesh->addComponent<CTransform>()->setPosition({0.0, 8, 0.0});
+    testMesh->addComponent<CMeshRenderer>()
+            ->setMesh(Data::loadMesh("data/bbox.obj"), MOVABLE)
+            ->setMaterial(debugProgram);
+    testMesh->addComponent<CRigidBody>();
 
 
     bgfx::RendererType::Enum type = bgfx::getRendererType();
@@ -211,6 +219,8 @@ void Engine::App::run() {
         Component::processStart();
         lastFixedFrame+=time->getDeltaTime();
         while(lastFixedFrame>=fixedDelta){
+            Physic::compute(fixedDelta);
+
             Component::processFixedUpdate(fixedDelta);
             lastFixedFrame-=fixedDelta;
         }
