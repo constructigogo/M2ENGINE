@@ -13,7 +13,7 @@
 #include "Mesh.h"
 #include "Components/CCamera.h"
 #include "Input.h"
-#include "Time.h"
+#include "ETime.h"
 #include "Objects/OCamera.h"
 #include "Renderer.h"
 
@@ -43,7 +43,7 @@ namespace Engine {
         Object *testMesh;
 
         KeyInput *input;
-        std::unique_ptr<Time> time;
+        std::unique_ptr<ETime> time;
         Renderer *renderer;
 
         GLFWwindow *currentWindow;

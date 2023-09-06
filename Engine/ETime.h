@@ -2,14 +2,14 @@
 // Created by Constantin on 22/07/2023.
 //
 
-#ifndef ENGINE_TIME_H
-#define ENGINE_TIME_H
+#ifndef ENGINE_ETIME_H
+#define ENGINE_ETIME_H
 
 
 namespace Engine {
-    class Time {
+    class ETime {
     public:
-        Time();
+        ETime();
 
         void processDelta();
 
@@ -21,4 +21,4 @@ namespace Engine {
 }
 
 
-#endif //ENGINE_TIME_H
+#endif //ENGINE_ETIME_H

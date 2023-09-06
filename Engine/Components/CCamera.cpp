@@ -14,7 +14,8 @@ void Engine::CCamera::start() {
     if(!transform){
         transform=getParent()->addComponent<CTransform>();
     }
-    transform->setPosition({10.0f, 10.0f, 10.0f});
+    //transform->setPosition({10.0f, 10.0f, 10.0f});
+    transform->setPosition({1.0f, .2f, 1.0f});
 
     std::cout<<"camera start"<<std::endl;
 }
@@ -27,9 +28,9 @@ void Engine::CCamera::update(double deltaTime) {
 
     bx::Vec3 rotated(current.x * cos(angle) - current.z * sin(angle),
                       current.y,
-                      current.x * sin(angle) + current.z * cos(angle));
-    //rotated *= deltaTime;
-    //transform->setPosition(rotated);
+                      current.x * sin(angle)  + current.z * cos(angle));
+    //rotated *=deltaTime;
+    transform->setPosition(rotated);
 }
 
 const Engine::CCamera::ViewData &Engine::CCamera::getData() const {

@@ -6,6 +6,7 @@
 #define ENGINE_MESH_H
 
 #include <vector>
+#include <array>
 #include "assimp/scene.h"
 #include "bx/math.h"
 #include "glm/glm.hpp"
@@ -31,8 +32,9 @@ namespace Engine {
                       const std::vector<uint16_t> &Indices);
 
             std::vector<vertexData> vertexesData;
-            std::vector<uint16_t> indices;
-
+            std::vector<uint16_t> indices; // 3-point triangle indices
+            std::vector<uint16_t> vertexSingleAdjacency; //indice of the first point of the triangle triangle access, same indice as vertexData
+            std::vector<int> triangleAdjacency; //Indice of the first point of every adjacent triangle, same indice as indices vector
 
             bgfx::VertexLayout vly;
             bgfx::VertexBufferHandle VBH;
@@ -59,7 +61,6 @@ namespace Engine {
         void initFromScene(const aiScene *pScene, const std::string &Filename);
 
         void initMesh(unsigned int Index, const aiMesh *paiMesh);
-
 
     };
 

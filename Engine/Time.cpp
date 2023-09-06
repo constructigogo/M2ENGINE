@@ -2,19 +2,19 @@
 // Created by Constantin on 22/07/2023.
 //
 
-#include "Time.h"
+#include "ETime.h"
 #include "GLFW/glfw3.h"
 
-void Engine::Time::processDelta() {
+void Engine::ETime::processDelta() {
     currentFrame = glfwGetTime();
     deltaTime = currentFrame - lastFrame;
     lastFrame = currentFrame;
 }
 
-Engine::Time::Time() : currentFrame(0), lastFrame(0), deltaTime(0){
+Engine::ETime::ETime() : currentFrame(0), lastFrame(0), deltaTime(0){
 
 }
 
-double Engine::Time::getDeltaTime() {
+double Engine::ETime::getDeltaTime() {
     return deltaTime;
 }
