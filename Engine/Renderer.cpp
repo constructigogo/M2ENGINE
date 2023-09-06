@@ -14,11 +14,13 @@ void Renderer::render() {
     for (const auto mesh:renderList) {
 
         const bx::Vec3 & pos = mesh->transform->getPosition();
+        const bx::Vec3 & scale = mesh->transform->getScale();
         const bx::Quaternion & rot = mesh->transform->getRotation();
 
         float mtx[16];
         bx::mtxFromQuaternion(mtx,rot);
         bx::mtxTranslate(mtx, pos.x, pos.y, pos.z);
+        bx::mtxScale(mtx,scale.x,scale.y,scale.z);
         bgfx::setState(0
                        | BGFX_STATE_WRITE_RGB
                        | BGFX_STATE_WRITE_A

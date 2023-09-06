@@ -21,7 +21,9 @@ public:
                 false
         );
         testMesh = new Object();
-        testMesh->addComponent<CTransform>()->setPosition({0.0, 0.0, 0.0});
+        auto transform = testMesh->addComponent<CTransform>();
+        transform->setPosition({0.0, 0.0, 0.0});
+        transform->setScale({0.5,1.2,0.1});
         testMesh->addComponent<CMeshRenderer>()
                 ->setMesh(Data::loadMesh("data/queen.off"), MOVABLE)
                 ->setMaterial(debugProgram);

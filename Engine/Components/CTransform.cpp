@@ -46,3 +46,11 @@ void Engine::CTransform::translate(const glm::vec3 &position) {
     Position.z += position.z;
 }
 
+void Engine::CTransform::setScale(const bx::Vec3 &scale) {
+    Scale = scale;
+}
+
+void Engine::CTransform::setScale(const float &x, const float &y, const float &z) {
+    setScale({x,y,z});
+}
+

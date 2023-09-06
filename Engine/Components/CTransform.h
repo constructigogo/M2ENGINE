@@ -40,6 +40,10 @@ namespace Engine {
 
         void setPosition(const bx::Vec3 &position);
         void setPosition(const float &x,const float &y,const float &z);
+
+        void setScale(const bx::Vec3 &scale);
+        void setScale(const float &x,const float &y,const float &z);
+
         void translate(const bx::Vec3 &position);
         void translate(const glm::vec3 &position);
         void translate(const float &x,const float &y,const float &z);
