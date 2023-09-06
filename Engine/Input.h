@@ -10,6 +10,7 @@
 #include <map>
 #include "Singleton.h"
 #include "GLFW/glfw3.h"
+#include "glm/vec2.hpp"
 
 #define KEY_NOT_PRESSED 0
 #define KEY_PRESSED 1
@@ -28,6 +29,11 @@ namespace Engine {
         // Takes a list of which keys to keep state for
         KeyInput(const std::vector<int>& keysToMonitor);
         ~KeyInput();
+
+        glm::vec2 getMousePosition();
+        int getMouseX();
+        int getMouseY();
+
         // If this KeyInput is enabled and the given key is monitored,
         // returns pressed state.  Else returns false.
         bool getIsKeyDown(int key);
@@ -45,6 +51,9 @@ namespace Engine {
         // If disabled, KeyInput.getIsKeyDown always returns false
         bool _isEnabled;
 
+        double mouseX;
+        double mouseY;
+
         // Workaround for C++ class using a c-style-callback
     public:
         // Must be called before any KeyInput instances will work
@@ -52,8 +61,11 @@ namespace Engine {
         static void updateInputs();
     private:
         // The GLFW callback for key events.  Sends events to all KeyInput instances
-        static void callback(
+        static void keyCallback(
                 GLFWwindow* window, int key, int scancode, int action, int mods);
+        static void mousePosCallback(GLFWwindow* window, double xpos, double ypos);
+        static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+
         // Keep a list of all KeyInput instances and notify them all of key events
         static std::vector<KeyInput*> _instances;
     };

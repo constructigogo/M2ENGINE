@@ -28,7 +28,7 @@ namespace Engine {
 
         virtual ~App();
 
-        virtual int init();
+        virtual void init();
 
         virtual void run();
 

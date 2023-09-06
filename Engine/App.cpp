@@ -20,6 +20,7 @@
 #endif
 
 #include <GLFW/glfw3native.h>
+#include "imgui/imgui.h"
 #include <fstream>
 #include <iostream>
 #include "utils.h"
@@ -47,21 +48,21 @@ namespace Engine {
 
     Engine::App::App(int width, int height, const char *title) : width(width), height(height) {}
 
-    int Engine::App::init() {
+    void Engine::App::init() {
 
         Log::Init();
 
         // Create a GLFW window without an OpenGL context.
         glfwSetErrorCallback(glfw_errorCallback);
         if (!glfwInit())
-            return 1;
+            return ;
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         currentWindow = glfwCreateWindow(width, height, "don't look here", nullptr, nullptr);
         if (!currentWindow)
-            return 1;
+            return ;
         KeyInput::setupKeyInputs(currentWindow);
 
-        input = new KeyInput({GLFW_KEY_F1});
+        input = new KeyInput({GLFW_KEY_F1,GLFW_MOUSE_BUTTON_1});
         time = std::make_unique<ETime>();
 
         //glfwSetKeyCallback(currentWindow, glfw_keyCallback);
@@ -85,80 +86,9 @@ namespace Engine {
         init.resolution.height = (uint32_t) height;
         init.resolution.reset = BGFX_RESET_VSYNC;
         if (!bgfx::init(init))
-            return 1;
+            return ;
 
         renderer = new Renderer();
-
-        debugProgram = bgfx::createProgram(
-                Data::loadShaderBin("v_simple_inst.vert"),
-                Data::loadShaderBin("f_simple_inst.frag"),
-                false
-        );
-        assert(isValid(debugProgram));
-
-        debugProgram = bgfx::createProgram(
-                Data::loadShaderBin("v_simple.vert"),
-                Data::loadShaderBin("f_simple.frag"),
-                false
-        );
-
-
-        /*
-        testMesh = new Object();
-        testMesh->addComponent<CTransform>();
-        testMesh->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC)
-                ->setMaterial(program);
-
-        testMesh = new Object();
-        testMesh->addComponent<CTransform>()->setPosition({-4.0,0.0,0.0});
-        testMesh->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC)
-                ->setMaterial(program);
-
-
-        testMesh = new Object();
-        testMesh->addComponent<CTransform>()->setPosition({4.0,0.0,0.0});
-        testMesh->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC)
-                ->setMaterial(program);
-    */
-        int max = 0;
-        float offset = 4.0;
-        for (int x = 0; x < max; ++x) {
-            for (int y = 0; y < max; ++y) {
-                for (int z = 0; z < max; ++z) {
-                    testMesh = new Object();
-                    testMesh->addComponent<CTransform>()->setPosition(
-                            {(-max / 2) * offset + x * 4.0, ((-max / 2) * offset + y * 4.0) + 5,
-                             ((-max / 2) * offset + z * 4.0)});
-                    testMesh->addComponent<CMeshRenderer>()
-                            ->setMesh(Data::loadMesh("data/bbox.obj"), MOVABLE)
-                            ->setMaterial(debugProgram);
-                    testMesh->addComponent<CRigidBody>();
-                }
-            }
-        }
-
-        testMesh = new Object();
-        testMesh->addComponent<CTransform>()->setPosition({0.0, 0.0, 0.0});
-        testMesh->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/queen.off"), MOVABLE)
-                ->setMaterial(debugProgram);
-        //testMesh->addComponent<CRigidBody>();
-
-
-        bgfx::RendererType::Enum type = bgfx::getRendererType();
-
-        /*
-        const bgfx::EmbeddedShader k_vs = BGFX_EMBEDDED_SHADER(v_simple);
-        const bgfx::EmbeddedShader k_fs = BGFX_EMBEDDED_SHADER(f_simple);
-        program = bgfx::createProgram(
-                bgfx::createEmbeddedShader(&k_vs, type, "v_simple")
-                , bgfx::createEmbeddedShader(&k_fs, type, "f_simple")
-                , false
-        );
-        */
 
 
         // Set view 0 to the same dimensions as the window and to clear the color buffer.
@@ -170,15 +100,35 @@ namespace Engine {
 
         m_timeOffset = bx::getHPCounter();
 
-
-        currentCamera = new OCamera();
-
-        return 0;
+        imguiCreate();
+        //  return;
     }
 
     void Engine::App::run() {
         while (!glfwWindowShouldClose(currentWindow)) {
             glfwPollEvents();
+
+            imguiBeginFrame(input->getMouseX(),input->getMouseY(),input->getIsKeyDown(GLFW_MOUSE_BUTTON_1),0,(uint16_t)width ,(uint16_t)height);
+            bool active = true;
+            ImGui::SetNextWindowSize(
+                    ImVec2(width / 5.0f, height / 3.5f)
+                    , ImGuiCond_FirstUseEver
+            );
+            ImGui::Begin("My First Tool", &active, ImGuiWindowFlags_MenuBar);
+            if (ImGui::BeginMenuBar())
+            {
+                if (ImGui::BeginMenu("File"))
+                {
+                    if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
+                    if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
+                    if (ImGui::MenuItem("Close", "Ctrl+W"))  { active = false; }
+                    ImGui::EndMenu();
+                }
+                ImGui::EndMenuBar();
+            }
+            ImGui::End();
+            imguiEndFrame();
+
             time->processDelta();
 
             int oldWidth = width, oldHeight = height;

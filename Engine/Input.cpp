@@ -55,11 +55,13 @@ bool Engine::KeyInput::getIsKeyReleased(int key) {
 }
 
 void Engine::KeyInput::setupKeyInputs(GLFWwindow *window) {
-    glfwSetKeyCallback(window, KeyInput::callback);
+    glfwSetKeyCallback(window, KeyInput::keyCallback);
+    glfwSetCursorPosCallback(window, KeyInput::mousePosCallback);
+    glfwSetMouseButtonCallback(window, KeyInput::mouseButtonCallback);
 }
 
 
-void Engine::KeyInput::callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
+void Engine::KeyInput::keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods) {
     // Send key event to all KeyInput instances
     for (Engine::KeyInput *keyInput: _instances) {
         Engine::KeyInput::KeyPress state = keyInput->getKeyState(key);
@@ -100,6 +102,40 @@ void Engine::KeyInput::updateInputs() {
         }
     }
 }
+
+int Engine::KeyInput::getMouseX() {
+    return mouseX;
+}
+
+int Engine::KeyInput::getMouseY() {
+    return mouseY;
+}
+
+glm::vec2 Engine::KeyInput::getMousePosition() {
+    return {mouseX,mouseY};
+}
+
+void Engine::KeyInput::mousePosCallback(GLFWwindow *window, double xpos, double ypos) {
+    for (Engine::KeyInput *keyInput: _instances) {
+        keyInput->mouseX = xpos;
+        keyInput->mouseY = ypos;
+    }
+}
+
+void Engine::KeyInput::mouseButtonCallback(GLFWwindow *window, int button, int action, int mods) {
+    // Send key event to all KeyInput instances
+    for (Engine::KeyInput *keyInput: _instances) {
+        Engine::KeyInput::KeyPress state = keyInput->getKeyState(button);
+        if((state.current == KEY_NOT_PRESSED || state.current == KEY_RELEASED) && action == GLFW_PRESS){
+            keyInput->setKeyState(button,KEY_PRESSED);
+        }
+        else if ((state.current == KEY_PRESSED || state.current == KEY_HELD) && action == GLFW_RELEASE ){
+            keyInput->setKeyState(button ,KEY_RELEASED);
+        }
+    }
+}
+
+
 
 
 
