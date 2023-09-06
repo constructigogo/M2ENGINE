@@ -10,3 +10,6 @@
 [submodule "libraries/entt"]
 	path = libraries/entt
 	url = https://github.com/skypjack/entt.git
+[submodule "libraries/bgfx.cmake"]
+	path = libraries/bgfx.cmake
+	url = https://github.com/bkaradzic/bgfx.cmake
