@@ -3,12 +3,14 @@
 //
 
 #pragma once
+
+
+
 namespace Engine {
 
     class Implicit {
     public:
         Implicit()= default;
-
     protected:
 
     private:
