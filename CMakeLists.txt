@@ -116,8 +116,8 @@ if(PROJECT_IS_TOP_LEVEL)
 else ()
     set(SHADER_BUILD_DIR ${CMAKE_BINARY_DIR})
     add_library(Engine STATIC main.cpp Core.h ${SRC_FILES} ${SHADER_RESULTS})
-    #set_property(TARGET Engine PROPERTY ENABLE_EXPORTS 1)
 endif()
+
 
 
 #target_include_dir(Engine)
@@ -131,7 +131,6 @@ target_link_libraries(Engine PUBLIC glfw)
 target_link_libraries(Engine PUBLIC glm::glm)
 target_link_libraries(Engine PUBLIC spdlog)
 target_link_libraries(Engine PUBLIC example-common)
-
 target_link_libraries(Engine PUBLIC OpenGL::GL)
 
 

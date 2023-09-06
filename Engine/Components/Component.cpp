@@ -3,6 +3,7 @@
 //
 
 #include "Component.h"
+#include <algorithm>
 #include <iostream>
 
 std::vector<Engine::Component *> Engine::Component::_instances;
