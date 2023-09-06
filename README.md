@@ -26,5 +26,19 @@ To create an App, use the following include, and create a child class inheriting
 #include "[your library folder]/M2ENGINE/Engine/App.h"
 ```
 
+to simply test that everything is working, you can use the following main : 
+```cpp
+#include "[your library folder]/M2ENGINE/Engine/App.h"
+
+int main(int _argc, const char* const* _argv)
+{
+    Engine::App application(1024, 768, "useless");
+
+    application.init();
+    application.run();
+    application.cleanup();
+    return 0;
+}
+```
 
 
