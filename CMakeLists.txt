@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.25)
 project(Engine)
 
 set(CMAKE_CXX_STANDARD 20)
-
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
 
 #set(BUILD_SHARED_LIBS ON)
@@ -18,6 +18,7 @@ set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT OFF CACHE BOOL "" FORCE)
 
 set(ASSIMP_BUILD_OBJ_IMPORTER TRUE CACHE BOOL "" FORCE)
+set(ASSIMP_BUILD_GLTF_IMPORTER TRUE CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_OFF_IMPORTER TRUE CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_FBX_IMPORTER TRUE CACHE BOOL "" FORCE)
 
@@ -132,6 +133,11 @@ target_link_libraries(Engine PUBLIC glm::glm)
 target_link_libraries(Engine PUBLIC spdlog)
 target_link_libraries(Engine PUBLIC example-common)
 target_link_libraries(Engine PUBLIC OpenGL::GL)
+
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(Engine PUBLIC OpenMP::OpenMP_CXX)
+endif()
 
 
 

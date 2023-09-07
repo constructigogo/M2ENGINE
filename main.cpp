@@ -9,7 +9,7 @@
 
 class EditorSandbox : public App {
 public:
-    EditorSandbox(int x, int y, const char * name) : App(x, y, name) {
+    EditorSandbox(int x, int y, const char *name) : App(x, y, name) {
     }
 
     void init() override {
@@ -20,24 +20,34 @@ public:
                 Data::loadShaderBin("f_simple.frag"),
                 false
         );
-        testMesh = new Object();
-        auto transform = testMesh->addComponent<CTransform>();
-        transform->setPosition({0.0, -0.5, 0.0});
-        //transform->setScale({0.1,0.1,0.1});
-        transform->setScale({0.4,0.4,0.4});
-        transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0}));
-        testMesh->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/bbox.obj"), MOVABLE)
-                ->setMaterial(debugProgram);
-        //testMesh->addComponent<CRigidBody>();
+
+        auto instProg = bgfx::createProgram(
+                Data::loadShaderBin("v_simple_inst.vert"),
+                Data::loadShaderBin("f_simple_inst.frag"),
+                false
+        );
+
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                auto inst = new Object();
+                auto transform = inst->addComponent<CTransform>();
+                transform->setPosition({(float)i*2 - 2, -0.5, (float)j*2 - 2});
+                //transform->setScale({0.1,0.1,0.1});
+                transform->setScale({0.1, 0.1, 0.1});
+                //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
+                inst->addComponent<CMeshRenderer>()
+                        ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC, true)
+                        ->setMaterial(instProg);
+                //testMesh->addComponent<CRigidBody>();
+            }
+        }
     }
 };
 
 
-int _main_(int, char**) { return 0;}
+int _main_(int, char **) { return 0; }
 
-int main(int _argc, const char* const* _argv)
-{
+int main(int _argc, const char *const *_argv) {
     EditorSandbox application(1024, 768, "useless");
 
     application.init();

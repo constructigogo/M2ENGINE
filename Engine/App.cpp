@@ -55,14 +55,14 @@ namespace Engine {
         // Create a GLFW window without an OpenGL context.
         glfwSetErrorCallback(glfw_errorCallback);
         if (!glfwInit())
-            return ;
+            return;
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         currentWindow = glfwCreateWindow(width, height, "don't look here", nullptr, nullptr);
         if (!currentWindow)
-            return ;
+            return;
         KeyInput::setupKeyInputs(currentWindow);
 
-        input = new KeyInput({GLFW_KEY_F1,GLFW_MOUSE_BUTTON_1});
+        input = new KeyInput({GLFW_KEY_F1, GLFW_MOUSE_BUTTON_1});
         time = std::make_unique<ETime>();
 
         //glfwSetKeyCallback(currentWindow, glfw_keyCallback);
@@ -86,7 +86,7 @@ namespace Engine {
         init.resolution.height = (uint32_t) height;
         init.resolution.reset = BGFX_RESET_VSYNC;
         if (!bgfx::init(init))
-            return ;
+            return;
 
         renderer = new Renderer();
 
@@ -108,25 +108,29 @@ namespace Engine {
         while (!glfwWindowShouldClose(currentWindow)) {
             glfwPollEvents();
 
-            imguiBeginFrame(input->getMouseX(),input->getMouseY(),input->getIsKeyDown(GLFW_MOUSE_BUTTON_1),0,(uint16_t)width ,(uint16_t)height);
+            imguiBeginFrame(input->getMouseX(), input->getMouseY(), input->getIsKeyDown(GLFW_MOUSE_BUTTON_1), 0,
+                            (uint16_t) width, (uint16_t) height);
+
+            /*
             bool active = true;
             ImGui::SetNextWindowSize(
                     ImVec2(width / 5.0f, height / 3.5f)
                     , ImGuiCond_FirstUseEver
             );
-            ImGui::Begin("My First Tool", &active, ImGuiWindowFlags_MenuBar);
+            ImGui::Begin("Hierarchy", nullptr, ImGuiWindowFlags_MenuBar);
             if (ImGui::BeginMenuBar())
             {
-                if (ImGui::BeginMenu("File"))
+                if (ImGui::BeginMenu("Object"))
                 {
-                    if (ImGui::MenuItem("Open..", "Ctrl+O")) { /* Do stuff */ }
-                    if (ImGui::MenuItem("Save", "Ctrl+S"))   { /* Do stuff */ }
-                    if (ImGui::MenuItem("Close", "Ctrl+W"))  { active = false; }
+                    if (ImGui::MenuItem("New Empty Object", "Ctrl+O")) { }
+                    if (ImGui::MenuItem("todo", "Ctrl+S"))   {  }
+                    if (ImGui::MenuItem("todo", "Ctrl+W"))  { active = false; }
                     ImGui::EndMenu();
                 }
                 ImGui::EndMenuBar();
             }
             ImGui::End();
+*/
             imguiEndFrame();
 
             time->processDelta();
@@ -172,8 +176,8 @@ namespace Engine {
             Component::processStart();
             lastFixedFrame += time->getDeltaTime();
 
-            int pFCount =0;
-            while (lastFixedFrame >= fixedDelta && pFCount<physicFrameCountLimit) {
+            int pFCount = 0;
+            while (lastFixedFrame >= fixedDelta && pFCount < physicFrameCountLimit) {
                 Physic::compute(fixedDelta);
                 Component::processFixedUpdate(fixedDelta);
                 lastFixedFrame -= fixedDelta;

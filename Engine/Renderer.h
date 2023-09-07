@@ -24,7 +24,8 @@ namespace Engine {
         static void unregisterStatic(CMeshRenderer*);
 
     private:
-        static std::map<BaseMesh* , std::pair<bgfx::ProgramHandle*,std::vector<CTransform*>>> batching;
+        static std::map<BaseMesh* , std::pair<bgfx::ProgramHandle*,std::vector<CTransform*>>> instancing;
+        static std::map<BaseMesh* , std::pair<bgfx::ProgramHandle*,std::pair<bgfx::InstanceDataBuffer, int>>> staticInstanceCache;
         static std::vector<CMeshRenderer*> renderList;
     };
 }

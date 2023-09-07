@@ -26,7 +26,7 @@ bool Engine::KeyInput::getIsKeyDown(int key) {
     if (_isEnabled) {
         auto it = _keys.find(key);
         if (it != _keys.end()) {
-            result = _keys[key].current == KEY_PRESSED || _keys[key].current==KEY_HELD;
+            result = _keys[key].current == KEY_PRESSED || _keys[key].current == KEY_HELD;
         }
     }
     return result;
@@ -65,11 +65,10 @@ void Engine::KeyInput::keyCallback(GLFWwindow *window, int key, int scancode, in
     // Send key event to all KeyInput instances
     for (Engine::KeyInput *keyInput: _instances) {
         Engine::KeyInput::KeyPress state = keyInput->getKeyState(key);
-        if((state.current == KEY_NOT_PRESSED || state.current == KEY_RELEASED) && action == GLFW_PRESS){
-            keyInput->setKeyState(key,KEY_PRESSED);
-        }
-        else if ((state.current == KEY_PRESSED || state.current == KEY_HELD) && action == GLFW_RELEASE ){
-            keyInput->setKeyState(key,KEY_RELEASED);
+        if ((state.current == KEY_NOT_PRESSED || state.current == KEY_RELEASED) && action == GLFW_PRESS) {
+            keyInput->setKeyState(key, KEY_PRESSED);
+        } else if ((state.current == KEY_PRESSED || state.current == KEY_HELD) && action == GLFW_RELEASE) {
+            keyInput->setKeyState(key, KEY_RELEASED);
         }
     }
 }
@@ -79,7 +78,7 @@ Engine::KeyInput::KeyPress Engine::KeyInput::getKeyState(int key) {
     if (it != _keys.end()) {
         return _keys[key];
     }
-    return {-1,-1};
+    return {-1, -1};
 }
 
 void Engine::KeyInput::setKeyState(int key, int state) {
@@ -93,11 +92,10 @@ void Engine::KeyInput::setKeyState(int key, int state) {
 void Engine::KeyInput::updateInputs() {
     for (Engine::KeyInput *keyInput: _instances) {
         for (auto &key: keyInput->_keys) {
-            if (key.second.current==KEY_PRESSED){
-                keyInput->setKeyState(key.first,KEY_HELD);
-            }
-            else if (key.second.current==KEY_RELEASED){
-                keyInput->setKeyState(key.first,KEY_NOT_PRESSED);
+            if (key.second.current == KEY_PRESSED) {
+                keyInput->setKeyState(key.first, KEY_HELD);
+            } else if (key.second.current == KEY_RELEASED) {
+                keyInput->setKeyState(key.first, KEY_NOT_PRESSED);
             }
         }
     }
@@ -112,11 +110,23 @@ int Engine::KeyInput::getMouseY() {
 }
 
 glm::vec2 Engine::KeyInput::getMousePosition() {
-    return {mouseX,mouseY};
+    return {mouseX, mouseY};
 }
 
 void Engine::KeyInput::mousePosCallback(GLFWwindow *window, double xpos, double ypos) {
+    int w, h;
+    glfwGetWindowSize(window, &w, &h);
+    const double widthd = double(int32_t(w));
+    const double heightd = double(int32_t(h));
+
+
     for (Engine::KeyInput *keyInput: _instances) {
+        keyInput->mouseDeltaX = double(xpos - keyInput->mousePrevX) / widthd;
+        keyInput->mouseDeltaY = double(ypos - keyInput->mousePrevY) / heightd;
+
+
+        keyInput->mousePrevX = keyInput->mouseX;
+        keyInput->mousePrevY = keyInput->mouseY;
         keyInput->mouseX = xpos;
         keyInput->mouseY = ypos;
     }
@@ -126,11 +136,10 @@ void Engine::KeyInput::mouseButtonCallback(GLFWwindow *window, int button, int a
     // Send key event to all KeyInput instances
     for (Engine::KeyInput *keyInput: _instances) {
         Engine::KeyInput::KeyPress state = keyInput->getKeyState(button);
-        if((state.current == KEY_NOT_PRESSED || state.current == KEY_RELEASED) && action == GLFW_PRESS){
-            keyInput->setKeyState(button,KEY_PRESSED);
-        }
-        else if ((state.current == KEY_PRESSED || state.current == KEY_HELD) && action == GLFW_RELEASE ){
-            keyInput->setKeyState(button ,KEY_RELEASED);
+        if ((state.current == KEY_NOT_PRESSED || state.current == KEY_RELEASED) && action == GLFW_PRESS) {
+            keyInput->setKeyState(button, KEY_PRESSED);
+        } else if ((state.current == KEY_PRESSED || state.current == KEY_HELD) && action == GLFW_RELEASE) {
+            keyInput->setKeyState(button, KEY_RELEASED);
         }
     }
 }

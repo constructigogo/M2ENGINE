@@ -17,7 +17,8 @@ void CMeshRenderer::start() {
     }
 }
 
-CMeshRenderer*  CMeshRenderer::setMesh(std::shared_ptr<BaseMesh> _mesh, CTransformMobility mobility) {
+CMeshRenderer *  CMeshRenderer::setMesh(std::shared_ptr<BaseMesh> _mesh, CTransformMobility mobility,
+                                        bool isInstanced) {
     clearMesh();
     bool hasTransform = getParent()->getComponent<CTransform>() != nullptr;
     if (hasTransform){
@@ -25,7 +26,12 @@ CMeshRenderer*  CMeshRenderer::setMesh(std::shared_ptr<BaseMesh> _mesh, CTransfo
 
         switch (mobility) {
             case STATIC:
-                Renderer::registerAsStatic(this);
+                if (isInstanced){
+                    Renderer::registerAsStatic(this);
+                }
+                else{
+                    Renderer::registerAsDynamic(this);
+                }
                 break;
             case MOVABLE:
                 Renderer::registerAsDynamic(this);

@@ -5,7 +5,8 @@
 #include <iostream>
 #include "Renderer.h"
 
-std::map<BaseMesh* , std::pair<bgfx::ProgramHandle*,std::vector<CTransform*>>> Renderer::batching;
+std::map<BaseMesh* , std::pair<bgfx::ProgramHandle*,std::vector<CTransform*>>> Renderer::instancing;
+std::map<BaseMesh* , std::pair<bgfx::ProgramHandle*,std::pair<bgfx::InstanceDataBuffer, int>>> Renderer::staticInstanceCache;
 std::vector<CMeshRenderer*> Renderer::renderList;
 
 
@@ -24,11 +25,6 @@ void Renderer::render() {
         mtxQuat[14] = pos.z;
         float mtxPos[16];
         bx::mtxScale(mtxPos, scale.x, scale.y, scale.z);
-
-        //mtx[0] = scale.x;
-        //mtx[5] = scale.y;
-        //mtx[10] = scale.z;
-
         float mtx[16];
         bx::mtxMul(mtx,mtxQuat,mtxPos);
 
@@ -51,7 +47,7 @@ void Renderer::render() {
         return;
     }
     const uint16_t instanceStride = 64;
-    for (const auto& batch : batching) {
+    for (const auto& batch : instancing) {
         const auto mesh = batch.first;
         const auto & batchData = batch.second;
         uint32_t drawnInst = bgfx::getAvailInstanceDataBuffer(batchData.second.size(), instanceStride);
@@ -59,18 +55,50 @@ void Renderer::render() {
         bgfx::InstanceDataBuffer idb;
         bgfx::allocInstanceDataBuffer(&idb, drawnInst, instanceStride);
         uint8_t* data = idb.data;
+
+#pragma omp parallel for
+        for(int i=0;i<batchData.second.size();++i){
+            int dataIdx = i * instanceStride;
+            const auto & pos = batchData.second[i]->getPosition();
+            const auto & rot = batchData.second[i]->getRotation();
+            const auto & scale = batchData.second[i]->getScale();
+
+            float mtxQuat[16];
+            bx::mtxFromQuaternion(mtxQuat,rot);
+            mtxQuat[12] = pos.x;
+            mtxQuat[13] = pos.y;
+            mtxQuat[14] = pos.z;
+            float mtxScale[16];
+            bx::mtxScale(mtxScale, scale.x, scale.y, scale.z);
+
+
+            auto* mtx = (float*)(data+i*instanceStride);
+            //bx::mtxTranslate(mtx, pos.x, pos.y, pos.z);
+            bx::mtxMul(mtx,mtxQuat,mtxScale);
+
+        }
+        /*
         for (const auto transform: batchData.second) {
             const auto & pos = transform->getPosition();
             const auto & rot = transform->getRotation();
+            const auto & scale = transform->getScale();
+
+            float mtxQuat[16];
+            bx::mtxFromQuaternion(mtxQuat,rot);
+            mtxQuat[12] = pos.x;
+            mtxQuat[13] = pos.y;
+            mtxQuat[14] = pos.z;
+            float mtxPos[16];
+            bx::mtxScale(mtxPos, scale.x, scale.y, scale.z);
 
 
             auto* mtx = (float*)data;
             //bx::mtxTranslate(mtx, pos.x, pos.y, pos.z);
-            bx::mtxFromQuaternion(mtx,rot,pos);
+            bx::mtxMul(mtx,mtxQuat,mtxPos);
 
             data += instanceStride;
         }
-
+        */
         bgfx::setVertexBuffer(0, mesh->VBH);
         bgfx::setIndexBuffer(mesh->IBH);
         bgfx::setInstanceDataBuffer(&idb);
@@ -82,7 +110,7 @@ void Renderer::render() {
                        | BGFX_STATE_DEPTH_TEST_LESS
                        | BGFX_STATE_CULL_CCW
                        | BGFX_STATE_MSAA);
-        bgfx::submit(0, *batchData.first, 0);
+        bgfx::submit(0, *batchData.first);
 
     }
 
@@ -100,17 +128,34 @@ void Renderer::registerAsStatic(CMeshRenderer * cMesh) {
 
     //bgfx::setInstanceCount()
     const auto key = cMesh->mesh.get();
-    auto it = batching.find(cMesh->mesh.get());
-    if (it != batching.end()) {
+    auto it = instancing.find(cMesh->mesh.get());
+    if (it != instancing.end()) {
         std::cout << "registering add"<<std::endl;
-        batching[key].second.push_back(cMesh->getParent()->getComponent<CTransform>());
+        instancing[key].second.push_back(cMesh->getParent()->getComponent<CTransform>());
     }
     else {
         std::cout << "registering new "<< cMesh->material.idx<<std::endl;
-        batching[key].first = &cMesh->material;
-        batching[key].second.push_back(cMesh->getParent()->getComponent<CTransform>());
+        instancing[key].first = &cMesh->material;
+        instancing[key].second.push_back(cMesh->getParent()->getComponent<CTransform>());
     }
+    /*
+    auto it_static = staticInstanceCache.find(cMesh->mesh.get());
+    if (it != instancing.end()) {
+        std::cout << "adding instance"<<std::endl;
+        //staticInstanceCache[key].second.push_back(cMesh->getParent()->getComponent<CTransform>());
+    }
+    else {
+        std::cout << "new instance"<< cMesh->material.idx<<std::endl;
+        staticInstanceCache[key].first = &cMesh->material;
+        const uint16_t instanceStride = 64;
 
+        uint32_t drawnInst = bgfx::getAvailInstanceDataBuffer(0, instanceStride);
+
+        bgfx::InstanceDataBuffer idb;
+        bgfx::allocInstanceDataBuffer(&idb, drawnInst, instanceStride);
+        //staticInstanceCache[key].second.push_back(cMesh->getParent()->getComponent<CTransform>());
+    }
+     */
 }
 
 void Renderer::unregisterDynamic(CMeshRenderer * cMesh) {
@@ -119,10 +164,10 @@ void Renderer::unregisterDynamic(CMeshRenderer * cMesh) {
 
 void Renderer::unregisterStatic(CMeshRenderer * cMesh) {
     const auto key = cMesh->mesh.get();
-    auto it = batching.find(key);
-    if (it != batching.end()) {
+    auto it = instancing.find(key);
+    if (it != instancing.end()) {
         const auto tf = cMesh->getParent()->getComponent<CTransform>();
-        auto & list = batching[key].second;
+        auto & list = instancing[key].second;
         list.erase(std::remove(list.begin(), list.end(), tf), list.end());
     }
 }
