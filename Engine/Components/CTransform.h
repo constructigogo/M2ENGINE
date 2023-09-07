@@ -30,7 +30,7 @@ namespace Engine {
 
         bx::Vec3 Position = bx::Vec3(bx::InitZero);
         bx::Quaternion Rotation = bx::Quaternion(bx::InitZero);
-        bx::Vec3 Scale = bx::Vec3(bx::InitZero);
+        bx::Vec3 Scale = bx::Vec3(bx::InitIdentity);
 
     public:
         CTransform()=default;
@@ -43,6 +43,8 @@ namespace Engine {
 
         void setScale(const bx::Vec3 &scale);
         void setScale(const float &x,const float &y,const float &z);
+
+        void setRotation(const bx::Quaternion &rotation);
 
         void translate(const bx::Vec3 &position);
         void translate(const glm::vec3 &position);

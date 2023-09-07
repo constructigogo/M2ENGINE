@@ -17,10 +17,21 @@ void Renderer::render() {
         const bx::Vec3 & scale = mesh->transform->getScale();
         const bx::Quaternion & rot = mesh->transform->getRotation();
 
+        float mtxQuat[16];
+        bx::mtxFromQuaternion(mtxQuat,rot);
+        mtxQuat[12] = pos.x;
+        mtxQuat[13] = pos.y;
+        mtxQuat[14] = pos.z;
+        float mtxPos[16];
+        bx::mtxScale(mtxPos, scale.x, scale.y, scale.z);
+
+        //mtx[0] = scale.x;
+        //mtx[5] = scale.y;
+        //mtx[10] = scale.z;
+
         float mtx[16];
-        bx::mtxFromQuaternion(mtx,rot);
-        bx::mtxTranslate(mtx, pos.x, pos.y, pos.z);
-        bx::mtxScale(mtx,scale.x,scale.y,scale.z);
+        bx::mtxMul(mtx,mtxQuat,mtxPos);
+
         bgfx::setState(0
                        | BGFX_STATE_WRITE_RGB
                        | BGFX_STATE_WRITE_A

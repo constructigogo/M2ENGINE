@@ -9,7 +9,7 @@
 
 class EditorSandbox : public App {
 public:
-    EditorSandbox(int x, int y, const char string[8]) : App(x, y, string) {
+    EditorSandbox(int x, int y, const char * name) : App(x, y, name) {
     }
 
     void init() override {
@@ -22,10 +22,12 @@ public:
         );
         testMesh = new Object();
         auto transform = testMesh->addComponent<CTransform>();
-        transform->setPosition({0.0, 0.0, 0.0});
-        transform->setScale({0.5,1.2,0.1});
+        transform->setPosition({0.0, -0.5, 0.0});
+        //transform->setScale({0.1,0.1,0.1});
+        transform->setScale({0.4,0.4,0.4});
+        transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0}));
         testMesh->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/queen.off"), MOVABLE)
+                ->setMesh(Data::loadMesh("data/bbox.obj"), MOVABLE)
                 ->setMaterial(debugProgram);
         //testMesh->addComponent<CRigidBody>();
     }

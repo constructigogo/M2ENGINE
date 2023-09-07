@@ -100,8 +100,6 @@ void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
         indexes.push_back(Face.mIndices[1]);
         indexes.push_back(Face.mIndices[2]);
     }
-
-    //subMeshes[Index].init(verts, indexes);
     subMeshes[Index].init(vertexesData, indexes);
 
 }

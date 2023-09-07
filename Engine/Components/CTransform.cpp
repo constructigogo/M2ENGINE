@@ -54,3 +54,8 @@ void Engine::CTransform::setScale(const float &x, const float &y, const float &z
     setScale({x,y,z});
 }
 
+void Engine::CTransform::setRotation(const bx::Quaternion &rotation) {
+    Rotation = rotation;
+}
+
+
