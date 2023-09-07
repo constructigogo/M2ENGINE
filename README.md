@@ -46,7 +46,7 @@ int _main_(int, char**) { return 0;}
 
 int main(int _argc, const char* const* _argv)
 {
-    EditorSandbox application(1024, 768, "useless");
+    TestApp application(1024, 768, "useless");
 
     application.init();
     application.run();
