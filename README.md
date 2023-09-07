@@ -28,11 +28,25 @@ To create an App, use the following include, and create a child class inheriting
 
 to simply test that everything is working, you can use the following main : 
 ```cpp
-#include "[your library folder]/M2ENGINE/Engine/App.h"
+#include "[your library folder]/M2ENGINE/Core.h"
+
+class TestApp : public App {
+public:
+    TestApp(int x, int y, const char string[8]) : App(x, y, string) {
+    }
+
+    void init() override {
+        App::init();
+        currentCamera = new OCamera();
+    }
+};
+
+
+int _main_(int, char**) { return 0;}
 
 int main(int _argc, const char* const* _argv)
 {
-    Engine::App application(1024, 768, "useless");
+    EditorSandbox application(1024, 768, "useless");
 
     application.init();
     application.run();
