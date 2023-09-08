@@ -53,6 +53,7 @@ void BaseMesh::initFromScene(const aiScene *pScene, const std::string &Filename)
     vly.begin()
             .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
             .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
+            .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float, true)
             .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float, true)
             .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
             .end();
@@ -68,6 +69,7 @@ void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
     std::vector<vertexData> vertexesData;
     std::vector<glm::vec3> verts;
     std::vector<glm::vec3> normals;
+    std::vector<glm::vec3> tangent;
     std::vector<uint16_t> indexes;
     size_t size = paiMesh->mNumVertices;
     //std::cout << "init mesh : " << Index << " / vert : " << size << " / triangle : " << paiMesh->mNumFaces << std::endl;
@@ -79,14 +81,17 @@ void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
     for (int i = 0; i < size; ++i) {
         const aiVector3D *pPos = &(paiMesh->mVertices[i]);
         const aiVector3D *pNormal = paiMesh->HasNormals() ? &(paiMesh->mNormals[i]) : &Zero3D;
+        const aiVector3D *pTang = paiMesh->HasTangentsAndBitangents() ? &(paiMesh->mTangents[i]) : &Zero3D;
         const aiVector3D *pTexCoord = paiMesh->HasTextureCoords(0) ? &(paiMesh->mTextureCoords[0][i]) : &Zero3D;
         glm::vec3 glPos(pPos->x, pPos->y, pPos->z);
         glm::vec3 glNorm(pNormal->x, pNormal->y, pNormal->z);
+        glm::vec3 glTang(pTang->x, pTang->y, pTang->z);
         glm::vec2 glTex(pTexCoord->x, pTexCoord->y);
 
         vertexesData.emplace_back(
                 glPos,
                 glNorm,
+                glTang,
                 glTex,
                 0
         );
@@ -119,6 +124,7 @@ bool BaseMesh::SubMesh::init(const std::vector<vertexData> &Vertices, const std:
     vly.begin()
             .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
             .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
+            .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float, true)
             .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float,true)
             .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
             .end();

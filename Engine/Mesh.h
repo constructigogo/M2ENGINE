@@ -19,6 +19,7 @@ namespace Engine {
         struct vertexData {
             glm::vec3 position;
             glm::vec3 normal;
+            glm::vec3 tangent;
             glm::vec2 texCoord;
             uint32_t m_abgr;
         };

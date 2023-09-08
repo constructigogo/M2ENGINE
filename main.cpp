@@ -33,8 +33,8 @@ public:
                 false
         );
 
-        auto texDiffuse = Data::loadTexture("data/brickwall.jpg");
-        auto texNormal = Data::loadTexture("data/brickwall_normal.jpg");
+        auto texDiffuse = Data::loadTexture("data/diffuse.jpg");
+        auto texNormal = Data::loadTexture("data/normal.png");
         assert(bgfx::isValid(texDiffuse));
         assert(bgfx::isValid(texNormal));
 
@@ -42,10 +42,10 @@ public:
         auto transform = inst->addComponent<CTransform>();
         transform->setPosition({0.5, -0.5, 0.0});
         //transform->setScale({0.1,0.1,0.1});
-        transform->setScale(2.0);
+        transform->setScale(.3);
         //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
         inst->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/triangle.obj"), STATIC, false)
+                ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC, false)
                 ->setMaterial(textured,2)
                 ->setMaterialTexId(0, texDiffuse)
                 ->setMaterialTexId(1, texNormal);

@@ -33,7 +33,7 @@ void main()
     vec4 color = texture2D(s_texColor, v_texcoord0);
     vec3 normal;
     normal.xyz = texture2D(s_texNormal, v_texcoord0).xyz;
-    normal = normalize(normal*v_normal);
+    normal = normalize(normal * 2.0 - 1.0);
     float res = dot(normalize(normal),v_view);
     float gamma = 2.2;
     vec3 fragColor = pow(color.rgb, vec3(1.0/gamma));
