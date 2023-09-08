@@ -11,14 +11,24 @@
 #include "CTransform.h"
 #include "../Renderer.h"
 
+
+
+
 namespace Engine {
+
+    enum TEXTURE_TYPE{
+        COLOR,
+        NORMAL,
+    };
+
     class CMeshRenderer : public Component {
     public :
         CMeshRenderer();
 
-        CMeshRenderer *setMesh(std::shared_ptr<BaseMesh>, CTransformMobility mobility, bool isInstanced = false);
+        CMeshRenderer* setMesh(std::shared_ptr<BaseMesh>, CTransformMobility mobility, bool isInstanced = false);
 
-        CMeshRenderer *setMaterial(bgfx::ProgramHandle _material);
+        CMeshRenderer* setMaterial(bgfx::ProgramHandle _material, int texAmount=0);
+        CMeshRenderer* setMaterialTexId(int idx, bgfx::TextureHandle texHandle);
 
         void start() override;
 
@@ -34,6 +44,7 @@ namespace Engine {
         std::shared_ptr<BaseMesh> mesh;
         CTransform *transform;
         bgfx::ProgramHandle material;
+        std::vector<bgfx::TextureHandle> textures;
 
         void clearMesh();
     };

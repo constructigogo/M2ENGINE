@@ -60,6 +60,8 @@ namespace Engine {
         currentWindow = glfwCreateWindow(width, height, "don't look here", nullptr, nullptr);
         if (!currentWindow)
             return;
+
+        Data::init();
         KeyInput::setupKeyInputs(currentWindow);
 
         input = new KeyInput({GLFW_KEY_F1, GLFW_MOUSE_BUTTON_1});
@@ -123,8 +125,8 @@ namespace Engine {
                 if (ImGui::BeginMenu("Object"))
                 {
                     if (ImGui::MenuItem("New Empty Object", "Ctrl+O")) { }
-                    if (ImGui::MenuItem("todo", "Ctrl+S"))   {  }
-                    if (ImGui::MenuItem("todo", "Ctrl+W"))  { active = false; }
+                    if (ImGui::MenuItem("empty", "Ctrl+S"))   {  }
+                    if (ImGui::MenuItem("empty as well", "Ctrl+W"))  { active = false; }
                     ImGui::EndMenu();
                 }
                 ImGui::EndMenuBar();

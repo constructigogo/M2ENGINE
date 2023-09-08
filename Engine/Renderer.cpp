@@ -38,6 +38,16 @@ void Renderer::render() {
         bgfx::setTransform(mtx);
         bgfx::setVertexBuffer(0, mesh->mesh->VBH);
         bgfx::setIndexBuffer(mesh->mesh->IBH);
+
+        if(mesh->textures.size()>0){
+            if (bgfx::isValid(mesh->textures[0])){
+                bgfx::setTexture(0,s_texColor,mesh->textures[0]);
+            }
+            if (bgfx::isValid(mesh->textures[1])){
+                bgfx::setTexture(1,s_texNormal,mesh->textures[1]);
+            }
+        }
+
         bgfx::submit(0, mesh->material, 0);
     }
 
@@ -170,4 +180,10 @@ void Renderer::unregisterStatic(CMeshRenderer * cMesh) {
         auto & list = instancing[key].second;
         list.erase(std::remove(list.begin(), list.end(), tf), list.end());
     }
+}
+
+Renderer::Renderer() {
+// Create texture sampler uniforms.
+    s_texColor  = bgfx::createUniform("s_texColor",  bgfx::UniformType::Sampler);
+    s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Sampler);
 }

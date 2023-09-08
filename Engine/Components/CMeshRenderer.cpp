@@ -55,8 +55,19 @@ CMeshRenderer::~CMeshRenderer() {
 
 }
 
-CMeshRenderer *CMeshRenderer::setMaterial(bgfx::ProgramHandle _material) {
+CMeshRenderer *CMeshRenderer::setMaterial(bgfx::ProgramHandle _material, int texAmount) {
     material=_material;
+    textures.clear();
+    textures.reserve(texAmount);
+    return this;
+}
+
+CMeshRenderer *CMeshRenderer::setMaterialTexId(int idx, bgfx::TextureHandle texHandle) {
+    if (idx >= textures.capacity()){
+        return this;
+    }
+    auto it = textures.begin()+idx;
+    textures.emplace(it,texHandle);
     return this;
 }
 

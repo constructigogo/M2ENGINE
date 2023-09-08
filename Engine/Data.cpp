@@ -5,19 +5,28 @@
 #include <fstream>
 #include <iostream>
 #include "Data.h"
+#include "bimg/bimg.h"
+#include "bx/readerwriter.h"
+#include "bimg/decode.h"
+
 
 using namespace Engine;
 
-std::unordered_map<std::string, std::shared_ptr<BaseMesh>> Engine::Data::loadedMeshes;
+bx::FileReaderI *Data::s_fileReader = nullptr;
+bx::AllocatorI *Data::allocator = nullptr;
 
-std::shared_ptr<BaseMesh> Engine::Data::loadMesh(const std::string& fileName) {
+
+std::unordered_map<std::string, std::shared_ptr<BaseMesh>> Engine::Data::loadedMeshes;
+std::unordered_map<std::string, bgfx::TextureHandle> Engine::Data::textureCache;
+
+std::shared_ptr<BaseMesh> Engine::Data::loadMesh(const std::string &fileName) {
     auto it = loadedMeshes.find(fileName);
     if (it != loadedMeshes.end()) {
         return loadedMeshes[fileName];
     } else {
         auto created = std::make_shared<BaseMesh>();
         created->loadMesh(fileName);
-        loadedMeshes[fileName]= created;
+        loadedMeshes[fileName] = created;
         return created;
     }
 }
@@ -48,6 +57,84 @@ bgfx::ShaderHandle Engine::Data::loadShaderBin(const char *_name) {
     mem->data[mem->size - 1] = '\0';
     bgfx::ShaderHandle handle = bgfx::createShader(mem);
     bgfx::setName(handle, path.c_str());
-    delete [] data;
+    delete[] data;
     return handle;
+}
+
+bgfx::TextureHandle Data::loadTexture(const char *_name) {
+
+    auto it = textureCache.find(_name);
+    if (it != textureCache.end()) {
+        return textureCache[_name];
+    }
+
+    bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
+    uint64_t _flags=0;
+    uint32_t size;
+    void *data = load(_name, &size);
+    if (data != nullptr) {
+        bimg::ImageContainer *imageContainer = bimg::imageParse(allocator, data, size);
+
+        if (imageContainer != nullptr) {
+            const bgfx::Memory *mem = bgfx::makeRef(
+                    imageContainer->m_data, imageContainer->m_size, imageReleaseCb, imageContainer
+            );
+            bx::free(allocator, data);
+
+
+            if (imageContainer->m_cubeMap) {
+                handle = bgfx::createTextureCube(
+                        uint16_t(imageContainer->m_width), 1 < imageContainer->m_numMips, imageContainer->m_numLayers,
+                        bgfx::TextureFormat::Enum(imageContainer->m_format), _flags, mem
+                );
+            } else if (1 < imageContainer->m_depth) {
+                handle = bgfx::createTexture3D(
+                        uint16_t(imageContainer->m_width), uint16_t(imageContainer->m_height),
+                        uint16_t(imageContainer->m_depth), 1 < imageContainer->m_numMips,
+                        bgfx::TextureFormat::Enum(imageContainer->m_format), _flags, mem
+                );
+            } else if (bgfx::isTextureValid(0, false, imageContainer->m_numLayers,
+                                            bgfx::TextureFormat::Enum(imageContainer->m_format), _flags)) {
+                handle = bgfx::createTexture2D(
+                        uint16_t(imageContainer->m_width), uint16_t(imageContainer->m_height),
+                        1 < imageContainer->m_numMips, imageContainer->m_numLayers,
+                        bgfx::TextureFormat::Enum(imageContainer->m_format), _flags, mem
+                );
+            }
+
+        }
+
+        if (bgfx::isValid(handle)) {
+            bgfx::setName(handle, _name);
+        }
+    }
+    textureCache[_name] = handle;
+    return handle;
+}
+
+void Data::init() {
+
+    static bx::DefaultAllocator s_allocator;
+    allocator = &s_allocator;
+    s_fileReader = BX_NEW(allocator, FileReader);
+}
+
+void *Data::load(const char *_name, uint32_t *_size) {
+    if (bx::open(s_fileReader, _name)) {
+        uint32_t size = (uint32_t) bx::getSize(s_fileReader);
+        void *data = bx::alloc(allocator, size);
+        bx::read(s_fileReader, data, size, bx::ErrorAssert{});
+        bx::close(s_fileReader);
+        if (NULL != _size) {
+            *_size = size;
+        }
+        return data;
+    }
+    return nullptr;
+}
+
+void Data::imageReleaseCb(void *_ptr, void *_userData) {
+    BX_UNUSED(_ptr);
+    bimg::ImageContainer *imageContainer = (bimg::ImageContainer *) _userData;
+    bimg::imageFree(imageContainer);
 }

@@ -43,6 +43,7 @@ namespace Engine {
 
         void setScale(const bx::Vec3 &scale);
         void setScale(const float &x,const float &y,const float &z);
+        void setScale(const float &xyz);
 
         void setRotation(const bx::Quaternion &rotation);
 

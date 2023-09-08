@@ -16,7 +16,7 @@ namespace Engine {
 
     class Renderer{
     public:
-        Renderer()= default;
+        Renderer();
         void render();
         static void registerAsDynamic(CMeshRenderer*);
         static void registerAsStatic(CMeshRenderer*);
@@ -27,6 +27,8 @@ namespace Engine {
         static std::map<BaseMesh* , std::pair<bgfx::ProgramHandle*,std::vector<CTransform*>>> instancing;
         static std::map<BaseMesh* , std::pair<bgfx::ProgramHandle*,std::pair<bgfx::InstanceDataBuffer, int>>> staticInstanceCache;
         static std::vector<CMeshRenderer*> renderList;
+        bgfx::UniformHandle s_texColor;
+        bgfx::UniformHandle s_texNormal;
     };
 }
 

@@ -27,8 +27,33 @@ public:
                 false
         );
 
-        for (int i = 0; i < 4; ++i) {
-            for (int j = 0; j < 4; ++j) {
+        auto textured = bgfx::createProgram(
+                Data::loadShaderBin("v_textured.vert"),
+                Data::loadShaderBin("f_textured.frag"),
+                false
+        );
+
+        auto texDiffuse = Data::loadTexture("data/brickwall.jpg");
+        auto texNormal = Data::loadTexture("data/brickwall_normal.jpg");
+        assert(bgfx::isValid(texDiffuse));
+        assert(bgfx::isValid(texNormal));
+
+        auto inst = new Object();
+        auto transform = inst->addComponent<CTransform>();
+        transform->setPosition({0.5, -0.5, 0.0});
+        //transform->setScale({0.1,0.1,0.1});
+        transform->setScale(2.0);
+        //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
+        inst->addComponent<CMeshRenderer>()
+                ->setMesh(Data::loadMesh("data/triangle.obj"), STATIC, false)
+                ->setMaterial(textured,2)
+                ->setMaterialTexId(0, texDiffuse)
+                ->setMaterialTexId(1, texNormal);
+        //testMesh->addComponent<CRigidBody>();
+
+
+        for (int i = 0; i < 0; ++i) {
+            for (int j = 0; j < 0; ++j) {
                 auto inst = new Object();
                 auto transform = inst->addComponent<CTransform>();
                 transform->setPosition({(float)i*2 - 2, -0.5, (float)j*2 - 2});
@@ -36,7 +61,7 @@ public:
                 transform->setScale({0.1, 0.1, 0.1});
                 //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
                 inst->addComponent<CMeshRenderer>()
-                        ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC, true)
+                        ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC, false)
                         ->setMaterial(instProg);
                 //testMesh->addComponent<CRigidBody>();
             }
