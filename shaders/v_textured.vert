@@ -9,6 +9,7 @@ void main(){
     vec3 T = normalize(vec3(u_model[0] * vec4(a_tangent,   0.0)));
     vec3 B = normalize(vec3(u_model[0] * vec4(a_bitangent, 0.0)));
     vec3 N = normalize(vec3(u_model[0] * vec4(a_normal,    0.0)));
+    T = normalize(T - dot(T, N) * N);
     //mat3 TBN = mat3(T, B, N);
     mat3 TBN = transpose(mat3(T, B, N));
 

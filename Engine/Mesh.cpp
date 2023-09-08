@@ -61,8 +61,6 @@ void BaseMesh::initFromScene(const aiScene *pScene, const std::string &Filename)
     VBH = bgfx::createVertexBuffer(bgfx::makeRef(vertexesAllData.data(), vertexesAllData.size() * sizeof(vertexData)),
                                    vly);
     IBH = bgfx::createIndexBuffer(bgfx::makeRef(indicesAllData.data(), indicesAllData.size() * sizeof(uint16_t)));
-
-
 }
 
 void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {

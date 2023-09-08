@@ -32,7 +32,10 @@ namespace Engine {
 
         virtual void cleanup(){}
         virtual ~Component();
+        bool scheduledForStart;
 
+
+        static std::queue<Component *> _startQueue;
     private:
         friend class App;
         friend class Object;
@@ -40,7 +43,6 @@ namespace Engine {
         void setParent(Object * _parent);
 
         static std::vector<Component *> _instances;
-        static std::queue<Component *> _startQueue;
 
         static void processStart();
         static void processFixedUpdate(double delta);

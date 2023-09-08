@@ -28,7 +28,7 @@ public:
         );
 
         auto textured = bgfx::createProgram(
-                Data::loadShaderBin("v_textured.vert"),
+                Data::loadShaderBin("v_textured_inst.vert"),
                 Data::loadShaderBin("f_textured.frag"),
                 false
         );
@@ -45,10 +45,11 @@ public:
         transform->setScale(.3);
         //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
         inst->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC, false)
+                ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC, true)
                 ->setMaterial(textured,2)
                 ->setMaterialTexId(0, texDiffuse)
-                ->setMaterialTexId(1, texNormal);
+                ->setMaterialTexId(1, texNormal)
+                ;
         //testMesh->addComponent<CRigidBody>();
 
 

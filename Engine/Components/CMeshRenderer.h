@@ -25,7 +25,7 @@ namespace Engine {
     public :
         CMeshRenderer();
 
-        CMeshRenderer* setMesh(std::shared_ptr<BaseMesh>, CTransformMobility mobility, bool isInstanced = false);
+        CMeshRenderer* setMesh(std::shared_ptr<BaseMesh>, CTransformMobility mobility, bool _isInstanced = false);
 
         CMeshRenderer* setMaterial(bgfx::ProgramHandle _material, int texAmount=0);
         CMeshRenderer* setMaterialTexId(int idx, bgfx::TextureHandle texHandle);
@@ -45,6 +45,8 @@ namespace Engine {
         CTransform *transform;
         bgfx::ProgramHandle material;
         std::vector<bgfx::TextureHandle> textures;
+        CTransformMobility mobility;
+        bool isInstanced;
 
         void clearMesh();
     };

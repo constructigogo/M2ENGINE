@@ -13,6 +13,7 @@ namespace Engine {
     Component::Component() {
         Component::_instances.push_back(this);
         Component::_startQueue.push(this);
+        scheduledForStart=true;
     }
 
     Component::~Component() {
@@ -24,6 +25,7 @@ namespace Engine {
             Engine::Component *current = Component::_startQueue.front();
             Component::_startQueue.pop();
             current->start();
+            current->scheduledForStart=false;
         }
     }
 
