@@ -31,20 +31,27 @@ std::shared_ptr<BaseMesh> Engine::Data::loadMesh(const std::string &fileName, bo
 }
 
 bgfx::ShaderHandle Engine::Data::loadShaderBin(const char *_name) {
-    char *data = new char[2048];
+    //char *data = new char[4096];
+    std::vector<char> data;
     std::string path = "shaders/generated/";
     path.append(_name);
     path.append(".bin");
 
     std::ifstream file;
     size_t fileSize;
+
     file.open(path);
     bool success = false;
     if (file.is_open()) {
+        file.unsetf(std::ios::skipws);
         file.seekg(0, std::ios::end);
         fileSize = file.tellg();
+        data.reserve(fileSize);
         file.seekg(0, std::ios::beg);
-        file.read(data, fileSize);
+        data.insert(data.begin(),
+                   std::istream_iterator<char>(file),
+                   std::istream_iterator<char>());
+        //file.read(data, fileSize);
         file.close();
         success = true;
     }
@@ -52,11 +59,11 @@ bgfx::ShaderHandle Engine::Data::loadShaderBin(const char *_name) {
         std::cout << "could not load shader " << _name << std::endl;
     }
 
-    const bgfx::Memory *mem = bgfx::copy(data, fileSize + 1);
+    const bgfx::Memory *mem = bgfx::copy(data.data(), fileSize + 1);
     mem->data[mem->size - 1] = '\0';
     bgfx::ShaderHandle handle = bgfx::createShader(mem);
     bgfx::setName(handle, path.c_str());
-    delete[] data;
+    //delete[] data;
     return handle;
 }
 
