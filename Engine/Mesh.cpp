@@ -10,10 +10,11 @@
 
 using namespace Engine;
 
-void BaseMesh::loadMesh(const std::string &Filename) {
+void BaseMesh::loadMesh(const std::string &Filename, bool simpleImport) {
     Assimp::Importer Importer;
 
-    const aiScene *pScene = Importer.ReadFile(Filename.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
+    const aiScene *pScene = Importer.ReadFile(Filename.c_str(), simpleImport ? aiProcess_JoinIdenticalVertices
+                                                                             : aiProcessPreset_TargetRealtime_MaxQuality);
     if (pScene) {
         std::cout << "reading mesh : " << Filename.c_str() << std::endl;
         initFromScene(pScene, Filename);
@@ -74,7 +75,7 @@ void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
 
     verts.reserve(size);
     const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
-
+    
 
     for (int i = 0; i < size; ++i) {
         const aiVector3D *pPos = &(paiMesh->mVertices[i]);
@@ -103,7 +104,7 @@ void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
         indexes.push_back(Face.mIndices[1]);
         indexes.push_back(Face.mIndices[2]);
     }
-    subMeshes[Index].init(vertexesData, indexes);
+    subMeshes[Index].init(vertexesData, indexes, paiMesh->HasNormals());
 
 }
 
@@ -113,25 +114,88 @@ BaseMesh::~BaseMesh() {
 }
 
 
-bool BaseMesh::SubMesh::init(const std::vector<vertexData> &Vertices, const std::vector<uint16_t> &Indices) {
+void
+BaseMesh::SubMesh::init(const std::vector<vertexData> &Vertices, const std::vector<uint16_t> &Indices, bool hasNormal) {
 
     vertexesData = Vertices;
     indices = Indices;
     NumVertices = Vertices.size();
 
+
+    if(!hasNormal){
+        triangleAdjencyGenerated = true;
+
+        std::map<std::pair<uint16_t, uint16_t>, std::pair<uint16_t, uint16_t>> triangleOppositeMap;
+
+
+        vertexSingleAdjacency.reserve(vertexesData.size());
+        for (int i = 0; i < vertexesData.size(); ++i) {
+            vertexSingleAdjacency.emplace_back(0);
+        }
+        triangleAdjacency.reserve(indices.size());
+        for (int i = 0; i < indices.size(); ++i) {
+            triangleAdjacency.emplace_back(-1);
+        }
+
+        //Triangle adjacency
+        for (int i = 0; i < indices.size() / 3; i++) {
+            vertexSingleAdjacency[indices[i]] = i;
+            vertexSingleAdjacency[indices[i + 1]] = i;
+            vertexSingleAdjacency[indices[i + 2]] = i;
+
+
+#pragma omp parallel for default(none) shared(i, triangleOppositeMap)
+            for (int index = 0; index < 3; ++index) {
+                int first = (index % 3);
+                int second = (index + 1) % 3;
+                int third = (index + 2) % 3;
+                int indexedFirst = i * 3 + first;
+                int indexedSecond = i * 3 + second;
+                int indexedThird = i * 3 + third;
+                {
+                    std::pair<uint16_t, uint16_t> edge1 = std::make_pair(
+                            std::min(indices[indexedFirst], indices[indexedSecond]),
+                            std::max(indices[indexedFirst], indices[indexedSecond]));
+                    if (!triangleOppositeMap.contains(edge1)) {
+                        std::pair<uint16_t, uint16_t> triangleAdjData1 = std::make_pair(i * 3, third);
+                        triangleOppositeMap[edge1] = triangleAdjData1;
+                    } else {
+                        uint16_t target = triangleOppositeMap[edge1].first;
+                        uint16_t offset = triangleOppositeMap[edge1].second;
+                        triangleAdjacency[indexedThird] = target;
+                        triangleAdjacency[target + offset] = i * 3;
+                    }
+                }
+            }
+        }
+    }
+    else {
+        triangleAdjencyGenerated = false;
+    }
+
+
+
+#ifndef NDEBUG
+    if (vertexesData.size() < 16) {
+        auto It = begin();
+        auto endIt = end();
+        for (; It != endIt; It++) {
+            std::cout << It->position.x << " " << It->position.y << " " << It->position.z << std::endl;
+        }
+    }
+#endif
+
+
     vly.begin()
             .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
             .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
             .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float,true)
+            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float, true)
             .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
             .end();
 
-    VBH = bgfx::createVertexBuffer(bgfx::copy(vertexesData.data(), vertexesData.size() * sizeof(vertexData)), vly);
-    IBH = bgfx::createIndexBuffer(bgfx::copy(indices.data(), indices.size() * sizeof(uint16_t)));
-
-
-    return true;
+    VBH = bgfx::createVertexBuffer(bgfx::makeRef(vertexesData.data(), vertexesData.size() * sizeof(vertexData)), vly);
+    IBH = bgfx::createIndexBuffer(bgfx::makeRef(indices.data(), indices.size() * sizeof(uint16_t)));
 }
 
 BaseMesh::SubMesh::~SubMesh() {

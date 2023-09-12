@@ -29,21 +29,71 @@ namespace Engine {
 
             ~SubMesh();
 
-            bool init(const std::vector<vertexData> &Vertices,
-                      const std::vector<uint16_t> &Indices);
-
+            void init(const std::vector<vertexData> &Vertices, const std::vector<uint16_t> &Indices, bool hasNormal);
+            
             std::vector<vertexData> vertexesData;
             std::vector<uint16_t> indices; // 3-point triangle indices
             std::vector<uint16_t> vertexSingleAdjacency; //indice of the first point of the triangle triangle access, same indice as vertexData
             std::vector<int> triangleAdjacency; //Indice of the first point of every adjacent triangle, same indice as indices vector
+
+            bool triangleAdjencyGenerated;
 
             bgfx::VertexLayout vly;
             bgfx::VertexBufferHandle VBH;
             bgfx::IndexBufferHandle IBH;
             unsigned int NumVertices;
             unsigned int MaterialIndex;
-        };
 
+
+
+
+            class triangleIterator {
+                using iterator_category = std::forward_iterator_tag;
+                using difference_type   = std::ptrdiff_t;
+                using value_type        = std::vector<vertexData>::iterator;
+                using pointer           = std::vector<vertexData>::iterator*;  // or also value_type*
+                using reference         = std::vector<vertexData>::iterator&;  // or also value_type&
+                std::vector<vertexData>::iterator m_it;
+            public:
+                explicit triangleIterator(std::vector<vertexData>::iterator it) : m_it(it) {}
+
+                triangleIterator &operator++() {
+                    m_it++;
+                    return *this;
+                }
+
+                triangleIterator operator++(int) {
+                    triangleIterator retval = *this;
+                    ++(*this);
+                    return retval;
+                }
+
+                bool operator==(const triangleIterator &b) const {
+                    return b.m_it != m_it;
+                }
+
+                bool operator!=(triangleIterator &other) const { return m_it != other.m_it; }
+
+                vertexData &operator*() const {
+                    return *m_it;
+                }
+
+                vertexData *operator->() {
+                    return &*m_it;
+                }
+            };
+
+            triangleIterator begin() {
+                return triangleIterator(vertexesData.begin());
+            }
+
+            triangleIterator end() {
+                return triangleIterator(vertexesData.end());
+            }
+            
+            
+            
+        };
 
         bgfx::VertexLayout vly;
 
@@ -52,7 +102,7 @@ namespace Engine {
 
         std::vector<SubMesh> subMeshes;
 
-        void loadMesh(const std::string &Filename);
+        void loadMesh(const std::string &Filename, bool simpleImport = false);
         std::vector<vertexData> vertexesAllData;
         std::vector<uint16_t> indicesAllData;
         bgfx::VertexBufferHandle VBH;

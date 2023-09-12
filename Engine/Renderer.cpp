@@ -127,8 +127,7 @@ void Renderer::registerAsStatic(CMeshRenderer *cMesh) {
 
     //bgfx::setInstanceCount()
     const auto key = cMesh->mesh.get();
-    auto it = instancing.find(cMesh->mesh.get());
-    if (it != instancing.end()) {
+    if (instancing.contains(cMesh->mesh.get())) {
         std::cout << "registering add" << std::endl;
         instancing[key].second.second.push_back(cMesh->getParent()->getComponent<CTransform>());
     } else {

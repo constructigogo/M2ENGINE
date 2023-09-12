@@ -24,8 +24,7 @@ Engine::KeyInput::~KeyInput() {
 bool Engine::KeyInput::getIsKeyDown(int key) {
     bool result = false;
     if (_isEnabled) {
-        auto it = _keys.find(key);
-        if (it != _keys.end()) {
+        if (_keys.contains(key)) {
             result = _keys[key].current == KEY_PRESSED || _keys[key].current == KEY_HELD;
         }
     }
@@ -35,8 +34,7 @@ bool Engine::KeyInput::getIsKeyDown(int key) {
 bool Engine::KeyInput::getIsKeyPressed(int key) {
     bool result = false;
     if (_isEnabled) {
-        auto it = _keys.find(key);
-        if (it != _keys.end()) {
+        if (_keys.contains(key)) {
             result = _keys[key].current == KEY_PRESSED;
         }
     }
@@ -46,8 +44,7 @@ bool Engine::KeyInput::getIsKeyPressed(int key) {
 bool Engine::KeyInput::getIsKeyReleased(int key) {
     bool result = false;
     if (_isEnabled) {
-        auto it = _keys.find(key);
-        if (it != _keys.end()) {
+        if (_keys.contains(key)) {
             result = _keys[key].current == KEY_RELEASED;
         }
     }
@@ -74,16 +71,14 @@ void Engine::KeyInput::keyCallback(GLFWwindow *window, int key, int scancode, in
 }
 
 Engine::KeyInput::KeyPress Engine::KeyInput::getKeyState(int key) {
-    auto it = _keys.find(key);
-    if (it != _keys.end()) {
+    if (_keys.contains(key)) {
         return _keys[key];
     }
     return {-1, -1};
 }
 
 void Engine::KeyInput::setKeyState(int key, int state) {
-    auto it = _keys.find(key);
-    if (it != _keys.end()) {
+    if (_keys.contains(key)) {
         _keys[key].previous = _keys[key].current;
         _keys[key].current = state;
     }

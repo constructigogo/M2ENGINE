@@ -28,10 +28,17 @@ public:
         );
 
         auto textured = bgfx::createProgram(
+                Data::loadShaderBin("v_textured.vert"),
+                Data::loadShaderBin("f_textured.frag"),
+                false
+        );
+
+        auto texturedInst = bgfx::createProgram(
                 Data::loadShaderBin("v_textured_inst.vert"),
                 Data::loadShaderBin("f_textured.frag"),
                 false
         );
+
 
         auto texDiffuse = Data::loadTexture("data/diffuse.jpg");
         auto texNormal = Data::loadTexture("data/normal.png");
@@ -45,25 +52,26 @@ public:
         transform->setScale(.3);
         //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
         inst->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC, true)
-                ->setMaterial(textured,2)
+                ->setMesh(Data::loadMesh("data/bbox.obj", true), STATIC, false)
+                ->setMaterial(textured, 2)
                 ->setMaterialTexId(0, texDiffuse)
-                ->setMaterialTexId(1, texNormal)
-                ;
+                ->setMaterialTexId(1, texNormal);
         //testMesh->addComponent<CRigidBody>();
 
 
         for (int i = 0; i < 0; ++i) {
-            for (int j = 0; j < 0; ++j) {
+            for (int j = 0; j < 3; ++j) {
                 auto inst = new Object();
                 auto transform = inst->addComponent<CTransform>();
-                transform->setPosition({(float)i*2 - 2, -0.5, (float)j*2 - 2});
+                transform->setPosition({(float) i * 2 -9, -4, (float) j * 2 - 2});
                 //transform->setScale({0.1,0.1,0.1});
                 transform->setScale({0.1, 0.1, 0.1});
                 //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
                 inst->addComponent<CMeshRenderer>()
-                        ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC, false)
-                        ->setMaterial(instProg);
+                        ->setMesh(Data::loadMesh("data/backpack.obj"), STATIC, true)
+                        ->setMaterial(texturedInst)
+                        ->setMaterialTexId(0, texDiffuse)
+                        ->setMaterialTexId(1, texNormal);
                 //testMesh->addComponent<CRigidBody>();
             }
         }

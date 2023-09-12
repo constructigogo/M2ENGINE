@@ -19,13 +19,12 @@ bx::AllocatorI *Data::allocator = nullptr;
 std::unordered_map<std::string, std::shared_ptr<BaseMesh>> Engine::Data::loadedMeshes;
 std::unordered_map<std::string, bgfx::TextureHandle> Engine::Data::textureCache;
 
-std::shared_ptr<BaseMesh> Engine::Data::loadMesh(const std::string &fileName) {
-    auto it = loadedMeshes.find(fileName);
-    if (it != loadedMeshes.end()) {
+std::shared_ptr<BaseMesh> Engine::Data::loadMesh(const std::string &fileName, bool simpleImport) {
+    if (loadedMeshes.contains(fileName)) {
         return loadedMeshes[fileName];
     } else {
         auto created = std::make_shared<BaseMesh>();
-        created->loadMesh(fileName);
+        created->loadMesh(fileName, simpleImport);
         loadedMeshes[fileName] = created;
         return created;
     }
@@ -62,9 +61,7 @@ bgfx::ShaderHandle Engine::Data::loadShaderBin(const char *_name) {
 }
 
 bgfx::TextureHandle Data::loadTexture(const char *_name) {
-
-    auto it = textureCache.find(_name);
-    if (it != textureCache.end()) {
+    if(textureCache.contains(_name)) {
         return textureCache[_name];
     }
 
@@ -121,11 +118,11 @@ void Data::init() {
 
 void *Data::load(const char *_name, uint32_t *_size) {
     if (bx::open(s_fileReader, _name)) {
-        uint32_t size = (uint32_t) bx::getSize(s_fileReader);
+        auto size = (uint32_t) bx::getSize(s_fileReader);
         void *data = bx::alloc(allocator, size);
         bx::read(s_fileReader, data, size, bx::ErrorAssert{});
         bx::close(s_fileReader);
-        if (NULL != _size) {
+        if (nullptr != _size) {
             *_size = size;
         }
         return data;
@@ -135,6 +132,12 @@ void *Data::load(const char *_name, uint32_t *_size) {
 
 void Data::imageReleaseCb(void *_ptr, void *_userData) {
     BX_UNUSED(_ptr);
-    bimg::ImageContainer *imageContainer = (bimg::ImageContainer *) _userData;
+    auto *imageContainer = (bimg::ImageContainer *) _userData;
     bimg::imageFree(imageContainer);
+}
+
+void Data::cleanup() {
+    for (auto & [name,texHandle]:textureCache) {
+        bgfx::destroy(texHandle);
+    }
 }

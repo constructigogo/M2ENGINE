@@ -17,12 +17,16 @@ namespace Engine {
     class Data {
     public:
         static void init();
+        static void cleanup();
 
-        static std::shared_ptr<BaseMesh> loadMesh(const std::string&);
+
+        static std::shared_ptr<BaseMesh> loadMesh(const std::string &fileName, bool simpleImport=false);
         static bgfx::ShaderHandle loadShaderBin(const char *_name);
         static bgfx::TextureHandle loadTexture(const char *_name);
         static bx::AllocatorI * allocator;
         static bx::FileReaderI* s_fileReader;
+
+
 
         class FileReader : public bx::FileReader
         {

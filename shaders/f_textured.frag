@@ -35,7 +35,7 @@ void main()
     normal.xyz = texture2D(s_texNormal, v_texcoord0).xyz;
     normal = normalize(normal * 2.0 - 1.0);
     float res = dot(normalize(normal),v_view);
-    float gamma = 2.2;
+    float gamma = 1.0;
     vec3 fragColor = pow(color.rgb, vec3(1.0/gamma));
     gl_FragColor = vec4(fragColor.xyz*res,1.0);
 }

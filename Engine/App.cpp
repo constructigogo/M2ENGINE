@@ -213,6 +213,7 @@ namespace Engine {
 
     Engine::App::~App() {
         bgfx::destroy(debugProgram);
+        Data::cleanup();
         bgfx::shutdown();
         glfwTerminate();
     }
