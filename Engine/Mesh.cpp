@@ -75,7 +75,7 @@ void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
 
     verts.reserve(size);
     const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
-    
+
 
     for (int i = 0; i < size; ++i) {
         const aiVector3D *pPos = &(paiMesh->mVertices[i]);
@@ -177,8 +177,8 @@ BaseMesh::SubMesh::init(const std::vector<vertexData> &Vertices, const std::vect
 
 #ifndef NDEBUG
     if (vertexesData.size() < 16) {
-        auto It = begin();
-        auto endIt = end();
+        auto It = vertexBegin();
+        auto endIt = vertexEnd();
         for (; It != endIt; It++) {
             std::cout << It->position.x << " " << It->position.y << " " << It->position.z << std::endl;
         }

@@ -47,7 +47,7 @@ namespace Engine {
 
 
 
-            class triangleIterator {
+            class vertexIterator {
                 using iterator_category = std::forward_iterator_tag;
                 using difference_type   = std::ptrdiff_t;
                 using value_type        = std::vector<vertexData>::iterator;
@@ -55,24 +55,24 @@ namespace Engine {
                 using reference         = std::vector<vertexData>::iterator&;  // or also value_type&
                 std::vector<vertexData>::iterator m_it;
             public:
-                explicit triangleIterator(std::vector<vertexData>::iterator it) : m_it(it) {}
+                explicit vertexIterator(std::vector<vertexData>::iterator it) : m_it(it) {}
 
-                triangleIterator &operator++() {
+                vertexIterator &operator++() {
                     m_it++;
                     return *this;
                 }
 
-                triangleIterator operator++(int) {
-                    triangleIterator retval = *this;
+                vertexIterator operator++(int) {
+                    vertexIterator retval = *this;
                     ++(*this);
                     return retval;
                 }
 
-                bool operator==(const triangleIterator &b) const {
+                bool operator==(const vertexIterator &b) const {
                     return b.m_it != m_it;
                 }
 
-                bool operator!=(triangleIterator &other) const { return m_it != other.m_it; }
+                bool operator!=(vertexIterator &other) const { return m_it != other.m_it; }
 
                 vertexData &operator*() const {
                     return *m_it;
@@ -83,12 +83,12 @@ namespace Engine {
                 }
             };
 
-            triangleIterator begin() {
-                return triangleIterator(vertexesData.begin());
+            vertexIterator vertexBegin() {
+                return vertexIterator(vertexesData.begin());
             }
 
-            triangleIterator end() {
-                return triangleIterator(vertexesData.end());
+            vertexIterator vertexEnd() {
+                return vertexIterator(vertexesData.end());
             }
             
             
