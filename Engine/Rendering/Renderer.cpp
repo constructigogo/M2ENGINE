@@ -5,7 +5,7 @@
 #include <iostream>
 #include "Renderer.h"
 
-std::map<BaseMesh *, std::pair<bgfx::ProgramHandle *, std::pair<std::vector<bgfx::TextureHandle>, std::vector<CTransform *>>>> Renderer::instancing;
+std::map<BaseMesh *, std::pair<bgfx::ProgramHandle *, std::pair<std::vector<std::shared_ptr<Texture>>, std::vector<CTransform *>>>> Renderer::instancing;
 std::map<BaseMesh *, std::pair<bgfx::ProgramHandle *, std::pair<bgfx::InstanceDataBuffer, int>>> Renderer::staticInstanceCache;
 std::vector<CMeshRenderer *> Renderer::renderList;
 
@@ -13,7 +13,7 @@ std::vector<CMeshRenderer *> Renderer::renderList;
 void Renderer::render() {
     for (const auto mesh: renderList) {
 
-        if(!mesh->isActive() || !mesh->getObject()->isActive() || !mesh->mesh){
+        if (!mesh->isActive() || !mesh->getObject()->isActive() || !mesh->mesh || !bgfx::isValid(mesh->material)) {
             continue;
         }
 
@@ -43,15 +43,15 @@ void Renderer::render() {
         bgfx::setIndexBuffer(mesh->mesh->IBH);
 
         if (!mesh->textures.empty()) {
-            if (bgfx::isValid(mesh->textures[0])) {
-                bgfx::setTexture(0, s_texColor, mesh->textures[0]);
+            if (bgfx::isValid(mesh->textures[0]->getHandle())) {
+                bgfx::setTexture(0, s_texColor, mesh->textures[0]->getHandle());
             }
-            if (bgfx::isValid(mesh->textures[1])) {
-                bgfx::setTexture(1, s_texNormal, mesh->textures[1]);
+            if (bgfx::isValid(mesh->textures[1]->getHandle())) {
+                bgfx::setTexture(1, s_texNormal, mesh->textures[1]->getHandle());
             }
         }
-
         bgfx::submit(0, mesh->material, 0);
+
     }
 
     const bgfx::Caps *caps = bgfx::getCaps();
@@ -71,7 +71,7 @@ void Renderer::render() {
         bgfx::allocInstanceDataBuffer(&idb, drawnInst, instanceStride);
         uint8_t *data = idb.data;
 
-#pragma omp parallel for default(none) shared(transformList,data)
+#pragma omp parallel for default(none) shared(transformList, data)
         for (int i = 0; i < transformList.size(); ++i) {
             int dataIdx = i * instanceStride;
             const auto ptr = transformList[i];
@@ -98,11 +98,11 @@ void Renderer::render() {
         bgfx::setInstanceDataBuffer(&idb);
 
         if (!texturesList.empty()) {
-            if (bgfx::isValid(texturesList[0])) {
-                bgfx::setTexture(0, s_texColor, texturesList[0]);
+            if (bgfx::isValid(texturesList[0]->getHandle())) {
+                bgfx::setTexture(0, s_texColor, texturesList[0]->getHandle());
             }
-            if (bgfx::isValid(texturesList[1])) {
-                bgfx::setTexture(1, s_texNormal, texturesList[1]);
+            if (bgfx::isValid(texturesList[1]->getHandle())) {
+                bgfx::setTexture(1, s_texNormal, texturesList[1]->getHandle());
             }
         }
 

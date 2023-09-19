@@ -51,7 +51,7 @@ CMeshRenderer *CMeshRenderer::setMesh(std::shared_ptr<BaseMesh> _mesh, CTransfor
 }
 
 void CMeshRenderer::clearMesh() {
-
+    cleanup();
 }
 
 void CMeshRenderer::cleanup() {
@@ -60,7 +60,8 @@ void CMeshRenderer::cleanup() {
 }
 
 CMeshRenderer::~CMeshRenderer() {
-
+    Renderer::unregisterDynamic(this);
+    Renderer::unregisterStatic(this);
 }
 
 CMeshRenderer *CMeshRenderer::setMaterial(bgfx::ProgramHandle _material, int texAmount) {
@@ -70,7 +71,7 @@ CMeshRenderer *CMeshRenderer::setMaterial(bgfx::ProgramHandle _material, int tex
     return this;
 }
 
-CMeshRenderer *CMeshRenderer::setMaterialTexId(int idx, bgfx::TextureHandle texHandle) {
+CMeshRenderer *CMeshRenderer::setMaterialTexId(int idx, std::shared_ptr<Texture> texHandle) {
     if (idx >= textures.capacity()) {
         return this;
     }
@@ -106,9 +107,15 @@ void CMeshRenderer::EditorUIDrawContent() {
     }
     if(ImGui::Button("Confirm")){
         std::cout<<str<<std::endl;
-        mesh = Data::loadMesh(std::string(str));
+        //mesh = Data::loadMesh(std::string(str));
+        setMesh(Data::loadMesh(std::string(str)),STATIC,false);
     }
     ImGui::SeparatorText("Material settings");
+    ImGui::Text("Material : %d", material);
+    int idx=0;
+    for (auto & tex:textures) {
+        ImGui::Text("%d : %s",idx++, tex->getName().c_str());
+    }
 }
 
 

@@ -44,11 +44,13 @@ public:
                 true
         );
 
+        auto texHandleDiffuse = Data::loadTexture("data/diffuse.jpg");
+        auto texHandleNormal = Data::loadTexture("data/normal.png");
 
-        auto texDiffuse = Data::loadTexture("data/diffuse.jpg");
-        auto texNormal = Data::loadTexture("data/normal.png");
+        /*auto texDiffuse = Data::loadTextureRaw("data/diffuse.jpg");
+        auto texNormal = Data::loadTextureRaw("data/normal.png");
         assert(bgfx::isValid(texDiffuse));
-        assert(bgfx::isValid(texNormal));
+        assert(bgfx::isValid(texNormal));*/
 
 
         auto inst = editorScene->createObject();
@@ -61,8 +63,8 @@ public:
         inst->addComponent<CMeshRenderer>()
                 ->setMesh(Data::loadMesh("data/backpack.obj", false), STATIC, false)
                 ->setMaterial(textured, 2)
-                ->setMaterialTexId(0, texDiffuse)
-                ->setMaterialTexId(1, texNormal);
+                ->setMaterialTexId(0, texHandleDiffuse)
+                ->setMaterialTexId(1, texHandleNormal);
         //testMesh->addComponent<CRigidBody>();
         auto obj = editorScene->createObject();
         obj->addComponent<CDummy>();
@@ -102,8 +104,8 @@ public:
                 inst->addComponent<CMeshRenderer>()
                         ->setMesh(Data::loadMesh("data/backpack.obj",false), STATIC, true)
                         ->setMaterial(texturedInst)
-                        ->setMaterialTexId(0, texDiffuse)
-                        ->setMaterialTexId(1, texNormal);
+                        ->setMaterialTexId(0, texHandleDiffuse)
+                        ->setMaterialTexId(1, texHandleNormal);
                 //testMesh->addComponent<CRigidBody>();
             }
         }
