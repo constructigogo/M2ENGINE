@@ -30,10 +30,13 @@ namespace Engine {
 
         bx::Vec3 Position = bx::Vec3(bx::InitZero);
         bx::Quaternion Rotation = bx::Quaternion(bx::InitZero);
-        bx::Vec3 Scale = bx::Vec3(bx::InitIdentity);
+        bx::Vec3 Scale = bx::Vec3(1.0f,1.0f,1.0f);
+
+    protected:
+        void EditorUIDrawContent() override;
 
     public:
-        CTransform()=default;
+        CTransform();
         CTransform(const bx::Vec3 &Pos);
         CTransform(const bx::Quaternion &Rot);
         CTransform(const bx::Vec3 &Pos, const std::vector<glm::quat> &Rot);
@@ -59,6 +62,7 @@ namespace Engine {
 
         bx::Vec3 getPositionBX() const;
     };
+
 }
 
 

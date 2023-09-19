@@ -5,21 +5,22 @@
 #include <iostream>
 #include <unordered_set>
 #include "CRigidBody.h"
-#include "../Log.h"
-#include "../utils.h"
+#include "../Core/Log.h"
+#include "../Core/utils.h"
 
 namespace Engine {
     CRigidBody::CRigidBody() {
+        viewName="Rigid Body";
         Physic::registerBody(this);
     }
 
     void CRigidBody::start() {
-        transform = getParent()->getComponent<CTransform>();
+        transform = getObject()->getComponent<CTransform>();
         if (!transform) {
-            transform = getParent()->addComponent<CTransform>();
+            transform = getObject()->addComponent<CTransform>();
         }
 
-        meshRenderer = getParent()->getComponent<CMeshRenderer>();
+        meshRenderer = getObject()->getComponent<CMeshRenderer>();
         computeTensor();
     }
 

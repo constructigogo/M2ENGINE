@@ -5,17 +5,19 @@
 #ifndef ENGINE_APP_H
 #define ENGINE_APP_H
 
-#include "CoreInc.h"
-#include <bgfx/bgfx.h>
-#include <bgfx/platform.h>
-#include <GLFW/glfw3.h>
-#include <bx/bx.h>
-#include "Mesh.h"
-#include "Components/CCamera.h"
+#include "../CoreInc.h"
+#include "bgfx/bgfx.h"
+#include "bgfx/platform.h"
+#include "GLFW/glfw3.h"
+#include "bx/bx.h"
+#include "../Rendering/Mesh.h"
+#include "../Components/CCamera.h"
 #include "Input.h"
 #include "ETime.h"
-#include "Objects/OCamera.h"
-#include "Renderer.h"
+#include "../Objects/OCamera.h"
+#include "../Rendering/Renderer.h"
+#include "Scene.h"
+#include "../UI/UIWindow.h"
 
 
 namespace Engine {
@@ -30,11 +32,18 @@ namespace Engine {
 
         virtual void init();
 
+        virtual void initComponentType();
+
+        virtual void initUI();
+
         virtual void run();
 
         virtual void cleanup();
 
     protected:
+
+        virtual void drawUI();
+
         bool debugMode = true;
         bool showStats = false;
 
@@ -42,9 +51,13 @@ namespace Engine {
 
         Object *testMesh;
 
-        KeyInput *input;
+        Scene *editorScene;
+
+        std::unique_ptr<KeyInput> input;
         std::unique_ptr<ETime> time;
         Renderer *renderer;
+        std::vector<UI::UIWindow*> editorWindows;
+
 
         GLFWwindow *currentWindow;
         bgfx::ViewId kClearView;
@@ -53,8 +66,6 @@ namespace Engine {
 
         double lastFixedFrame =0;
 
-        //bgfx::ShaderHandle vsh;
-        //bgfx::ShaderHandle fsh;
         bgfx::ProgramHandle debugProgram;
     };
 

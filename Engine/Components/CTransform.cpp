@@ -12,8 +12,8 @@ void Engine::CTransform::setPosition(const bx::Vec3 &position) {
     Position = position;
 }
 
-void Engine::CTransform::setPosition(const float &x, const float &y, const float &z){
-    setPosition({x,y,z});
+void Engine::CTransform::setPosition(const float &x, const float &y, const float &z) {
+    setPosition({x, y, z});
 }
 
 const bx::Vec3 &Engine::CTransform::getPosition() const {
@@ -51,7 +51,7 @@ void Engine::CTransform::setScale(const bx::Vec3 &scale) {
 }
 
 void Engine::CTransform::setScale(const float &x, const float &y, const float &z) {
-    setScale({x,y,z});
+    setScale({x, y, z});
 }
 
 void Engine::CTransform::setRotation(const bx::Quaternion &rotation) {
@@ -59,7 +59,39 @@ void Engine::CTransform::setRotation(const bx::Quaternion &rotation) {
 }
 
 void Engine::CTransform::setScale(const float &xyz) {
-    setScale({xyz,xyz,xyz});
+    setScale({xyz, xyz, xyz});
 }
+
+Engine::CTransform::CTransform() {
+    viewName = "Transform";
+}
+
+void Engine::CTransform::EditorUIDrawContent() {
+    auto flags =
+            ImGuiInputTextFlags_EnterReturnsTrue |
+            ImGuiInputTextFlags_CharsDecimal |
+            ImGuiInputTextFlags_CharsNoBlank
+            ;
+
+    ImGui::DragFloat3("Position", &Position.x, 0.1f,0.0f,0.0f,"%0.1f");
+    auto vec = mul(bx::toEuler(Rotation), 360.f);
+    if (ImGui::DragFloat3("Rotation", &vec.x, 0.1f,0.0f,0.0f,"%0.1f")) {
+        setRotation(bx::fromEuler(div(vec, 360.f)));
+    }
+    ImGui::DragFloat3("Scale", &Scale.x, 0.1f,0.0f,0.0f,"%0.1f");
+
+    /*
+    ImGui::InputFloat3("Position", &Position.x, "%.1f", flags);
+    auto vec = mul(bx::toEuler(Rotation), 360.f);
+    if (ImGui::InputFloat3("Rotation", &vec.x, "%.1f", flags)) {
+        setRotation(bx::fromEuler(div(vec, 360.f)));
+    }
+    ImGui::InputFloat3("Scale", &Scale.x, "%.1f", flags);
+    */
+
+
+}
+
+
 
 

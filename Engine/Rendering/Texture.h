@@ -1,16 +1,16 @@
 //
-// Created by constantin on 06/09/23.
+// Created by constantin on 19/09/23.
 //
 
 #pragma once
 
 
-
 namespace Engine {
 
-    class Implicit {
+    class Texture {
     public:
-        Implicit()= default;
+        Texture() = default;
+
     protected:
 
     private:

@@ -5,8 +5,8 @@
 #ifndef ENGINE_PHYSIC_H
 #define ENGINE_PHYSIC_H
 
-#include "Components/CRigidBody.h"
-#include "App.h"
+#include "../Components/CRigidBody.h"
+#include "../Core/App.h"
 
 namespace Engine {
 

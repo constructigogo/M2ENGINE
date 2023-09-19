@@ -11,11 +11,21 @@
 #include "bx/math.h"
 #include "glm/glm.hpp"
 #include "bgfx/bgfx.h"
-#include "Components/CTransform.h"
+#include "../Components/CTransform.h"
 
 namespace Engine {
     class BaseMesh {
     private:
+        bgfx::VertexLayout vly;
+
+        std::string name;
+
+    public:
+        ~BaseMesh();
+
+        const std::string &getName() const;
+
+
         struct vertexData {
             glm::vec3 position;
             glm::vec3 normal;
@@ -23,14 +33,13 @@ namespace Engine {
             glm::vec2 texCoord;
             uint32_t m_abgr;
         };
-
         struct SubMesh {
             SubMesh() = default;
 
             ~SubMesh();
 
             void init(const std::vector<vertexData> &Vertices, const std::vector<uint16_t> &Indices, bool hasNormal);
-            
+
             std::vector<vertexData> vertexesData;
             std::vector<uint16_t> indices; // 3-point triangle indices
             std::vector<uint16_t> vertexSingleAdjacency; //indice of the first point of the triangle triangle access, same indice as vertexData
@@ -39,8 +48,8 @@ namespace Engine {
             bool triangleAdjencyGenerated;
 
             bgfx::VertexLayout vly;
-            bgfx::VertexBufferHandle VBH;
-            bgfx::IndexBufferHandle IBH;
+            bgfx::VertexBufferHandle VBH = BGFX_INVALID_HANDLE;
+            bgfx::IndexBufferHandle IBH = BGFX_INVALID_HANDLE;
             unsigned int NumVertices;
             unsigned int MaterialIndex;
 
@@ -90,15 +99,13 @@ namespace Engine {
             vertexIterator vertexEnd() {
                 return vertexIterator(vertexesData.end());
             }
-            
-            
-            
+
+
+
         };
 
-        bgfx::VertexLayout vly;
 
-    public:
-        ~BaseMesh();
+        void addSubMesh(SubMesh& toAdd);
 
         std::vector<SubMesh> subMeshes;
 

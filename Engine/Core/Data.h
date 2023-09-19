@@ -7,8 +7,9 @@
 
 
 #include <unordered_map>
+#include <unordered_set>
 #include <string>
-#include "Mesh.h"
+#include "../Rendering/Mesh.h"
 #include "bx/readerwriter.h"
 #include "bx/file.h"
 #include <memory>
@@ -20,13 +21,12 @@ namespace Engine {
         static void cleanup();
 
 
+        static const std::unordered_set<std::string> &getLoadableMesh();
         static std::shared_ptr<BaseMesh> loadMesh(const std::string &fileName, bool simpleImport=false);
         static bgfx::ShaderHandle loadShaderBin(const char *_name);
         static bgfx::TextureHandle loadTexture(const char *_name);
         static bx::AllocatorI * allocator;
         static bx::FileReaderI* s_fileReader;
-
-
 
         class FileReader : public bx::FileReader
         {
@@ -43,8 +43,9 @@ namespace Engine {
     private:
         static void* load(const char *_name, uint32_t* _size);
         static void imageReleaseCb(void* _ptr, void* _userData);
-        static std::unordered_map<std::string, std::shared_ptr<BaseMesh>> loadedMeshes;
+        static std::unordered_map<std::string, std::shared_ptr<BaseMesh>> meshCache;
         static std::unordered_map<std::string, bgfx::TextureHandle> textureCache;
+        static std::unordered_set<std::string> loadableMesh;
     };
 }
 

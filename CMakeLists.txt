@@ -4,6 +4,8 @@ project(Engine)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 
+set(USE_GL true)
+
 
 #set(BUILD_SHARED_LIBS ON)
 
@@ -22,8 +24,6 @@ set(ASSIMP_BUILD_GLTF_IMPORTER TRUE CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_OFF_IMPORTER TRUE CACHE BOOL "" FORCE)
 set(ASSIMP_BUILD_FBX_IMPORTER TRUE CACHE BOOL "" FORCE)
 
-
-
 set(ASSIMP_INSTALL OFF CACHE BOOL "" FORCE)
 
 set(SHADER_PLATFORM "")
@@ -37,14 +37,10 @@ endif()
 find_package(OpenGL REQUIRED)
 
 include_directories(OpenGL)
-#include_directories(OpenGL/include) # OpenGL/include has to contain the required OpenGL's .h files
-#include_directories(OpenGL/lib) # OpenGL/lib has to contain the required OpenGL's .lib files
-
 add_subdirectory(libraries/)
 
 
 file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/Engine/*.cpp ${PROJECT_SOURCE_DIR}/Engine/*.h)
-#file(GLOB_RECURSE INC_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/includes/*.h ${PROJECT_SOURCE_DIR}/src/*.cpp)
 
 bgfx_compile_shader_to_header(
         TYPE VERTEX
@@ -70,8 +66,12 @@ else ()
 endif()
 
 
-
-
+if (USE_GL)
+    set(profile-sc "")
+else()
+    set(profile-sc -p spirv)
+    message("not using opengl")
+endif ()
 
 function(engine_build_shaders SHADER_OUT FILES)
     set(RES "")
@@ -95,11 +95,13 @@ function(engine_build_shaders SHADER_OUT FILES)
                 OUTPUT ${SHADER_BUILD_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin
                 ${EXT_TYPE}
                 ${SHADER_PLATFORM}
+                #PROFILE 150
                 VARYING_DEF ${PROJECT_SOURCE_DIR}/shaders/varying.def.sc
         )
+        message(${RESULT})
         add_custom_command(
                 OUTPUT ${SHADER_BUILD_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin
-                COMMAND shaderc ${RESULT}
+                COMMAND shaderc ${RESULT} ${profile-sc} -O3
                 DEPENDS ${PROJECT_SOURCE_DIR}/shaders/varying.def.sc
         )
     endforeach ()
@@ -131,8 +133,12 @@ target_link_libraries(Engine PUBLIC glad)
 target_link_libraries(Engine PUBLIC glfw)
 target_link_libraries(Engine PUBLIC glm::glm)
 target_link_libraries(Engine PUBLIC spdlog)
+target_link_libraries(Engine PUBLIC ctti)
 target_link_libraries(Engine PUBLIC example-common)
 target_link_libraries(Engine PUBLIC OpenGL::GL)
+if (USE_GL)
+    target_compile_definitions(Engine PUBLIC "USE_GL")
+endif ()
 
 find_package(OpenMP)
 if(OpenMP_CXX_FOUND)

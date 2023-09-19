@@ -4,6 +4,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 #include "Data.h"
 #include "bimg/bimg.h"
 #include "bx/readerwriter.h"
@@ -16,16 +17,18 @@ bx::FileReaderI *Data::s_fileReader = nullptr;
 bx::AllocatorI *Data::allocator = nullptr;
 
 
-std::unordered_map<std::string, std::shared_ptr<BaseMesh>> Engine::Data::loadedMeshes;
+std::unordered_map<std::string, std::shared_ptr<BaseMesh>> Engine::Data::meshCache;
 std::unordered_map<std::string, bgfx::TextureHandle> Engine::Data::textureCache;
+std::unordered_set<std::string> Engine::Data::loadableMesh;
+
 
 std::shared_ptr<BaseMesh> Engine::Data::loadMesh(const std::string &fileName, bool simpleImport) {
-    if (loadedMeshes.contains(fileName)) {
-        return loadedMeshes[fileName];
+    if (meshCache.contains(fileName)) {
+        return meshCache[fileName];
     } else {
         auto created = std::make_shared<BaseMesh>();
         created->loadMesh(fileName, simpleImport);
-        loadedMeshes[fileName] = created;
+        meshCache[fileName] = created;
         return created;
     }
 }
@@ -49,8 +52,8 @@ bgfx::ShaderHandle Engine::Data::loadShaderBin(const char *_name) {
         data.reserve(fileSize);
         file.seekg(0, std::ios::beg);
         data.insert(data.begin(),
-                   std::istream_iterator<char>(file),
-                   std::istream_iterator<char>());
+                    std::istream_iterator<char>(file),
+                    std::istream_iterator<char>());
         //file.read(data, fileSize);
         file.close();
         success = true;
@@ -68,12 +71,12 @@ bgfx::ShaderHandle Engine::Data::loadShaderBin(const char *_name) {
 }
 
 bgfx::TextureHandle Data::loadTexture(const char *_name) {
-    if(textureCache.contains(_name)) {
+    if (textureCache.contains(_name)) {
         return textureCache[_name];
     }
 
     bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
-    uint64_t _flags=0;
+    uint64_t _flags = 0;
     uint32_t size;
     void *data = load(_name, &size);
     if (data != nullptr) {
@@ -121,6 +124,17 @@ void Data::init() {
     static bx::DefaultAllocator s_allocator;
     allocator = &s_allocator;
     s_fileReader = BX_NEW(allocator, FileReader);
+
+    const std::filesystem::path data{"data"};
+    for (auto &file_it: std::filesystem::directory_iterator({data}))
+    {
+        const std::filesystem::path& file(file_it);
+        auto ext = file.extension();
+        if(ext==".off" || ext == ".obj"){
+            std::cout << file << '\n';
+            Data::loadableMesh.emplace(file);
+        }
+    }
 }
 
 void *Data::load(const char *_name, uint32_t *_size) {
@@ -144,7 +158,11 @@ void Data::imageReleaseCb(void *_ptr, void *_userData) {
 }
 
 void Data::cleanup() {
-    for (auto & [name,texHandle]:textureCache) {
+    for (auto &[name, texHandle]: textureCache) {
         bgfx::destroy(texHandle);
     }
+}
+
+const std::unordered_set<std::string> &Data::getLoadableMesh() {
+    return loadableMesh;
 }

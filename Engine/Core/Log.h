@@ -5,7 +5,7 @@
 #ifndef ENGINE_LOG_H
 #define ENGINE_LOG_H
 
-#include "CoreInc.h"
+#include "../CoreInc.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/ostr.h"
 

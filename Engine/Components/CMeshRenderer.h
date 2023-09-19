@@ -7,9 +7,9 @@
 
 
 #include "Component.h"
-#include "../Mesh.h"
+#include "../Rendering/Mesh.h"
 #include "CTransform.h"
-#include "../Renderer.h"
+#include "../Rendering/Renderer.h"
 
 
 
@@ -30,11 +30,17 @@ namespace Engine {
         CMeshRenderer* setMaterial(bgfx::ProgramHandle _material, int texAmount=0);
         CMeshRenderer* setMaterialTexId(int idx, bgfx::TextureHandle texHandle);
 
+
+
+
         void start() override;
 
         void cleanup() override;
 
         ~CMeshRenderer() override;
+
+    protected:
+        void EditorUIDrawContent() override;
 
     private :
         friend class Renderer;

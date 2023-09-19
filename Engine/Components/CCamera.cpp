@@ -7,12 +7,13 @@
 #include "CTransform.h"
 
 Engine::CCamera::CCamera() {
+    viewName = "Camera Controller";
 }
 
 void Engine::CCamera::start() {
-    transform = getParent()->getComponent<CTransform>();
+    transform = getObject()->getComponent<CTransform>();
     if(!transform){
-        transform=getParent()->addComponent<CTransform>();
+        transform= getObject()->addComponent<CTransform>();
     }
     //transform->setPosition({10.0f, 10.0f, 10.0f});
     transform->setPosition({1.0f, .2f, 1.0f});

@@ -5,4 +5,7 @@
 #include "Implicit.h"
 
 namespace Engine {
+    bool Implicit::isInside(glm::vec3 p) {
+        return dist2(p)<0;
+    }
 } // Engine

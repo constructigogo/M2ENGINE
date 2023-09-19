@@ -8,7 +8,7 @@
 #include "Component.h"
 #include "CTransform.h"
 #include "CMeshRenderer.h"
-#include "../Physic.h"
+#include "../Physic/Physic.h"
 
 namespace Engine {
 

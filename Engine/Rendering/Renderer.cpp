@@ -13,6 +13,10 @@ std::vector<CMeshRenderer *> Renderer::renderList;
 void Renderer::render() {
     for (const auto mesh: renderList) {
 
+        if(!mesh->isActive() || !mesh->getObject()->isActive() || !mesh->mesh){
+            continue;
+        }
+
         const bx::Vec3 &pos = mesh->transform->getPosition();
         const bx::Vec3 &scale = mesh->transform->getScale();
         const bx::Quaternion &rot = mesh->transform->getRotation();
@@ -38,7 +42,7 @@ void Renderer::render() {
         bgfx::setVertexBuffer(0, mesh->mesh->VBH);
         bgfx::setIndexBuffer(mesh->mesh->IBH);
 
-        if (mesh->textures.size() > 0) {
+        if (!mesh->textures.empty()) {
             if (bgfx::isValid(mesh->textures[0])) {
                 bgfx::setTexture(0, s_texColor, mesh->textures[0]);
             }
@@ -67,7 +71,7 @@ void Renderer::render() {
         bgfx::allocInstanceDataBuffer(&idb, drawnInst, instanceStride);
         uint8_t *data = idb.data;
 
-#pragma omp parallel for
+#pragma omp parallel for default(none) shared(transformList,data)
         for (int i = 0; i < transformList.size(); ++i) {
             int dataIdx = i * instanceStride;
             const auto ptr = transformList[i];
@@ -93,7 +97,7 @@ void Renderer::render() {
         bgfx::setIndexBuffer(mesh->IBH);
         bgfx::setInstanceDataBuffer(&idb);
 
-        if (texturesList.size() > 0) {
+        if (!texturesList.empty()) {
             if (bgfx::isValid(texturesList[0])) {
                 bgfx::setTexture(0, s_texColor, texturesList[0]);
             }
@@ -129,11 +133,11 @@ void Renderer::registerAsStatic(CMeshRenderer *cMesh) {
     const auto key = cMesh->mesh.get();
     if (instancing.contains(cMesh->mesh.get())) {
         std::cout << "registering add" << std::endl;
-        instancing[key].second.second.push_back(cMesh->getParent()->getComponent<CTransform>());
+        instancing[key].second.second.push_back(cMesh->getObject()->getComponent<CTransform>());
     } else {
         std::cout << "registering new " << cMesh->material.idx << std::endl;
         instancing[key].first = &cMesh->material;
-        instancing[key].second.second.push_back(cMesh->getParent()->getComponent<CTransform>());
+        instancing[key].second.second.push_back(cMesh->getObject()->getComponent<CTransform>());
         for (const auto &texHandle: cMesh->textures) {
             instancing[key].second.first.push_back(texHandle);
         }
@@ -166,7 +170,7 @@ void Renderer::unregisterStatic(CMeshRenderer *cMesh) {
     const auto key = cMesh->mesh.get();
     auto it = instancing.find(key);
     if (it != instancing.end()) {
-        const auto tf = cMesh->getParent()->getComponent<CTransform>();
+        const auto tf = cMesh->getObject()->getComponent<CTransform>();
         auto &list = instancing[key].second.second;
         list.erase(std::remove(list.begin(), list.end(), tf), list.end());
     }

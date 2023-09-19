@@ -5,7 +5,7 @@
 #ifndef ENGINE_ENTRYPOINT_H
 #define ENGINE_ENTRYPOINT_H
 
-#include "App.h"
+#include "Core/App.h"
 
 extern Engine::App* Engine::CreateApp();
 

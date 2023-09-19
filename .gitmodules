@@ -13,3 +13,6 @@
 [submodule "libraries/bgfx.cmake"]
 	path = libraries/bgfx.cmake
 	url = https://github.com/bkaradzic/bgfx.cmake
+[submodule "libraries/ctti"]
+	path = libraries/ctti
+	url = https://github.com/hendrik-skubch/ctti.git

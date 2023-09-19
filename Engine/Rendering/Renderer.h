@@ -4,9 +4,9 @@
 
 #ifndef ENGINE_RENDERER_H
 #define ENGINE_RENDERER_H
-#include "Singleton.h"
-#include "Components/CMeshRenderer.h"
-#include "Components/CTransform.h"
+#include "../Singleton.h"
+#include "../Components/CMeshRenderer.h"
+#include "../Components/CTransform.h"
 #include "Mesh.h"
 
 using namespace Engine;

@@ -8,45 +8,75 @@
 #include <vector>
 #include <queue>
 #include "../Objects/Object.h"
-
+#include "../UI/EditorUIDraw.h"
+#include "dear-imgui/imgui.h"
+#include <set>
 
 
 namespace Engine {
     class Object;
-    class Component {
+
+    class Component : public UI::EditorViewable {
     public:
-        Component(Object * parent);
+        Component(Object *parent);
+
         virtual void start() {}
+
         virtual void fixedUpdate(double delta) {}
+
         virtual void update(double delta) {}
+
         virtual void lateUpdate(double delta) {}
 
-        Object *getParent() const;
+        void EditorUIDraw() override;
+
+        Object *getObject() const;
+
+        void setParent(Object *_parent);
+
+        bool isActive() const;
+
+        void setIsActive(bool isActive);
+
+        static std::set<std::type_index> types;
 
     private:
         Object *parent;
+
+        bool _isActive = true;
 
 
     protected:
         Component();
 
-        virtual void cleanup(){}
-        virtual ~Component();
+        virtual void cleanup() {}
+
+        void EditorUIDrawHeader() override;
+
+        void EditorUIDrawContent() override;
+
+        void EditorUIDrawFoot() override;
+
+
+        ~Component() override;
+
         bool scheduledForStart;
 
 
         static std::queue<Component *> _startQueue;
     private:
         friend class App;
-        friend class Object;
 
-        void setParent(Object * _parent);
+        friend class Object;
 
         static std::vector<Component *> _instances;
 
         static void processStart();
+
         static void processFixedUpdate(double delta);
+
         static void processUpdate(double delta);
+
         static void processLateUpdate(double delta);
     };
 }

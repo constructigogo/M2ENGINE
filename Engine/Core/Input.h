@@ -8,7 +8,7 @@
 
 #include <vector>
 #include <map>
-#include "Singleton.h"
+#include "../Singleton.h"
 #include "GLFW/glfw3.h"
 #include "glm/vec2.hpp"
 
@@ -34,9 +34,9 @@ namespace Engine {
         glm::vec2 getMousePosition();
 
         int getMouseX();
-
         int getMouseY();
 
+        int getMouseScroll();
         // If this KeyInput is enabled and the given key is monitored,
         // returns pressed state.  Else returns false.
         bool getIsKeyDown(int key);
@@ -67,6 +67,10 @@ namespace Engine {
         double mousePrevY = 0.0;
         double mouseDeltaX;
         double mouseDeltaY;
+        double mouseScroll=0;
+        double mouseScrollDelta;
+
+
 
         // Workaround for C++ class using a c-style-callback
     public:
@@ -74,18 +78,29 @@ namespace Engine {
         static void setupKeyInputs(GLFWwindow *window);
 
         static void updateInputs();
+        static unsigned int getSingleCharKey();
+
+        static int lastKey;
+        static int lastKeyPrev;
+        static int lastScancode;
 
     private:
         // The GLFW callback for key events.  Sends events to all KeyInput instances
         static void keyCallback(
                 GLFWwindow *window, int key, int scancode, int action, int mods);
+        static void keyCharCallback(GLFWwindow* window, unsigned int codepoint);
 
         static void mousePosCallback(GLFWwindow *window, double xpos, double ypos);
-
         static void mouseButtonCallback(GLFWwindow *window, int button, int action, int mods);
+        static void mouseScrollCallBack(GLFWwindow* window, double xoffset, double yoffset);
 
         // Keep a list of all KeyInput instances and notify them all of key events
         static std::vector<KeyInput *> _instances;
+
+        static std::array<int,GLFW_KEY_LAST> keyConvert;
+
+
+
     };
 }
 

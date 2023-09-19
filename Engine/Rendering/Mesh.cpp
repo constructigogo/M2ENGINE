@@ -12,7 +12,7 @@ using namespace Engine;
 
 void BaseMesh::loadMesh(const std::string &Filename, bool simpleImport) {
     Assimp::Importer Importer;
-
+    name = Filename;
     const aiScene *pScene = Importer.ReadFile(Filename.c_str(), simpleImport ? aiProcess_JoinIdenticalVertices
                                                                              : aiProcessPreset_TargetRealtime_MaxQuality);
     if (pScene) {
@@ -111,6 +111,28 @@ void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
 BaseMesh::~BaseMesh() {
     bgfx::destroy(VBH);
     bgfx::destroy(IBH);
+}
+
+void BaseMesh::addSubMesh(BaseMesh::SubMesh &toAdd) {
+    subMeshes.push_back(toAdd);
+
+    vertexesAllData = toAdd.vertexesData;
+
+    vly.begin()
+            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
+            .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float, true)
+            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float, true)
+            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+            .end();
+
+    VBH = bgfx::createVertexBuffer(bgfx::copy(toAdd.vertexesData.data(), toAdd.vertexesData.size() * sizeof(vertexData)), vly);
+    IBH = bgfx::createIndexBuffer(bgfx::copy(toAdd.indices.data(), toAdd.indices.size() * sizeof(uint16_t)));
+
+}
+
+const std::string &BaseMesh::getName() const {
+    return name;
 }
 
 

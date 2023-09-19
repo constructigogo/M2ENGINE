@@ -7,6 +7,7 @@
 #include "../Components/CCamera.h"
 
 Engine::OCamera::OCamera() {
+    name="Camera";
     addComponent<CTransform>();
     addComponent<CCamera>();
 }

@@ -4,7 +4,7 @@
 
 #pragma once
 #include "glm/vec3.hpp"
-#include "Objects/Object.h"
+#include "../Objects/Object.h"
 
 namespace Engine {
 
