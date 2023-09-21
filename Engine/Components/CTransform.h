@@ -29,7 +29,7 @@ namespace Engine {
         std::shared_ptr<CTransform*> Parent;
 
         bx::Vec3 Position = bx::Vec3(bx::InitZero);
-        bx::Quaternion Rotation = bx::Quaternion(bx::InitZero);
+        bx::Quaternion Rotation = bx::Quaternion(bx::InitIdentity);
         bx::Vec3 Scale = bx::Vec3(1.0f,1.0f,1.0f);
 
     protected:
@@ -53,6 +53,11 @@ namespace Engine {
         void translate(const bx::Vec3 &position);
         void translate(const glm::vec3 &position);
         void translate(const float &x,const float &y,const float &z);
+
+        const bx::Vec3 getForward() const;
+        const bx::Vec3 getRight() const;
+        const bx::Vec3 getUp() const;
+
 
         const bx::Vec3 &getPosition() const;
 

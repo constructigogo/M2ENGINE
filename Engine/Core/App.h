@@ -12,6 +12,7 @@
 #include "bx/bx.h"
 #include "../Rendering/Mesh.h"
 #include "../Components/CCamera.h"
+#include "../Components/CDirectionalLight.h"
 #include "Input.h"
 #include "ETime.h"
 #include "../Objects/OCamera.h"
@@ -48,6 +49,7 @@ namespace Engine {
         bool showStats = false;
 
         OCamera *currentCamera;
+        CDirectionalLight *sunlight= nullptr;
 
         Object *testMesh;
 

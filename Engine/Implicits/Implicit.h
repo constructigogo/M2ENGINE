@@ -7,6 +7,7 @@
 
 #include "glm/glm.hpp"
 #include "glm/common.hpp"
+#include "../Core/Ray.h"
 #include <cmath>
 
 namespace Engine {
@@ -18,6 +19,7 @@ namespace Engine {
         virtual float dist(glm::vec3 p)=0;
         virtual float dist2(glm::vec3 p)=0;
         virtual bool isInside(glm::vec3 p);
+        virtual bool intersect(const Ray& ray, RayHit& hit){return false;}
 
         virtual ~Implicit()= default;
     protected:

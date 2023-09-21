@@ -6,6 +6,7 @@
 #define ENGINE_CCAMERA_H
 #include "CTransform.h"
 #include "Component.h"
+#include "../Core/Input.h"
 
 namespace Engine {
     class CCamera : public Component{
@@ -17,6 +18,7 @@ namespace Engine {
 
     private:
         CTransform * transform;
+        KeyInput * input;
         ViewData data;
 
     public:

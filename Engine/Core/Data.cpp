@@ -8,6 +8,11 @@
 #include "Data.h"
 #include "bimg/bimg.h"
 #include "bx/readerwriter.h"
+#include "../Components/CTransform.h"
+#include "assimp/Importer.hpp"
+#include "assimp/scene.h"
+#include "assimp/postprocess.h"
+#include "../Components/CMeshRenderer.h"
 #include "bimg/decode.h"
 
 
@@ -33,6 +38,8 @@ std::shared_ptr<BaseMesh> Engine::Data::loadMesh(const std::string &fileName, bo
         return created;
     }
 }
+
+
 
 bgfx::ShaderHandle Engine::Data::loadShaderBin(const char *_name) {
     //char *data = new char[4096];
@@ -223,4 +230,92 @@ std::shared_ptr<Texture> Data::loadTexture(const char *_name) {
 
     textureCache[_name] = buff;
     return buff;
+}
+
+std::vector<Object *> Data::loadScene(const std::string &fileName) {
+    Assimp::Importer Importer;
+    std::vector<Object *> res;
+    const aiScene *pScene = Importer.ReadFile(fileName.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
+    auto root = new Object();
+    root->setName(fileName);
+    root->addComponent<CTransform>();
+    res.push_back(root);
+    if (pScene) {
+        std::cout << "init mesh, size : " << pScene->mNumMeshes << std::endl;
+        std::cout << "reading mesh as scene : " << fileName.c_str() << std::endl;
+
+        auto textured = bgfx::createProgram(
+                Data::loadShaderBin("v_textured.vert"),
+                Data::loadShaderBin("f_textured.frag"),
+                true
+        );
+
+        for (int i = 0; i < pScene->mNumMeshes; ++i) {
+            const aiMesh *paiMesh = pScene->mMeshes[i];
+            if(paiMesh->mPrimitiveTypes!= aiPrimitiveType_TRIANGLE){
+                continue;
+            }
+            std::string name = fileName + std::to_string(i);
+            std::cout<<name<<std::endl;
+
+            auto obj = new Object(name);
+            obj->setParent(root);
+
+            auto transform = obj->addComponent<CTransform>();
+            auto rend = obj->addComponent<CMeshRenderer>();
+
+            auto mesh = std::make_shared<BaseMesh>();
+            mesh->subMeshes.resize(1);
+
+            mesh->initMeshAsSingle(paiMesh);
+            rend->setMesh(mesh,STATIC, false);
+            auto matIdx = paiMesh->mMaterialIndex;
+            auto mat = pScene->mMaterials[matIdx];
+            rend->setMaterial(textured,2);
+
+
+            std::cout<< pScene->mMaterials[matIdx]->GetName().C_Str()<<std::endl;
+            aiString textureName;//Filename of the texture using the aiString assimp structure
+            if(mat->GetTextureCount(aiTextureType_DIFFUSE)){
+                //Get the file name of the texture by passing the variable by reference again
+                //Second param is 0, which is the first diffuse texture
+                //There can be more diffuse textures but for now we are only interested in the first one
+                auto ret = mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), textureName);
+                std::string path = "data/"+std::string(textureName.data);
+                std::string textureType = "diffuse ";
+                std::string textureFileName = textureType + textureName.data;//The actual name of the texture file
+                std::cout <<textureFileName<<std::endl;
+                rend->setMaterialTexId(0,Data::loadTexture(path.c_str()));
+            } else {
+                rend->setMaterialTexId(0,Data::loadTexture("data/color_flat.png"));
+            }
+
+            if(mat->GetTextureCount(aiTextureType_HEIGHT)){
+                //Get the file name of the texture by passing the variable by reference again
+                //Second param is 0, which is the first diffuse texture
+                //There can be more diffuse textures but for now we are only interested in the first one
+                auto ret = mat->Get(AI_MATKEY_TEXTURE(aiTextureType_HEIGHT, 0), textureName);
+                std::string path = "data/"+std::string(textureName.data);
+                std::string textureType = "normal ";
+                std::string textureFileName = textureType + textureName.data;//The actual name of the texture file
+                std::cout <<textureFileName<<std::endl;
+                rend->setMaterialTexId(1,Data::loadTexture(path.c_str()));
+            } else {
+                rend->setMaterialTexId(1,Data::loadTexture("data/normal_flat.png"));
+            }
+
+
+            meshCache[name] = mesh;
+            //res.push_back(obj);
+        }
+
+
+    } else {
+        printf("Error parsing '%s': '%s'\n", fileName.c_str(), Importer.GetErrorString());
+        std::string error = "Error parsing ";
+        error.append(fileName);
+        error.append(" : ");
+        error.append(Importer.GetErrorString());
+    }
+    return res;
 }

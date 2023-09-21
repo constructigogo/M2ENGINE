@@ -37,8 +37,8 @@ namespace Engine {
         return name;
     }
 
-    void Object::setName(const std::string &name) {
-        Object::name = name;
+    void Object::setName(const std::string &_name) {
+        Object::name = _name;
     }
 
     bool Object::isActive() const {
@@ -47,11 +47,18 @@ namespace Engine {
 
     void Object::setIsActive(bool isActive) {
         Object::_isActive = isActive;
-        /*
-        for (const auto & [key,comp] : m_components) {
-            comp->setIsActive(isActive);
+        for (auto & child: childrens) {
+            child->setIsActive(isActive);
         }
-        */
+    }
+
+    void Object::setParent(Object *_parent) {
+        Object::parent = _parent;
+        _parent->childrens.push_back(this);
+    }
+
+    const std::vector<Object *> &Object::getChildrens() const {
+        return childrens;
     }
 
 }

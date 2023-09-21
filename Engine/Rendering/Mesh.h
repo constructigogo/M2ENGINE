@@ -38,11 +38,11 @@ namespace Engine {
 
             ~SubMesh();
 
-            void init(const std::vector<vertexData> &Vertices, const std::vector<uint16_t> &Indices, bool hasNormal);
+            void init(const std::vector<vertexData> &Vertices, const std::vector<uint32_t> &Indices, bool hasNormal);
 
             std::vector<vertexData> vertexesData;
-            std::vector<uint16_t> indices; // 3-point triangle indices
-            std::vector<uint16_t> vertexSingleAdjacency; //indice of the first point of the triangle triangle access, same indice as vertexData
+            std::vector<uint32_t> indices; // 3-point triangle indices
+            std::vector<uint32_t> vertexSingleAdjacency; //indice of the first point of the triangle triangle access, same indice as vertexData
             std::vector<int> triangleAdjacency; //Indice of the first point of every adjacent triangle, same indice as indices vector
 
             bool triangleAdjencyGenerated;
@@ -106,19 +106,20 @@ namespace Engine {
 
 
         void addSubMesh(SubMesh& toAdd);
+        void initMesh(unsigned int Index, const aiMesh *paiMesh);
+        void initMeshAsSingle(const aiMesh* paimesh);
 
         std::vector<SubMesh> subMeshes;
 
         void loadMesh(const std::string &Filename, bool simpleImport = false);
         std::vector<vertexData> vertexesAllData;
-        std::vector<uint16_t> indicesAllData;
-        bgfx::VertexBufferHandle VBH;
-        bgfx::IndexBufferHandle IBH;
+        std::vector<uint32_t> indicesAllData;
+        bgfx::VertexBufferHandle VBH=BGFX_INVALID_HANDLE;
+        bgfx::IndexBufferHandle IBH=BGFX_INVALID_HANDLE;
 
     private:
         void initFromScene(const aiScene *pScene, const std::string &Filename);
 
-        void initMesh(unsigned int Index, const aiMesh *paiMesh);
 
     };
 

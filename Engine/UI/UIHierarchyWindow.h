@@ -24,6 +24,8 @@
 
             void EditorUIDrawFoot() override;
 
+            void HierarchyDrawObjectLine(Object * obj);
+
 
             Object *getSelectedObject() const;
 
@@ -34,7 +36,8 @@
         protected:
             Scene *attachedScene;
             Object *selectedObject = nullptr;
-
+            ImGuiTreeNodeFlags TreeBaseflags = ImGuiTreeNodeFlags_OpenOnArrow | ImGuiTreeNodeFlags_OpenOnDoubleClick | ImGuiTreeNodeFlags_SpanAvailWidth;
+            int node_clicked = -1;
 
         private:
         };

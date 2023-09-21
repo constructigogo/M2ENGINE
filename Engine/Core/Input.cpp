@@ -195,6 +195,8 @@ void Engine::KeyInput::setKeyState(int key, int state) {
 
 void Engine::KeyInput::updateInputs() {
     for (Engine::KeyInput *keyInput: _instances) {
+        keyInput->mouseDeltaX=0.0;
+        keyInput->mouseDeltaY=0.0;
         for (auto &key: keyInput->_keys) {
             if (key.second.current == KEY_PRESSED) {
                 keyInput->setKeyState(key.first, KEY_HELD);
@@ -223,16 +225,28 @@ void Engine::KeyInput::mousePosCallback(GLFWwindow *window, double xpos, double 
     const double widthd = double(int32_t(w));
     const double heightd = double(int32_t(h));
 
+    auto io = ImGui::GetIO();
 
     for (Engine::KeyInput *keyInput: _instances) {
-        keyInput->mouseDeltaX = double(xpos - keyInput->mousePrevX) / widthd;
-        keyInput->mouseDeltaY = double(ypos - keyInput->mousePrevY) / heightd;
-
-
         keyInput->mousePrevX = keyInput->mouseX;
         keyInput->mousePrevY = keyInput->mouseY;
         keyInput->mouseX = xpos;
         keyInput->mouseY = ypos;
+
+        auto delta = io.MouseDelta;
+
+        if(!io.WantCaptureMouse){
+            keyInput->mouseDeltaX = double(xpos - keyInput->mousePrevX) / widthd;
+            keyInput->mouseDeltaY = double(ypos - keyInput->mousePrevY) / heightd;
+            keyInput->mouseDeltaX = delta.x/ widthd;
+            keyInput->mouseDeltaY = delta.y/ heightd;
+        }
+        else {
+            keyInput->mouseDeltaX = 0.0;
+            keyInput->mouseDeltaY = 0.0;
+        }
+
+
     }
 }
 
@@ -273,6 +287,14 @@ unsigned int Engine::KeyInput::getSingleCharKey() {
     } else {
         return 0;
     }
+}
+
+double Engine::KeyInput::getMouseDeltaX() const {
+    return mouseDeltaX;
+}
+
+double Engine::KeyInput::getMouseDeltaY() const {
+    return mouseDeltaY;
 }
 
 

@@ -96,21 +96,13 @@ namespace Engine {
         if (!bgfx::init(init))
             return;
 
-        renderer = new Renderer();
-
-
-        // Set view 0 to the same dimensions as the window and to clear the color buffer.
-        kClearView = 0;
-        bgfx::setViewClear(kClearView, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x443355FF, 1.0f, 0);
-        //bgfx::setViewRect(kClearView,400,0, width, height);
-
-        bgfx::setViewMode(kClearView, bgfx::ViewMode::Default);
 
         m_timeOffset = bx::getHPCounter();
         editorScene = new Engine::Scene();
 
 
         initUI();
+        renderer = new Renderer(width,height);
 
         //  return;
     }
@@ -127,8 +119,7 @@ namespace Engine {
             int oldWidth = width, oldHeight = height;
             glfwGetWindowSize(currentWindow, &width, &height);
             if (width != oldWidth || height != oldHeight) {
-                bgfx::reset((uint32_t) width, (uint32_t) height, BGFX_RESET_VSYNC);
-                bgfx::setViewRect(kClearView, 0, 0, bgfx::BackbufferRatio::Equal);
+                renderer->setRect(width,height);
             }
 
             if (input->getIsKeyPressed(GLFW_KEY_F1)) {
@@ -170,14 +161,20 @@ namespace Engine {
             Component::processLateUpdate(time->getDeltaTime());
 
 
-            const bx::Vec3 at = {0.0f, 0.0f, 0.0f};
             const bx::Vec3 eye = currentCamera->getComponent<CTransform>()->getPositionBX();
+            bx::Vec3 at = bx::sub(currentCamera->getComponent<CTransform>()->getPositionBX(),
+                                  currentCamera->getComponent<CTransform>()->getForward());
+            //at=bx::Vec3{0.0,0.0,0.0};
             float view[16];
-            bx::mtxLookAt(view, eye, at);
+            bx::mtxLookAt(view, eye, at, bx::Vec3{0.0, 1.0, 0.0}, bx::Handedness::Left);
             float proj[16];
-            bx::mtxProj(proj, 60.0f, float(width) / float(height), 0.1f, 250.0f, bgfx::getCaps()->homogeneousDepth);
-            bgfx::setViewTransform(kClearView, view, proj);
-            bgfx::setViewRect(kClearView, 0, 0, uint16_t(width), uint16_t(height));
+            bx::mtxProj(proj, 75.0f, float(width) / float(height), 0.1f, 250.0f, bgfx::getCaps()->homogeneousDepth,
+                        bx::Handedness::Right);
+
+
+
+            renderer->setView(view);
+            renderer->setProj(proj);
 
 
             KeyInput::updateInputs();
@@ -209,7 +206,7 @@ namespace Engine {
                         KeyInput::getSingleCharKey()
         );
 
-        ImGui::ShowDemoWindow();
+        //ImGui::ShowDemoWindow();
 
         for (auto window: editorWindows) {
             window->EditorUIDraw();
@@ -239,8 +236,8 @@ namespace Engine {
     }
 
     void App::initComponentType() {
-        REGISTER_COMPONENT(CTransform,"Transform")
-        REGISTER_COMPONENT(CMeshRenderer,"Mesh Renderer")
-        REGISTER_COMPONENT(CDummy,"Dummy Comp lol")
+        REGISTER_COMPONENT(CTransform, "Transform")
+        REGISTER_COMPONENT(CMeshRenderer, "Mesh Renderer")
+        REGISTER_COMPONENT(CDummy, "Dummy Comp lol")
     }
 }

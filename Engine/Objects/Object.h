@@ -23,6 +23,7 @@ namespace Engine {
         bool _isActive = true;
         Object *parent = nullptr;
         std::multimap<std::type_index, Component *> m_components;
+        std::vector<Object *> childrens;
     public:
 
         Object();
@@ -34,10 +35,13 @@ namespace Engine {
         uint64_t getUid() const;
 
         bool isActive() const;
-
         void setIsActive(bool isActive);
 
-        void setName(const std::string &name);
+        void setName(const std::string &_name);
+
+        void setParent(Object *_parent);
+
+        const std::vector<Object *> &getChildrens() const;
 
         const std::string &getName() const;
 

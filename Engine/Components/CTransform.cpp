@@ -74,9 +74,9 @@ void Engine::CTransform::EditorUIDrawContent() {
             ;
 
     ImGui::DragFloat3("Position", &Position.x, 0.1f,0.0f,0.0f,"%0.1f");
-    auto vec = mul(bx::toEuler(Rotation), 360.f);
+    auto vec = mul(bx::toEuler(Rotation),180.0/bx::kPi);
     if (ImGui::DragFloat3("Rotation", &vec.x, 0.1f,0.0f,0.0f,"%0.1f")) {
-        setRotation(bx::fromEuler(div(vec, 360.f)));
+        setRotation(bx::fromEuler(div(mul(vec, bx::kPi),180.0)));
     }
     ImGui::DragFloat3("Scale", &Scale.x, 0.1f,0.0f,0.0f,"%0.1f");
 
@@ -90,6 +90,21 @@ void Engine::CTransform::EditorUIDrawContent() {
     */
 
 
+}
+
+const bx::Vec3 Engine::CTransform::getForward() const {
+    bx::Vec3 forward{0.0,0.0,-1.0};
+    return bx::normalize(bx::mul(forward,Rotation)) ;
+}
+
+const bx::Vec3 Engine::CTransform::getRight() const {
+    bx::Vec3 right{1.0,0.0,0.0};
+    return bx::normalize(bx::mul(right,Rotation)) ;
+}
+
+const bx::Vec3 Engine::CTransform::getUp() const {
+    bx::Vec3 up{0.0,1.0,0.0};
+    return bx::normalize(bx::mul(up,Rotation)) ;
 }
 
 

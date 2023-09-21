@@ -32,6 +32,11 @@ namespace Engine {
         ~KeyInput();
 
         glm::vec2 getMousePosition();
+        glm::vec2 getMouseDelta();
+
+        double getMouseDeltaX() const;
+
+        double getMouseDeltaY() const;
 
         int getMouseX();
         int getMouseY();
@@ -65,8 +70,8 @@ namespace Engine {
         double mouseY;
         double mousePrevX = 0.0;
         double mousePrevY = 0.0;
-        double mouseDeltaX;
-        double mouseDeltaY;
+        double mouseDeltaX=0.0;
+        double mouseDeltaY=0.0;
         double mouseScroll=0;
         double mouseScrollDelta;
 

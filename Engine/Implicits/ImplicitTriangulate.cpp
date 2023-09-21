@@ -32,7 +32,7 @@ namespace Engine {
         //std::cout << "test, " << form->dist({-1.5,-1.5,-1.5})<<std::endl;
         //std::cout << "test2, " << form->dist({-0.5,0.1,0.0})<<std::endl;
 
-        std::vector<uint16_t > triangle;
+        std::vector<uint32_t > triangle;
 
         vertex.reserve(20000);
         normal.reserve(20000);
@@ -243,7 +243,7 @@ namespace Engine {
         delete[]ez;
 
 
-        std::vector<uint16_t> normals = triangle;
+        std::vector<uint32_t> normals = triangle;
 
         std::vector<BaseMesh::vertexData> data;
         for (int i = 0; i < vertex.size(); ++i) {

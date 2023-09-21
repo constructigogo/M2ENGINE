@@ -10,6 +10,7 @@
 #include "Engine/Implicits/Sphere.h"
 #include "Engine/Implicits/Operators/Union.h"
 #include "Engine/Components/CDummy.h"
+#include "Engine/Components/CDirectionalLight.h"
 
 class EditorSandbox : public App {
 public:
@@ -25,6 +26,10 @@ public:
                 Data::loadShaderBin("f_simple.frag"),
                 false
         );
+
+        auto light= editorScene->createObject("Directional light");
+        light->addComponent<CDirectionalLight>();
+
 
         auto instProg = bgfx::createProgram(
                 Data::loadShaderBin("v_simple_inst.vert"),
@@ -58,19 +63,35 @@ public:
         auto transform = inst->getComponent<CTransform>();
         transform->setPosition({0.5, -0.5, 0.0});
         //transform->setScale({0.1,0.1,0.1});
-        transform->setScale(.3);
+        transform->setScale(1.0);
+        //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
+        inst->addComponent<CMeshRenderer>()
+                ->setMesh(Data::loadMesh("data/triangle.obj", false), STATIC, false)
+                ->setMaterial(textured, 2)
+                ->setMaterialTexId(0, texHandleDiffuse)
+                ->setMaterialTexId(1, texHandleNormal);
+        //testMesh->addComponent<CRigidBody>();
+
+
+        inst = editorScene->createObject();
+        inst->setName("Backpack");
+        transform = inst->getComponent<CTransform>();
+        transform->setPosition({-3.5, 0.0, 0.0});
+        //transform->setScale({0.1,0.1,0.1});
+        transform->setScale(1.0);
         //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
         inst->addComponent<CMeshRenderer>()
                 ->setMesh(Data::loadMesh("data/backpack.obj", false), STATIC, false)
                 ->setMaterial(textured, 2)
                 ->setMaterialTexId(0, texHandleDiffuse)
                 ->setMaterialTexId(1, texHandleNormal);
-        //testMesh->addComponent<CRigidBody>();
-        auto obj = editorScene->createObject();
-        obj->addComponent<CDummy>();
-        obj->addComponent<CDummy>();
-        obj->addComponent<CDummy>();
 
+
+
+        auto res = Data::loadScene("data/export.obj");
+        //for (auto obj:res) {
+            //editorScene->addObject(obj);
+        //}
 
         /*
         auto imp = editorScene->createObject();

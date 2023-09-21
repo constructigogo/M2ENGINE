@@ -12,7 +12,9 @@ namespace Engine {
     class Scene {
     public:
         Object * createObject();
-        Object * createObject(char* name);
+        Object * createObject(std::string name);
+
+        void importScene(const std::string &Filename);
 
         void addObject(Object * toAdd);
 

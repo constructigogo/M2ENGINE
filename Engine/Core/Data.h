@@ -24,6 +24,7 @@ namespace Engine {
 
         static const std::unordered_set<std::string> &getLoadableMesh();
         static std::shared_ptr<BaseMesh> loadMesh(const std::string &fileName, bool simpleImport=false);
+        static std::vector<Object *> loadScene(const std::string &fileName);
         static bgfx::ShaderHandle loadShaderBin(const char *_name);
         static bgfx::TextureHandle loadTextureRaw(const char *_name);
         static std::shared_ptr<Texture> loadTexture(const char *_name);
