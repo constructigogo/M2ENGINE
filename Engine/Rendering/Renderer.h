@@ -28,7 +28,7 @@ namespace Engine {
 
         void setRect(int width, int height);
 
-        void setView(float *view);
+        void setView(glm::mat4x4 view);
 
         void setProj(float *proj);
 
@@ -65,10 +65,9 @@ namespace Engine {
         bgfx::ProgramHandle debugShader;
         bgfx::ProgramHandle shadowmapShader;
 
-        float* view;
-        float* proj;
+        glm::mat4x4 view;
+        glm::mat4x4 proj;
         int width;
-
         int height;
 
 

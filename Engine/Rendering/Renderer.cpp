@@ -66,7 +66,7 @@ void Renderer::render() {
     glm::mat4x4 viewGLM = glm::lookAt(glm::vec3{0.0, 0.0, 10.0}, {0.0, 0.0, 0.0}, {0.0, 1.0, 0.0});
     glm::mat4x4 projGLM = glm::perspective(glm::radians(75.0f), float(width) / float(height), 0.1f, 250.0f);
 
-    bgfx::setViewTransform(RENDER_PASS::Render, view, glm::value_ptr(projGLM));
+    bgfx::setViewTransform(RENDER_PASS::Render, glm::value_ptr(view), glm::value_ptr(projGLM));
     bgfx::setViewRect(RENDER_PASS::Render, 0, 0, uint16_t(width), uint16_t(height));
 
 
@@ -76,25 +76,21 @@ void Renderer::render() {
             continue;
         }
 
-        const bx::Vec3 &pos = mesh->transform->getPosition();
-        const bx::Vec3 &scale = mesh->transform->getScale();
-        const bx::Quaternion &rot = mesh->transform->getRotation();
+        const glm::vec3 &pos = mesh->transform->getPosition();
+        const glm::vec3 &scal = mesh->transform->getScale();
+        const glm::quat &rot = mesh->transform->getRotation();
         //std::cout<< pos.x <<" "<<pos.y <<" "<<pos.z <<" " <<std::endl;
-        float mtxQuat[16];
-        bx::mtxFromQuaternion(mtxQuat, rot);
-        mtxQuat[12] = pos.x;
-        mtxQuat[13] = pos.y;
-        mtxQuat[14] = pos.z;
-        float mtxPos[16];
-        bx::mtxScale(mtxPos, scale.x, scale.y, scale.z);
-        float mtx[16];
-        bx::mtxMul(mtx, mtxQuat, mtxPos);
-
+        glm::mat4 model_matrix(1.0f);
+        auto translate = glm::translate(model_matrix,pos);
+        auto rotate = glm::mat4_cast(rot);
+        auto scale = glm::scale(model_matrix,scal);
+        glm::mat4 mtx = translate*rotate*scale;
+        mtx=translate;
         ///Shadow pass
-        bgfx::setTransform(mtx);
+        bgfx::setTransform(glm::value_ptr(mtx));
         bgfx::setVertexBuffer(0, mesh->mesh->VBH);
         bgfx::setIndexBuffer(mesh->mesh->IBH);
-        bx::mtxMul(lightMtx, mtx, mtxShadow);
+        bx::mtxMul(lightMtx, glm::value_ptr(mtx), mtxShadow);
 
         bgfx::setState(0 | BGFX_STATE_WRITE_RGB
                        | BGFX_STATE_WRITE_Z
@@ -117,7 +113,7 @@ void Renderer::render() {
         bgfx::setTexture(3, s_shadowMap, shadowMapTexture);
 
         //Uniform ginding
-        bgfx::setTransform(mtx);
+        bgfx::setTransform(glm::value_ptr(mtx));
         bgfx::setVertexBuffer(0, mesh->mesh->VBH);
         bgfx::setIndexBuffer(mesh->mesh->IBH);
         glm::mat4x4 lightMtxGLM= lightProj * lightViewGLM;
@@ -163,7 +159,7 @@ void Renderer::render() {
             const auto &scale = ptr->getScale();
 
             float mtxQuat[16];
-            bx::mtxFromQuaternion(mtxQuat, rot);
+            //bx::mtxFromQuaternion(mtxQuat, glm::value_ptr(rot));
             mtxQuat[12] = pos.x;
             mtxQuat[13] = pos.y;
             mtxQuat[14] = pos.z;
@@ -276,12 +272,12 @@ void Renderer::setRect(int width, int height) {
     bgfx::setViewRect(RENDER_PASS::Render, 0, 0, bgfx::BackbufferRatio::Equal);
 }
 
-void Renderer::setView(float *view) {
+void Renderer::setView(glm::mat4x4 view) {
     Renderer::view = view;
 }
 
 void Renderer::setProj(float *proj) {
-    Renderer::proj = proj;
+    //Renderer::proj = proj;
 }
 
 void Renderer::init() {

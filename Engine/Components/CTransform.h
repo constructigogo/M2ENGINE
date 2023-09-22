@@ -28,44 +28,39 @@ namespace Engine {
 
         std::shared_ptr<CTransform*> Parent;
 
-        bx::Vec3 Position = bx::Vec3(bx::InitZero);
-        bx::Quaternion Rotation = bx::Quaternion(bx::InitIdentity);
-        bx::Vec3 Scale = bx::Vec3(1.0f,1.0f,1.0f);
-
+        glm::vec3 Position = glm::vec3(0.0f,0.0f,0.0f);
+        glm::quat Rotation = glm::quat(1.0,0.0,0.0,0.0);
+        glm::vec3 Scale = glm::vec3(1.0f,1.0f,1.0f);
     protected:
         void EditorUIDrawContent() override;
 
     public:
         CTransform();
-        CTransform(const bx::Vec3 &Pos);
-        CTransform(const bx::Quaternion &Rot);
-        CTransform(const bx::Vec3 &Pos, const std::vector<glm::quat> &Rot);
 
-        void setPosition(const bx::Vec3 &position);
+        void setPosition(const glm::vec3 &position);
         void setPosition(const float &x,const float &y,const float &z);
 
-        void setScale(const bx::Vec3 &scale);
+        void setScale(const glm::vec3 &scale);
         void setScale(const float &x,const float &y,const float &z);
         void setScale(const float &xyz);
 
-        void setRotation(const bx::Quaternion &rotation);
+        void setRotation(const glm::quat &rotation);
 
-        void translate(const bx::Vec3 &position);
         void translate(const glm::vec3 &position);
         void translate(const float &x,const float &y,const float &z);
 
-        const bx::Vec3 getForward() const;
-        const bx::Vec3 getRight() const;
-        const bx::Vec3 getUp() const;
+        glm::vec3 getForward() const;
+        glm::vec3 getRight() const;
+        glm::vec3 getUp() const;
 
 
-        const bx::Vec3 &getPosition() const;
+        const glm::vec3 &getPosition() const;
 
-        const bx::Quaternion &getRotation() const;
+        const glm::quat &getRotation() const;
 
-        const bx::Vec3 &getScale() const;
+        const glm::vec3 &getScale() const;
 
-        bx::Vec3 getPositionBX() const;
+        glm::vec3 getPositionBX() const;
     };
 
 }

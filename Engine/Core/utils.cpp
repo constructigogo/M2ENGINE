@@ -9,7 +9,7 @@
 #include "glm/gtc/quaternion.hpp"
 
 namespace Engine::Utils{
-    glm::mat3 bxQuaternionToMat(bx::Quaternion quat){
+    glm::mat3 QuaternionToMat(glm::quat quat){
         glm::quat glQuat(quat.w,quat.x,quat.y,quat.z);
         return mat3_cast(glQuat);
     }

@@ -102,7 +102,7 @@ namespace Engine {
 
 
         initUI();
-        renderer = new Renderer(width,height);
+        renderer = new Renderer(width, height);
 
         //  return;
     }
@@ -119,7 +119,7 @@ namespace Engine {
             int oldWidth = width, oldHeight = height;
             glfwGetWindowSize(currentWindow, &width, &height);
             if (width != oldWidth || height != oldHeight) {
-                renderer->setRect(width,height);
+                renderer->setRect(width, height);
             }
 
             if (input->getIsKeyPressed(GLFW_KEY_F1)) {
@@ -161,20 +161,14 @@ namespace Engine {
             Component::processLateUpdate(time->getDeltaTime());
 
 
-            const bx::Vec3 eye = currentCamera->getComponent<CTransform>()->getPositionBX();
-            bx::Vec3 at = bx::sub(currentCamera->getComponent<CTransform>()->getPositionBX(),
-                                  currentCamera->getComponent<CTransform>()->getForward());
+            auto eye = currentCamera->getComponent<CTransform>()->getPosition();
+            glm::vec3 at = currentCamera->getComponent<CTransform>()->getPosition() +
+                           currentCamera->getComponent<CTransform>()->getForward();
             //at=bx::Vec3{0.0,0.0,0.0};
-            float view[16];
-            bx::mtxLookAt(view, eye, at, bx::Vec3{0.0, 1.0, 0.0}, bx::Handedness::Left);
-            float proj[16];
-            bx::mtxProj(proj, 75.0f, float(width) / float(height), 0.1f, 250.0f, bgfx::getCaps()->homogeneousDepth,
-                        bx::Handedness::Right);
 
-
+            auto view = glm::lookAt(eye,at,glm::vec3{0.0,1.0,0.0});
 
             renderer->setView(view);
-            renderer->setProj(proj);
 
 
             KeyInput::updateInputs();

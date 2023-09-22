@@ -4,11 +4,11 @@
 
 #include "CTransform.h"
 
-bx::Vec3 Engine::CTransform::getPositionBX() const {
+glm::vec3 Engine::CTransform::getPositionBX() const {
     return {Position.x, Position.y, Position.z};
 }
 
-void Engine::CTransform::setPosition(const bx::Vec3 &position) {
+void Engine::CTransform::setPosition(const glm::vec3 &position) {
     Position = position;
 }
 
@@ -16,19 +16,19 @@ void Engine::CTransform::setPosition(const float &x, const float &y, const float
     setPosition({x, y, z});
 }
 
-const bx::Vec3 &Engine::CTransform::getPosition() const {
+const glm::vec3 &Engine::CTransform::getPosition() const {
     return Position;
 }
 
-const bx::Quaternion &Engine::CTransform::getRotation() const {
+const glm::quat &Engine::CTransform::getRotation() const {
     return Rotation;
 }
 
-const bx::Vec3 &Engine::CTransform::getScale() const {
+const glm::vec3 &Engine::CTransform::getScale() const {
     return Scale;
 }
 
-void Engine::CTransform::translate(const bx::Vec3 &position) {
+void Engine::CTransform::translate(const glm::vec3 &position) {
     Position.x += position.x;
     Position.y += position.y;
     Position.z += position.z;
@@ -40,13 +40,7 @@ void Engine::CTransform::translate(const float &x, const float &y, const float &
     Position.z += z;
 }
 
-void Engine::CTransform::translate(const glm::vec3 &position) {
-    Position.x += position.x;
-    Position.y += position.y;
-    Position.z += position.z;
-}
-
-void Engine::CTransform::setScale(const bx::Vec3 &scale) {
+void Engine::CTransform::setScale(const glm::vec3 &scale) {
     Scale = scale;
 }
 
@@ -54,7 +48,7 @@ void Engine::CTransform::setScale(const float &x, const float &y, const float &z
     setScale({x, y, z});
 }
 
-void Engine::CTransform::setRotation(const bx::Quaternion &rotation) {
+void Engine::CTransform::setRotation(const glm::quat &rotation) {
     Rotation = rotation;
 }
 
@@ -74,9 +68,10 @@ void Engine::CTransform::EditorUIDrawContent() {
             ;
 
     ImGui::DragFloat3("Position", &Position.x, 0.1f,0.0f,0.0f,"%0.1f");
-    auto vec = mul(bx::toEuler(Rotation),180.0/bx::kPi);
+    auto vec = glm::eulerAngles(Rotation) * 180.0f/glm::pi<float>();
+    //auto vec = mul(bx::toEuler(Rotation),180.0/bx::kPi);
     if (ImGui::DragFloat3("Rotation", &vec.x, 0.1f,0.0f,0.0f,"%0.1f")) {
-        setRotation(bx::fromEuler(div(mul(vec, bx::kPi),180.0)));
+        setRotation(glm::quat(vec * glm::pi<float>()/180.0f));
     }
     ImGui::DragFloat3("Scale", &Scale.x, 0.1f,0.0f,0.0f,"%0.1f");
 
@@ -92,19 +87,21 @@ void Engine::CTransform::EditorUIDrawContent() {
 
 }
 
-const bx::Vec3 Engine::CTransform::getForward() const {
-    bx::Vec3 forward{0.0,0.0,-1.0};
-    return bx::normalize(bx::mul(forward,Rotation)) ;
+glm::vec3 Engine::CTransform::getForward() const {
+    glm::vec3 forward{0.0,0.0,-1.0};
+    return glm::normalize(forward*Rotation) ;
 }
 
-const bx::Vec3 Engine::CTransform::getRight() const {
-    bx::Vec3 right{1.0,0.0,0.0};
-    return bx::normalize(bx::mul(right,Rotation)) ;
+glm::vec3 Engine::CTransform::getRight() const {
+    glm::vec3 right{1.0,0.0,0.0};
+    return glm::normalize(right*Rotation) ;
+
 }
 
-const bx::Vec3 Engine::CTransform::getUp() const {
-    bx::Vec3 up{0.0,1.0,0.0};
-    return bx::normalize(bx::mul(up,Rotation)) ;
+glm::vec3 Engine::CTransform::getUp() const {
+    glm::vec3 up{0.0,1.0,0.0};
+    return glm::normalize(up*Rotation) ;
+
 }
 
 

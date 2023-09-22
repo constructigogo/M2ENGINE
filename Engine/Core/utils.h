@@ -12,7 +12,7 @@
 #include "bx/math.h"
 
 namespace Engine::Utils {
-        glm::mat3 bxQuaternionToMat(bx::Quaternion);
+        glm::mat3 QuaternionToMat(glm::quat quat);
 }
 
 #endif //ENGINE_UTILS_H

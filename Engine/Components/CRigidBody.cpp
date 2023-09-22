@@ -74,7 +74,7 @@ namespace Engine {
 
     void CRigidBody::computeAuxilaries() {
         velocity = LinMomentum / mass;
-        R= Utils::bxQuaternionToMat(bx::normalize(transform->getRotation()));
+        R= Utils::QuaternionToMat(glm::normalize(transform->getRotation()));
         Iinv = R * tensorInv * glm::transpose(R);
         angular = Iinv * AngMomentum;
     }

@@ -88,7 +88,7 @@ public:
 
 
 
-        auto res = Data::loadScene("data/export.obj");
+        //auto res = Data::loadScene("data/export.obj");
         //for (auto obj:res) {
             //editorScene->addObject(obj);
         //}
