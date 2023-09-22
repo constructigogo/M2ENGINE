@@ -37,7 +37,7 @@ void Renderer::render() {
     const float area = 32.0f;
     glm::mat4x4 lightViewGLM = glm::lookAt(glm::vec3{lightPos[0], lightPos[1], lightPos[2]}, {0.0, 0.0, 0.0},
                                            {0.0, 1.0, 0.0});
-    glm::mat4x4 lightProj = glm::orthoRH_NO(-area, area, -area, area, -100.0f, 100.0f);
+    glm::mat4x4 lightProj = glm::orthoRH_NO(-area, area, -area, area, -50.0f, 100.0f);
 
 
     float mtxShadow[16];
@@ -69,8 +69,9 @@ void Renderer::render() {
     bgfx::setViewTransform(RENDER_PASS::Render, view, glm::value_ptr(projGLM));
     bgfx::setViewRect(RENDER_PASS::Render, 0, 0, uint16_t(width), uint16_t(height));
 
-    ///SHADOWS
+
     for (const auto &mesh: renderList) {
+
         if (!mesh->isActive() || !mesh->getObject()->isActive() || !mesh->mesh) {
             continue;
         }
@@ -88,43 +89,23 @@ void Renderer::render() {
         bx::mtxScale(mtxPos, scale.x, scale.y, scale.z);
         float mtx[16];
         bx::mtxMul(mtx, mtxQuat, mtxPos);
+
+        ///Shadow pass
         bgfx::setTransform(mtx);
         bgfx::setVertexBuffer(0, mesh->mesh->VBH);
         bgfx::setIndexBuffer(mesh->mesh->IBH);
+        bx::mtxMul(lightMtx, mtx, mtxShadow);
+
         bgfx::setState(0 | BGFX_STATE_WRITE_RGB
                        | BGFX_STATE_WRITE_Z
                        | BGFX_STATE_DEPTH_TEST_LESS
                        | BGFX_STATE_CULL_CCW
                        | BGFX_STATE_MSAA);
         bgfx::submit(RENDER_PASS::Shadow, shadowmapShader, 0);
-    }
 
 
-    for (const auto &mesh: renderList) {
-
-        if (!mesh->isActive() || !mesh->getObject()->isActive() || !mesh->mesh) {
-            continue;
-        }
-
-        const bx::Vec3 &pos = mesh->transform->getPosition();
-        const bx::Vec3 &scale = mesh->transform->getScale();
-        const bx::Quaternion &rot = mesh->transform->getRotation();
-        //std::cout<< pos.x <<" "<<pos.y <<" "<<pos.z <<" " <<std::endl;
-        float mtxQuat[16];
-        bx::mtxFromQuaternion(mtxQuat, rot);
-        mtxQuat[12] = pos.x;
-        mtxQuat[13] = pos.y;
-        mtxQuat[14] = pos.z;
-        float mtxPos[16];
-        bx::mtxScale(mtxPos, scale.x, scale.y, scale.z);
-        float mtx[16];
-        bx::mtxMul(mtx, mtxQuat, mtxPos);
-        bgfx::setTransform(mtx);
-        bgfx::setVertexBuffer(0, mesh->mesh->VBH);
-        bgfx::setIndexBuffer(mesh->mesh->IBH);
-        bx::mtxMul(lightMtx, mtx, mtxShadow);
-
-
+        ///Render pass
+        //Texture binding
         if (!mesh->textures.empty()) {
             if (bgfx::isValid(mesh->textures[0]->getHandle())) {
                 bgfx::setTexture(0, s_texColor, mesh->textures[0]->getHandle());
@@ -135,10 +116,10 @@ void Renderer::render() {
         }
         bgfx::setTexture(3, s_shadowMap, shadowMapTexture);
 
+        //Uniform ginding
         bgfx::setTransform(mtx);
         bgfx::setVertexBuffer(0, mesh->mesh->VBH);
         bgfx::setIndexBuffer(mesh->mesh->IBH);
-
         glm::mat4x4 lightMtxGLM= lightProj * lightViewGLM;
         bgfx::setUniform(u_shadowTexelSize,shadowTexel);
         bgfx::setUniform(u_lightMtx, mtxShadow);
@@ -155,7 +136,6 @@ void Renderer::render() {
         } else {
             bgfx::submit(RENDER_PASS::Render, debugShader, 0);
         }
-
     }
 
     const bool instancingSupported = 0 != (BGFX_CAPS_INSTANCING & caps->supported);
@@ -283,23 +263,10 @@ void Renderer::unregisterStatic(CMeshRenderer *cMesh) {
 
 Renderer::Renderer() {
     init();
-
-    debugShader = bgfx::createProgram(
-            Data::loadShaderBin("v_simple.vert"),
-            Data::loadShaderBin("f_simple.frag"),
-            true
-    );
-
-
 }
 
 Renderer::Renderer(int width, int height) : width(width), height(height) {
     init();
-
-    bgfx::setViewClear(RENDER_PASS::Shadow, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
-    bgfx::setViewClear(RENDER_PASS::Render, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x443355FF, 1.0f, 0);
-    bgfx::setViewMode(RENDER_PASS::Render, bgfx::ViewMode::Default);
-    bgfx::setViewMode(RENDER_PASS::Shadow, bgfx::ViewMode::Default);
 }
 
 void Renderer::setRect(int width, int height) {
@@ -325,6 +292,13 @@ void Renderer::init() {
     u_lightMtx = bgfx::createUniform("u_lightMtx", bgfx::UniformType::Mat4);
     u_shadowTexelSize = bgfx::createUniform("u_shadowTexelSize",bgfx::UniformType::Vec4);
 
+
+    bgfx::setViewClear(RENDER_PASS::Shadow, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
+    bgfx::setViewClear(RENDER_PASS::Render, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x443355FF, 1.0f, 0);
+    bgfx::setViewMode(RENDER_PASS::Render, bgfx::ViewMode::Default);
+    bgfx::setViewMode(RENDER_PASS::Shadow, bgfx::ViewMode::Default);
+
+
     debugShader = bgfx::createProgram(
             Data::loadShaderBin("v_simple.vert"),
             Data::loadShaderBin("f_simple.frag"),
@@ -336,7 +310,6 @@ void Renderer::init() {
             Data::loadShaderBin("f_shadowmap.frag"),
             true
     );
-
 
     u_depthScaleOffset = bgfx::createUniform("u_depthScaleOffset", bgfx::UniformType::Vec4);
 
