@@ -25,9 +25,12 @@ namespace Engine {
         static const std::unordered_set<std::string> &getLoadableMesh();
         static std::shared_ptr<BaseMesh> loadMesh(const std::string &fileName, bool simpleImport=false);
         static std::vector<Object *> loadScene(const std::string &fileName);
+
+
+        static bgfx::ProgramHandle loadProgram(const char *vertex, const char* fragment);
         static bgfx::ShaderHandle loadShaderBin(const char *_name);
         static bgfx::TextureHandle loadTextureRaw(const char *_name);
-        static std::shared_ptr<Texture> loadTexture(const char *_name);
+        static std::shared_ptr<Texture> loadTexture(const char *_name, Texture::TYPE type);
         static bx::AllocatorI * allocator;
         static bx::FileReaderI* s_fileReader;
 
@@ -48,6 +51,7 @@ namespace Engine {
         static void imageReleaseCb(void* _ptr, void* _userData);
         static std::unordered_map<std::string, std::shared_ptr<BaseMesh>> meshCache;
         static std::unordered_map<std::string, std::shared_ptr<Texture>> textureCache;
+        static std::unordered_map<std::string, bgfx::ProgramHandle> programCache;
         static std::unordered_map<std::string, bgfx::TextureHandle> textureCacheRaw;
         static std::unordered_set<std::string> loadableMesh;
     };

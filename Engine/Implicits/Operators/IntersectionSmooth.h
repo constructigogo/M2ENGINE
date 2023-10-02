@@ -1,20 +1,21 @@
 //
-// Created by constantin on 13/09/23.
+// Created by constantin on 28/09/23.
 //
 
 #pragma once
 #include "ImplicitNode.h"
 namespace Engine {
 
-    class Union : public ImplicitNode{
+    class IntersectionSmooth :public ImplicitNode{
     public:
-        explicit Union(Implicit *l, Implicit *r);
+        IntersectionSmooth(Implicit *l, Implicit *r, float mFactor=0.4);
 
         float dist(const glm::vec3 &p) const override;
-        float dist2(const glm::vec3 &p) const override;
-        ~Union() override =default;
-    protected:
 
+        float dist2(const glm::vec3 &p) const override;
+
+    protected:
+        float m_factor;
     private:
     };
 

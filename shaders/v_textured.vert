@@ -20,7 +20,7 @@ void main(){
     vec3 weyepos = mul(vec4(0.0, 0.0, 0.0, 1.0), u_view).xyz;
     // tangent space view dir
     //v_view = TBN * v_view;
-    v_view = mul(weyepos - wpos, TBN);
+    //v_view = mul(weyepos - wpos, TBN);
 
 
     vec3 normal = a_normal * 2.0 - 1.0;

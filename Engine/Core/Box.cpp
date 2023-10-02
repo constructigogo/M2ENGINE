@@ -182,7 +182,28 @@ namespace Engine {
         else return b;
     }
 
-    Box::Box(const glm::vec3 &a, const glm::vec3 &b) : a(a), b(b) {}
+    Box::Box(const glm::vec3 &a, const glm::vec3 &b) : a(a), b(b) {
+        computeVertices();
+    }
+
+    void Box::computeVertices() {
+        vertices[0]=a;
+        vertices[1]=glm::vec3(b.x,a.y,a.z);
+        vertices[2]=glm::vec3(a.x,a.y,b.z);
+        vertices[3]=glm::vec3(a.x,b.y,a.z);
+        vertices[4]=b;
+        vertices[5]=glm::vec3(b.x,b.y,a.z);
+        vertices[6]=glm::vec3(b.x,a.y,b.z);
+        vertices[7]=glm::vec3(a.x,b.y,b.z);
+    }
+
+    const std::array<glm::vec3, 8> &Box::getVertices() const {
+        return vertices;
+    }
+
+    bool Box::isInside(const glm::vec3 &p) const {
+        return a.x <= p.x && p.x <= b.x && a.y <= p.y && p.y <= b.y;
+    }
 }
 
 

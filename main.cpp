@@ -8,9 +8,10 @@
 #include <iostream>
 #include "Engine/Implicits/ImplicitTriangulate.h"
 #include "Engine/Implicits/Sphere.h"
-#include "Engine/Implicits/Operators/Union.h"
-#include "Engine/Components/CDummy.h"
+#include "Engine/Implicits/Operators/Operators.h"
 #include "Engine/Components/CDirectionalLight.h"
+#include "Engine/Rendering/Material.h"
+#include "Engine/Core/Log.h"
 
 class EditorSandbox : public App {
 public:
@@ -24,10 +25,10 @@ public:
         debugProgram = bgfx::createProgram(
                 Data::loadShaderBin("v_simple.vert"),
                 Data::loadShaderBin("f_simple.frag"),
-                false
+                true
         );
 
-        auto light= editorScene->createObject("Directional light");
+        auto light = editorScene->createObject("Directional light");
         light->addComponent<CDirectionalLight>();
 
 
@@ -37,11 +38,9 @@ public:
                 true
         );
 
-        auto textured = bgfx::createProgram(
-                Data::loadShaderBin("v_textured.vert"),
-                Data::loadShaderBin("f_textured.frag"),
-                true
-        );
+        auto textured = Data::loadProgram("v_textured.vert", "f_textured.frag");
+        auto texMaterial = Material("textured", textured);
+        auto debugMaterial = Material("debug", debugProgram);
 
         auto texturedInst = bgfx::createProgram(
                 Data::loadShaderBin("v_textured_inst.vert"),
@@ -49,48 +48,52 @@ public:
                 true
         );
 
-        auto texHandleDiffuse = Data::loadTexture("data/diffuse.jpg");
-        auto texHandleNormal = Data::loadTexture("data/normal.png");
+        auto texHandleDiffuse = Data::loadTexture("data/diffuse.jpg", Texture::TYPE::COLOR);
+        auto texHandleNormal = Data::loadTexture("data/normal.png", Texture::TYPE::NORMAL);
 
-        /*auto texDiffuse = Data::loadTextureRaw("data/diffuse.jpg");
-        auto texNormal = Data::loadTextureRaw("data/normal.png");
-        assert(bgfx::isValid(texDiffuse));
-        assert(bgfx::isValid(texNormal));*/
+        ENGINE_INFO("Instantiating implicit");
+        auto imp = editorScene->createObject("Implicit");
+        ImplicitTriangulate tr;
+        Implicit *sphere = new Sphere({0.0, 0.0, 0.0}, 1.f);
+        Implicit *form = new DifferenceSmooth(
+                sphere,
+                new Sphere({1.0, 0.4, 0.0}, 1.f),
+                1.0f
+        );
+        float s = 2;
+        auto msh = (tr.Triangulate(form,
+                                   256,
+                                   Box({-s, -s, -s}, {s, s, s})
+        ));
+        imp->addComponent<CMeshRenderer>()
+                ->setMesh(msh, STATIC, false)
+                ->setMaterial(debugMaterial.createInstance());
 
 
+
+        /*
         auto inst = editorScene->createObject();
         inst->setName("Backpack");
         auto transform = inst->getComponent<CTransform>();
-        transform->setPosition({0.5, -0.5, 0.0});
+        transform->setPosition({0.0, 0.0, 0.0});
         //transform->setScale({0.1,0.1,0.1});
         transform->setScale(1.0);
         //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
-        inst->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/triangle.obj", false), STATIC, false)
-                ->setMaterial(textured, 2)
-                ->setMaterialTexId(0, texHandleDiffuse)
-                ->setMaterialTexId(1, texHandleNormal);
+        auto mRenderer = inst->addComponent<CMeshRenderer>()
+                ->setMesh(Data::loadMesh("data/backpack.obj", false), STATIC, false)
+                ->setMaterial(texMaterial.createInstance());
+        auto matInst = mRenderer->getMaterialInst();
+        matInst->setTexture(texHandleDiffuse);
+        matInst->setTexture(texHandleNormal);
+         */
         //testMesh->addComponent<CRigidBody>();
 
 
-        inst = editorScene->createObject();
-        inst->setName("Backpack");
-        transform = inst->getComponent<CTransform>();
-        transform->setPosition({-3.5, 0.0, 0.0});
-        //transform->setScale({0.1,0.1,0.1});
-        transform->setScale(1.0);
-        //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
-        inst->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/backpack.obj", false), STATIC, false)
-                ->setMaterial(textured, 2)
-                ->setMaterialTexId(0, texHandleDiffuse)
-                ->setMaterialTexId(1, texHandleNormal);
 
 
-
-        //auto res = Data::loadScene("data/export.obj");
+        auto res = Data::loadScene("data/export.obj");
         //for (auto obj:res) {
-            //editorScene->addObject(obj);
+        //editorScene->addObject(obj);
         //}
 
         /*
@@ -118,12 +121,12 @@ public:
             for (int j = 0; j < 3; ++j) {
                 auto inst = editorScene->createObject();
                 auto transform = inst->addComponent<CTransform>();
-                transform->setPosition({(float) i * 2 -9, -4, (float) j * 2 - 2});
+                transform->setPosition({(float) i * 2 - 9, -4, (float) j * 2 - 2});
                 //transform->setScale({0.1,0.1,0.1});
                 transform->setScale({0.1, 0.1, 0.1});
                 //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
                 inst->addComponent<CMeshRenderer>()
-                        ->setMesh(Data::loadMesh("data/backpack.obj",false), STATIC, true)
+                        ->setMesh(Data::loadMesh("data/backpack.obj", false), STATIC, true)
                         ->setMaterial(texturedInst)
                         ->setMaterialTexId(0, texHandleDiffuse)
                         ->setMaterialTexId(1, texHandleNormal);

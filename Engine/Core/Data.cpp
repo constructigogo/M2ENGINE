@@ -24,6 +24,7 @@ bx::AllocatorI *Data::allocator = nullptr;
 
 std::unordered_map<std::string, std::shared_ptr<BaseMesh>> Engine::Data::meshCache;
 std::unordered_map<std::string, std::shared_ptr<Texture>> Engine::Data::textureCache;
+std::unordered_map<std::string, bgfx::ProgramHandle> Engine::Data::programCache;
 std::unordered_map<std::string, bgfx::TextureHandle> Engine::Data::textureCacheRaw;
 std::unordered_set<std::string> Engine::Data::loadableMesh;
 
@@ -176,7 +177,7 @@ const std::unordered_set<std::string> &Data::getLoadableMesh() {
     return loadableMesh;
 }
 
-std::shared_ptr<Texture> Data::loadTexture(const char *_name) {
+std::shared_ptr<Texture> Data::loadTexture(const char *_name,Texture::TYPE type) {
 
     if (textureCache.contains(_name)) {
         return textureCache[_name];
@@ -226,7 +227,7 @@ std::shared_ptr<Texture> Data::loadTexture(const char *_name) {
         }
     }
     std::string name(_name);
-    auto buff = std::make_shared<Texture>(name,w,h,handle);
+    auto buff = std::make_shared<Texture>(name,w,h,handle,type);
 
     textureCache[_name] = buff;
     return buff;
@@ -235,20 +236,22 @@ std::shared_ptr<Texture> Data::loadTexture(const char *_name) {
 std::vector<Object *> Data::loadScene(const std::string &fileName) {
     Assimp::Importer Importer;
     std::vector<Object *> res;
-    const aiScene *pScene = Importer.ReadFile(fileName.c_str(), aiProcessPreset_TargetRealtime_MaxQuality);
+    const aiScene *pScene = Importer.ReadFile(fileName.c_str(), aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_GenBoundingBoxes);
     auto root = new Object();
     root->setName(fileName);
     root->addComponent<CTransform>();
     res.push_back(root);
+
+    auto textured = bgfx::createProgram(
+            Data::loadShaderBin("v_textured.vert"),
+            Data::loadShaderBin("f_textured.frag"),
+            true
+    );
+    Material material("textured",textured);
+
     if (pScene) {
         std::cout << "init mesh, size : " << pScene->mNumMeshes << std::endl;
         std::cout << "reading mesh as scene : " << fileName.c_str() << std::endl;
-
-        auto textured = bgfx::createProgram(
-                Data::loadShaderBin("v_textured.vert"),
-                Data::loadShaderBin("f_textured.frag"),
-                true
-        );
 
         for (int i = 0; i < pScene->mNumMeshes; ++i) {
             const aiMesh *paiMesh = pScene->mMeshes[i];
@@ -271,7 +274,8 @@ std::vector<Object *> Data::loadScene(const std::string &fileName) {
             rend->setMesh(mesh,STATIC, false);
             auto matIdx = paiMesh->mMaterialIndex;
             auto mat = pScene->mMaterials[matIdx];
-            rend->setMaterial(textured,2);
+            auto matInst = material.createInstance();
+            rend->setMaterial(matInst);
 
 
             std::cout<< pScene->mMaterials[matIdx]->GetName().C_Str()<<std::endl;
@@ -285,24 +289,45 @@ std::vector<Object *> Data::loadScene(const std::string &fileName) {
                 std::string textureType = "diffuse ";
                 std::string textureFileName = textureType + textureName.data;//The actual name of the texture file
                 std::cout <<textureFileName<<std::endl;
-                rend->setMaterialTexId(0,Data::loadTexture(path.c_str()));
+                matInst->setTexture(Data::loadTexture(path.c_str(),Texture::TYPE::COLOR));
             } else {
-                rend->setMaterialTexId(0,Data::loadTexture("data/color_flat.png"));
+                matInst->setTexture(Data::loadTexture("data/color_flat.png",Texture::TYPE::COLOR));
             }
 
             if(mat->GetTextureCount(aiTextureType_HEIGHT)){
-                //Get the file name of the texture by passing the variable by reference again
-                //Second param is 0, which is the first diffuse texture
-                //There can be more diffuse textures but for now we are only interested in the first one
                 auto ret = mat->Get(AI_MATKEY_TEXTURE(aiTextureType_HEIGHT, 0), textureName);
                 std::string path = "data/"+std::string(textureName.data);
                 std::string textureType = "normal ";
                 std::string textureFileName = textureType + textureName.data;//The actual name of the texture file
                 std::cout <<textureFileName<<std::endl;
-                rend->setMaterialTexId(1,Data::loadTexture(path.c_str()));
+                matInst->setTexture(Data::loadTexture(path.c_str(),Texture::TYPE::NORMAL));
             } else {
-                rend->setMaterialTexId(1,Data::loadTexture("data/normal_flat.png"));
+                matInst->setTexture(Data::loadTexture("data/normal_flat.png",Texture::TYPE::NORMAL));
             }
+
+            if(mat->GetTextureCount(aiTextureType_SPECULAR)){
+                auto ret = mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), textureName);
+                std::string path = "data/"+std::string(textureName.data);
+                std::string textureType = "specular ";
+                std::string textureFileName = textureType + textureName.data;//The actual name of the texture file
+                std::cout <<textureFileName<<std::endl;
+                matInst->setTexture(Data::loadTexture(path.c_str(),Texture::TYPE::SPECULAR));
+            } else {
+                matInst->setTexture(Texture::TYPE::SPECULAR,Data::loadTexture("data/color_flat.png",Texture::TYPE::COLOR));
+            }
+
+
+            // material index is the ID of the material you are interested in
+            float shininess;
+            if(AI_SUCCESS != aiGetMaterialFloat(mat, AI_MATKEY_SHININESS, &shininess))
+            {
+                shininess = 20.f;
+            }
+            else {
+                matInst->setSpecColor({1.0,1.0,1.0});
+                matInst->setSpecularStr(shininess);
+            }
+
 
 
             meshCache[name] = mesh;
@@ -318,4 +343,19 @@ std::vector<Object *> Data::loadScene(const std::string &fileName) {
         error.append(Importer.GetErrorString());
     }
     return res;
+}
+
+bgfx::ProgramHandle Data::loadProgram(const char *vertex, const char *fragment) {
+    std::string cat = std::string(vertex)+std::string(fragment);
+    if (programCache.contains(cat)) {
+        return programCache[cat];
+    } else {
+        auto created =  bgfx::createProgram(
+                Data::loadShaderBin(vertex),
+                Data::loadShaderBin(fragment),
+                true
+        );
+        programCache[cat] = created;
+        return created;
+    }
 }

@@ -16,8 +16,8 @@ namespace Engine {
     public:
         Implicit()= default;
 
-        virtual float dist(glm::vec3 p)=0;
-        virtual float dist2(glm::vec3 p)=0;
+        virtual float dist(const glm::vec3 &p) const =0;
+        virtual float dist2(const glm::vec3 &p) const =0;
         virtual bool isInside(glm::vec3 p);
         virtual bool intersect(const Ray& ray, RayHit& hit){return false;}
 

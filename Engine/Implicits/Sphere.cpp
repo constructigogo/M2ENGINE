@@ -9,12 +9,12 @@ namespace Engine {
 
     }
 
-    float Sphere::dist(glm::vec3 p) {
+    float Sphere::dist(const glm::vec3 &p) const {
         auto val =glm::distance(o,p)-r;
         return val ;
     }
 
-    float Sphere::dist2(glm::vec3 p) {
+    float Sphere::dist2(const glm::vec3 &p) const {
         glm::vec3 t(o-p);
         return glm::dot(t,t);
     }

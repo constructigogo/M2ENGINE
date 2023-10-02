@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include "../Core/Log.h"
 #include "Mesh.h"
 #include "assimp/Importer.hpp"
 #include "bgfx/bgfx.h"
@@ -13,8 +14,9 @@ using namespace Engine;
 void BaseMesh::loadMesh(const std::string &Filename, bool simpleImport) {
     Assimp::Importer Importer;
     name = Filename;
-    const aiScene *pScene = Importer.ReadFile(Filename.c_str(), simpleImport ? aiProcess_JoinIdenticalVertices | aiProcess_Triangulate
-                                                                             : aiProcessPreset_TargetRealtime_MaxQuality);
+    const aiScene *pScene = Importer.ReadFile(Filename.c_str(),
+                                              simpleImport ? aiProcess_JoinIdenticalVertices | aiProcess_Triangulate
+                                                           : aiProcessPreset_TargetRealtime_MaxQuality);
     if (pScene) {
         std::cout << "reading mesh : " << Filename.c_str() << std::endl;
         initFromScene(pScene, Filename);
@@ -61,7 +63,8 @@ void BaseMesh::initFromScene(const aiScene *pScene, const std::string &Filename)
 
     VBH = bgfx::createVertexBuffer(bgfx::makeRef(vertexesAllData.data(), vertexesAllData.size() * sizeof(vertexData)),
                                    vly);
-    IBH = bgfx::createIndexBuffer(bgfx::makeRef(indicesAllData.data(), indicesAllData.size() * sizeof(uint32_t)),BGFX_BUFFER_INDEX32);
+    IBH = bgfx::createIndexBuffer(bgfx::makeRef(indicesAllData.data(), indicesAllData.size() * sizeof(uint32_t)),
+                                  BGFX_BUFFER_INDEX32);
 }
 
 void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
@@ -103,7 +106,7 @@ void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
 
     for (unsigned int i = 0; i < paiMesh->mNumFaces; i++) {
         const aiFace &Face = paiMesh->mFaces[i];
-        if (Face.mNumIndices<3){
+        if (Face.mNumIndices < 3) {
             continue;
         }
         assert(Face.mNumIndices == 3);
@@ -115,8 +118,13 @@ void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
 }
 
 BaseMesh::~BaseMesh() {
-    bgfx::destroy(VBH);
-    bgfx::destroy(IBH);
+    ENGINE_DEBUG("Cleaning Mesh " + name);
+    if (bgfx::isValid(VBH)) {
+        bgfx::destroy(VBH);
+    }
+    if(bgfx::isValid(IBH)) {
+        bgfx::destroy(IBH);
+    }
 }
 
 void BaseMesh::addSubMesh(BaseMesh::SubMesh &toAdd) {
@@ -132,8 +140,10 @@ void BaseMesh::addSubMesh(BaseMesh::SubMesh &toAdd) {
             .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
             .end();
 
-    VBH = bgfx::createVertexBuffer(bgfx::copy(toAdd.vertexesData.data(), toAdd.vertexesData.size() * sizeof(vertexData)), vly);
-    IBH = bgfx::createIndexBuffer(bgfx::copy(toAdd.indices.data(), toAdd.indices.size() * sizeof(uint32_t)),BGFX_BUFFER_INDEX32);
+    VBH = bgfx::createVertexBuffer(
+            bgfx::copy(toAdd.vertexesData.data(), toAdd.vertexesData.size() * sizeof(vertexData)), vly);
+    IBH = bgfx::createIndexBuffer(bgfx::copy(toAdd.indices.data(), toAdd.indices.size() * sizeof(uint32_t)),
+                                  BGFX_BUFFER_INDEX32);
 
 }
 
@@ -142,9 +152,13 @@ const std::string &BaseMesh::getName() const {
 }
 
 void BaseMesh::initMeshAsSingle(const aiMesh *paimesh) {
-    initMesh(0,paimesh);
+    initMesh(0, paimesh);
 
     auto current = subMeshes[0];
+    auto aabb = paimesh->mAABB;
+    glm::vec3 min(aabb.mMin.x, aabb.mMin.y, aabb.mMin.z);
+    glm::vec3 max(aabb.mMax.x, aabb.mMax.y, aabb.mMax.z);
+    boundingBox = Box(min, max);
 
     vly.begin()
             .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
@@ -154,11 +168,13 @@ void BaseMesh::initMeshAsSingle(const aiMesh *paimesh) {
             .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
             .end();
 
-    VBH = bgfx::createVertexBuffer(bgfx::copy(current.vertexesData.data(), current.vertexesData.size() * sizeof(vertexData)), vly);
-    IBH = bgfx::createIndexBuffer(bgfx::copy(current.indices.data(), current.indices.size() * sizeof(uint32_t)),BGFX_BUFFER_INDEX32);
-
-
+    VBH = bgfx::createVertexBuffer(
+            bgfx::copy(current.vertexesData.data(), current.vertexesData.size() * sizeof(vertexData)), vly);
+    IBH = bgfx::createIndexBuffer(bgfx::copy(current.indices.data(), current.indices.size() * sizeof(uint32_t)),
+                                  BGFX_BUFFER_INDEX32);
 }
+
+BaseMesh::BaseMesh(const std::string &name) : name(name) {}
 
 
 void
@@ -169,7 +185,7 @@ BaseMesh::SubMesh::init(const std::vector<vertexData> &Vertices, const std::vect
     NumVertices = Vertices.size();
 
 
-    if(!hasNormal && Vertices.size()<32){
+    if (!hasNormal && Vertices.size() < 32) {
         triangleAdjencyGenerated = true;
 
         std::map<std::pair<uint32_t, uint32_t>, std::pair<uint32_t, uint32_t>> triangleOppositeMap;
@@ -215,11 +231,9 @@ BaseMesh::SubMesh::init(const std::vector<vertexData> &Vertices, const std::vect
                 }
             }
         }
-    }
-    else {
+    } else {
         triangleAdjencyGenerated = false;
     }
-
 
 
 #ifndef NDEBUG
@@ -232,20 +246,7 @@ BaseMesh::SubMesh::init(const std::vector<vertexData> &Vertices, const std::vect
     }
 #endif
 
-
-    vly.begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-            .end();
-
-    //VBH = bgfx::createVertexBuffer(bgfx::makeRef(vertexesData.data(), vertexesData.size() * sizeof(vertexData)), vly);
-    //IBH = bgfx::createIndexBuffer(bgfx::makeRef(indices.data(), indices.size() * sizeof(uint32_t)));
 }
 
 BaseMesh::SubMesh::~SubMesh() {
-    //bgfx::destroy(VBH);
-    //bgfx::destroy(IBH);
 }

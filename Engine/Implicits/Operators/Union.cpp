@@ -5,12 +5,12 @@
 #include "Union.h"
 
 namespace Engine {
-    float Union::dist(glm::vec3 p) {
+    float Union::dist(const glm::vec3 &p) const {
         //return std::sqrt(std::min(l->dist2(p),r->dist2(p)));
         return std::min(l->dist(p),r->dist(p));
     }
 
-    float Union::dist2(glm::vec3 p) {
+    float Union::dist2(const glm::vec3 &p) const {
         return std::min(l->dist2(p),r->dist2(p));
     }
 

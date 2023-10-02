@@ -46,6 +46,7 @@ namespace Engine {
         virtual void drawUI();
 
         bool debugMode = true;
+        bool wireframe = false;
         bool showStats = false;
 
         OCamera *currentCamera;

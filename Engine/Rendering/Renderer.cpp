@@ -5,6 +5,8 @@
 #include <iostream>
 #include "Renderer.h"
 #include "../Core/Data.h"
+#include "../Core/Log.h"
+#include "../Core/Box.h"
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 
@@ -24,9 +26,9 @@ void Renderer::render() {
     assert(bgfx::isValid(m_shadowMapFB));
 
     // Define matrices.
-    shadowmap_size=2048;
+    shadowmap_size = 2048;
     float shadowTexel[4]{
-        1.0f/(float)shadowmap_size,1.0f/(float)shadowmap_size,0.0,0.0
+            1.0f / (float) shadowmap_size, 1.0f / (float) shadowmap_size, 0.0, 0.0
     };
 
     float lightPos[4]{
@@ -34,6 +36,7 @@ void Renderer::render() {
     };
     bgfx::setUniform(u_lightPos, lightPos);
 
+    //Light view mtx
     const float area = 32.0f;
     glm::mat4x4 lightViewGLM = glm::lookAt(glm::vec3{lightPos[0], lightPos[1], lightPos[2]}, {0.0, 0.0, 0.0},
                                            {0.0, 1.0, 0.0});
@@ -63,15 +66,19 @@ void Renderer::render() {
     bgfx::setViewFrameBuffer(RENDER_PASS::Shadow, m_shadowMapFB);
     bgfx::setViewRect(RENDER_PASS::Shadow, 0, 0, shadowmap_size, shadowmap_size);
 
+    //Render mtx
+    float near = 0.1f;
+    float far = 250.0f;
     glm::mat4x4 viewGLM = glm::lookAt(glm::vec3{0.0, 0.0, 10.0}, {0.0, 0.0, 0.0}, {0.0, 1.0, 0.0});
-    glm::mat4x4 projGLM = glm::perspective(glm::radians(75.0f), float(width) / float(height), 0.1f, 250.0f);
+    glm::mat4x4 projGLM = glm::perspective(glm::radians(75.0f), float(width) / float(height), near, far);
+
+    Box bbox({0.0, 0.0, near}, {1.0, 1.0, -far});
 
     bgfx::setViewTransform(RENDER_PASS::Render, glm::value_ptr(view), glm::value_ptr(projGLM));
     bgfx::setViewRect(RENDER_PASS::Render, 0, 0, uint16_t(width), uint16_t(height));
 
 
     for (const auto &mesh: renderList) {
-
         if (!mesh->isActive() || !mesh->getObject()->isActive() || !mesh->mesh) {
             continue;
         }
@@ -81,56 +88,86 @@ void Renderer::render() {
         const glm::quat &rot = mesh->transform->getRotation();
         //std::cout<< pos.x <<" "<<pos.y <<" "<<pos.z <<" " <<std::endl;
         glm::mat4 model_matrix(1.0f);
-        auto translate = glm::translate(model_matrix,pos);
+        auto translate = glm::translate(model_matrix, pos);
         auto rotate = glm::mat4_cast(rot);
-        auto scale = glm::scale(model_matrix,scal);
-        glm::mat4 mtx = translate*rotate*scale;
-        mtx=translate;
+        auto scale = glm::scale(model_matrix, scal);
+        glm::mat4 mtx = translate * rotate * scale;
+        mtx = translate * rotate * scale;
         ///Shadow pass
-        bgfx::setTransform(glm::value_ptr(mtx));
-        bgfx::setVertexBuffer(0, mesh->mesh->VBH);
-        bgfx::setIndexBuffer(mesh->mesh->IBH);
-        bx::mtxMul(lightMtx, glm::value_ptr(mtx), mtxShadow);
 
-        bgfx::setState(0 | BGFX_STATE_WRITE_RGB
-                       | BGFX_STATE_WRITE_Z
-                       | BGFX_STATE_DEPTH_TEST_LESS
-                       | BGFX_STATE_CULL_CCW
-                       | BGFX_STATE_MSAA);
-        bgfx::submit(RENDER_PASS::Shadow, shadowmapShader, 0);
+        auto VP = lightProj * lightViewGLM;
+        if (!isCulled(VP, mtx, mesh->mesh->boundingBox)) {
+            bgfx::setTransform(glm::value_ptr(mtx));
+            bgfx::setVertexBuffer(0, mesh->mesh->VBH);
+            bgfx::setIndexBuffer(mesh->mesh->IBH);
+            bx::mtxMul(lightMtx, glm::value_ptr(mtx), mtxShadow);
+
+            bgfx::setState(0 | BGFX_STATE_WRITE_RGB
+                           | BGFX_STATE_WRITE_Z
+                           | BGFX_STATE_DEPTH_TEST_LESS
+                           | BGFX_STATE_CULL_CCW);
+            bgfx::submit(RENDER_PASS::Shadow, shadowmapShader, 0);
+        }
 
 
         ///Render pass
-        //Texture binding
-        if (!mesh->textures.empty()) {
-            if (bgfx::isValid(mesh->textures[0]->getHandle())) {
-                bgfx::setTexture(0, s_texColor, mesh->textures[0]->getHandle());
+        //Culling
+        bool visible = false;
+        /*
+        int count =0;
+        for (const auto & vert : mesh->mesh->boundingBox.getVertices()) {
+            auto transformed = projGLM*view*mtx*glm::vec4(vert,1);
+            if ((transformed.x < -transformed.w )){
+                count++;
             }
-            if (bgfx::isValid(mesh->textures[1]->getHandle())) {
-                bgfx::setTexture(1, s_texNormal, mesh->textures[1]->getHandle());
-            }
+            visible = visible ||
+                     ((transformed.x > -transformed.w));
         }
-        bgfx::setTexture(3, s_shadowMap, shadowMapTexture);
 
-        //Uniform ginding
-        bgfx::setTransform(glm::value_ptr(mtx));
-        bgfx::setVertexBuffer(0, mesh->mesh->VBH);
-        bgfx::setIndexBuffer(mesh->mesh->IBH);
-        glm::mat4x4 lightMtxGLM= lightProj * lightViewGLM;
-        bgfx::setUniform(u_shadowTexelSize,shadowTexel);
-        bgfx::setUniform(u_lightMtx, mtxShadow);
-        bgfx::setUniform(u_lightPos, lightPos);
-        bgfx::setState(0
-                       | BGFX_STATE_WRITE_RGB
-                       | BGFX_STATE_WRITE_A
-                       | BGFX_STATE_WRITE_Z
-                       | BGFX_STATE_DEPTH_TEST_LESS
-                       | BGFX_STATE_CULL_CW
-                       | BGFX_STATE_MSAA);
-        if (bgfx::isValid(mesh->material)) {
-            bgfx::submit(RENDER_PASS::Render, mesh->material, 0);
-        } else {
-            bgfx::submit(RENDER_PASS::Render, debugShader, 0);
+        if (count ==8){
+            continue;
+        }*/
+
+
+        VP = projGLM * view;
+        if (!isCulled(VP, mtx, mesh->mesh->boundingBox)) {
+            auto matInst = mesh->getMaterialInst();
+
+            if (matInst->useMap(Texture::TYPE::COLOR)) {
+                bgfx::setTexture(Texture::TYPE::COLOR, s_texColor, matInst->getMap(Texture::TYPE::COLOR)->getHandle());
+            }
+            if (matInst->useMap(Texture::TYPE::NORMAL)) {
+                bgfx::setTexture(Texture::TYPE::NORMAL, s_texNormal,
+                                 matInst->getMap(Texture::TYPE::NORMAL)->getHandle());
+            }
+            if (matInst->useMap(Texture::TYPE::SPECULAR)) {
+                bgfx::setTexture(Texture::TYPE::SPECULAR, s_texSpecular,
+                                 matInst->getMap(Texture::TYPE::SPECULAR)->getHandle());
+            }
+
+            bgfx::setTexture(3, s_shadowMap, shadowMapTexture);
+
+            //Uniform binding
+            bgfx::setTransform(glm::value_ptr(mtx));
+            bgfx::setVertexBuffer(0, mesh->mesh->VBH);
+            bgfx::setIndexBuffer(mesh->mesh->IBH);
+            glm::mat4x4 lightMtxGLM = lightProj * lightViewGLM;
+            bgfx::setUniform(u_shadowTexelSize, shadowTexel);
+            bgfx::setUniform(u_specular, glm::value_ptr(matInst->getSpecular()));
+            bgfx::setUniform(u_lightMtx, mtxShadow);
+            bgfx::setUniform(u_lightPos, lightPos);
+            bgfx::setState(0
+                           | BGFX_STATE_WRITE_RGB
+                           | BGFX_STATE_WRITE_A
+                           | BGFX_STATE_WRITE_Z
+                           | BGFX_STATE_DEPTH_TEST_LESS
+                           | BGFX_STATE_CULL_CW
+                           | BGFX_STATE_MSAA);
+            if (bgfx::isValid(matInst->getHandle())) {
+                bgfx::submit(RENDER_PASS::Render, matInst->getHandle(), 0);
+            } else {
+                bgfx::submit(RENDER_PASS::Render, debugShader, 0);
+            }
         }
     }
 
@@ -175,7 +212,7 @@ void Renderer::render() {
         bgfx::setVertexBuffer(0, mesh->VBH);
         bgfx::setIndexBuffer(mesh->IBH);
         bgfx::setInstanceDataBuffer(&idb);
-
+        /*
         if (!texturesList.empty()) {
             if (bgfx::isValid(texturesList[0]->getHandle())) {
                 bgfx::setTexture(0, s_texColor, texturesList[0]->getHandle());
@@ -183,7 +220,11 @@ void Renderer::render() {
             if (bgfx::isValid(texturesList[1]->getHandle())) {
                 bgfx::setTexture(1, s_texNormal, texturesList[1]->getHandle());
             }
+            if (bgfx::isValid(texturesList[2]->getHandle())) {
+                bgfx::setTexture(2, s_texSpecular, texturesList[2]->getHandle());
+            }
         }
+        */
 
 
         bgfx::setState(0
@@ -204,7 +245,7 @@ void Renderer::render() {
 
 
 void Renderer::registerAsDynamic(CMeshRenderer *cMesh) {
-    std::cout << "registering dynamic " << cMesh->material.idx << std::endl;
+    ENGINE_TRACE("Registering [" + cMesh->getObject()->getName() + "] as dynamic");
     Renderer::renderList.push_back(cMesh);
 }
 
@@ -283,10 +324,12 @@ void Renderer::setProj(float *proj) {
 void Renderer::init() {
     s_texColor = bgfx::createUniform("s_texColor", bgfx::UniformType::Sampler);
     s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Sampler);
+    s_texSpecular = bgfx::createUniform("s_texSpecular", bgfx::UniformType::Sampler);
     s_shadowMap = bgfx::createUniform("s_shadowMap", bgfx::UniformType::Sampler);
+    u_specular = bgfx::createUniform("u_specular", bgfx::UniformType::Vec4);
     u_lightPos = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4);
     u_lightMtx = bgfx::createUniform("u_lightMtx", bgfx::UniformType::Mat4);
-    u_shadowTexelSize = bgfx::createUniform("u_shadowTexelSize",bgfx::UniformType::Vec4);
+    u_shadowTexelSize = bgfx::createUniform("u_shadowTexelSize", bgfx::UniformType::Vec4);
 
 
     bgfx::setViewClear(RENDER_PASS::Shadow, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);

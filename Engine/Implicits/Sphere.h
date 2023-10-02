@@ -12,9 +12,9 @@ namespace Engine {
     public:
         explicit Sphere(glm::vec3 _o, float _r);
 
-        float dist(glm::vec3 p) override;
+        float dist(const glm::vec3 &p) const override;
 
-        float dist2(glm::vec3 p) override;
+        float dist2(const glm::vec3 &p) const override;
 
         ~Sphere() override;
     protected:

@@ -10,16 +10,19 @@ namespace Engine {
 
     class Texture {
     public:
-        Texture() = default;
-
-        Texture(const std::string &name, int width, int height, const bgfx::TextureHandle &handle);
 
         enum TYPE {
             COLOR,
             NORMAL,
+            SPECULAR,
             AO,
             DEPTH
         };
+
+        Texture() = default;
+
+        Texture(const std::string &name,int width, int height, const bgfx::TextureHandle &handle ,TYPE texType);
+
 
         const bgfx::TextureHandle &getHandle() const;
 
@@ -27,9 +30,12 @@ namespace Engine {
 
         int getWidth() const;
         int getHeight() const;
+        TYPE getType() const;
+
 
     protected:
         std::string name;
+        TYPE texType;
         int width;
         int height;
         bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;

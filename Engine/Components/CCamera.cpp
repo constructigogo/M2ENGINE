@@ -27,16 +27,18 @@ namespace Engine {
 
     void CCamera::update(double deltaTime) {
         const glm::vec3 &current = transform->getPosition();
-        float dx, dy;
+        static float dx=0, dy=0;
 
         if (input->getIsKeyDown(GLFW_MOUSE_BUTTON_1)) {
-            dx = input->getMouseDeltaX() * 3.0;
-            dy = input->getMouseDeltaY() * 3.0;
-            auto rotD = glm::quat(glm::vec3(dy * cos(dx), dx, dy * sin(dx)));
-            auto current = (transform->getRotation());
-            auto res = current * rotD;
-            transform->setRotation(res);
+            dx += -input->getMouseDeltaX() * 3.0;
+            dy += input->getMouseDeltaY() * 3.0;
 
+            dy = std::clamp(dy, glm::radians(-85.0f), glm::radians(85.0f));
+            glm::quat QuatAroundX = glm::quat( glm::vec3(-dy,0.0,0.0) );
+            glm::quat QuatAroundY = glm::quat( glm::vec3(0.0,dx,0.0) );
+            glm::quat QuatAroundZ = glm::quat( glm::vec3(0.0,0.0,0.0));
+            glm::quat finalOrientation = QuatAroundX * QuatAroundY * QuatAroundZ;
+            transform->setRotation(finalOrientation);
 
         }
         if (input->getIsKeyDown(GLFW_KEY_W)) {

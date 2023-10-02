@@ -2,6 +2,7 @@
 // Created by constantin on 19/09/23.
 //
 
+#include <cassert>
 #include "Texture.h"
 
 namespace Engine {
@@ -14,15 +15,19 @@ namespace Engine {
     }
 
     const bgfx::TextureHandle &Texture::getHandle() const {
+        assert(bgfx::isValid(handle));
         return handle;
     }
 
-    Texture::Texture(const std::string &name, int width, int height, const bgfx::TextureHandle &handle) : name(name),
-                                                                                                          width(width),
-                                                                                                          height(height),
-                                                                                                          handle(handle) {}
-
     const std::string &Texture::getName() const {
         return name;
+    }
+
+    Texture::Texture(const std::string &name, int width, int height,
+                     const bgfx::TextureHandle &handle, Texture::TYPE texType) : name(name), texType(texType), width(width), height(height),
+                                                          handle(handle) {}
+
+    Texture::TYPE Texture::getType() const {
+        return texType;
     }
 } // Engine

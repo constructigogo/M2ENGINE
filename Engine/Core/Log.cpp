@@ -13,9 +13,9 @@ namespace Engine {
         spdlog::set_pattern("%^[%T] %n: %v%$");
         CoreLogger = spdlog::stdout_color_mt("Engine");
         CoreLogger->set_level(spdlog::level::trace);
-        ClientLogger = spdlog::stdout_color_mt("App");
+        ClientLogger = spdlog::stdout_color_mt("Debug");
         ClientLogger->set_level(spdlog::level::trace);
-
+        ENGINE_TRACE("Init Logger");
     }
 
 

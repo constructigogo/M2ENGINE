@@ -5,6 +5,7 @@
 #pragma once
 
 #include "glm/vec3.hpp"
+#include <array>
 
 namespace Engine {
 
@@ -13,10 +14,15 @@ namespace Engine {
         Box(const glm::vec3 &a, const glm::vec3 &b);
 
         glm::vec3 diagonal();
+        bool isInside(const glm::vec3 &p) const;
+        const std::array<glm::vec3, 8> &getVertices() const;
+
 
         glm::vec3 &operator[](int i);
     protected:
+        void computeVertices();
         glm::vec3 a, b; //!< Lower and upper vertex.
+        std::array<glm::vec3,8> vertices;
     };
 
 /*

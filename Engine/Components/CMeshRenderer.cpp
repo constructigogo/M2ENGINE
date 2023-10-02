@@ -118,6 +118,15 @@ void CMeshRenderer::EditorUIDrawContent() {
     }
 }
 
+CMeshRenderer *CMeshRenderer::setMaterial(std::shared_ptr<MaterialInstance> mat) {
+    materialInst = std::move(mat);
+    return this;
+}
+
+const std::shared_ptr<MaterialInstance> &CMeshRenderer::getMaterialInst() const {
+    return materialInst;
+}
+
 
 
 

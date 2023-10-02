@@ -53,24 +53,34 @@ namespace Engine {
     Engine::App::App(int width, int height, const char *title) : width(width), height(height) {}
 
     void Engine::App::init() {
-
         Log::Init();
+
+        ENGINE_TRACE("Registering Components");
         initComponentType();
+
+        ENGINE_TRACE("Init GLFW context");
         // Create a GLFW window without an OpenGL context.
         glfwSetErrorCallback(glfw_errorCallback);
-        if (!glfwInit())
+        if (!glfwInit()) {
+            ENGINE_FATAL("GLFW not initialized, exiting");
             return;
+        }
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
         currentWindow = glfwCreateWindow(width, height, "don't look here", nullptr, nullptr);
-        if (!currentWindow)
+        if (!currentWindow) {
+            ENGINE_FATAL("Failed to create window, exiting");
             return;
+        }
 
+        ENGINE_TRACE("Init Data Manager");
         Data::init();
+        ENGINE_TRACE("Init Input Manager");
         KeyInput::setupKeyInputs(currentWindow);
 
-        input = std::make_unique<KeyInput>(std::vector<int>({GLFW_KEY_F1, GLFW_MOUSE_BUTTON_1, GLFW_MOUSE_BUTTON_2}));
+        input = std::make_unique<KeyInput>(std::vector<int>({GLFW_KEY_F1,GLFW_KEY_Z, GLFW_MOUSE_BUTTON_1, GLFW_MOUSE_BUTTON_2}));
         time = std::make_unique<ETime>();
 
+        ENGINE_TRACE("Init rendering backend");
         //glfwSetKeyCallback(currentWindow, glfw_keyCallback);
         // Call bgfx::renderFrame before bgfx::init to signal to bgfx not to create a render thread.
         // Most graphics APIs must be used on the same thread that created the window.
@@ -93,18 +103,20 @@ namespace Engine {
         init.resolution.width = (uint32_t) width;
         init.resolution.height = (uint32_t) height;
         init.resolution.reset = BGFX_RESET_VSYNC;
-        if (!bgfx::init(init))
+        if (!bgfx::init(init)) {
+            ENGINE_FATAL("Failed to initialize rendering backend, exiting");
             return;
+        }
 
-
-        m_timeOffset = bx::getHPCounter();
-        editorScene = new Engine::Scene();
-
-
-        initUI();
+        ENGINE_TRACE("Init Renderer");
         renderer = new Renderer(width, height);
 
-        //  return;
+        m_timeOffset = bx::getHPCounter();
+        ENGINE_TRACE("Init Editor Scene");
+        editorScene = new Engine::Scene();
+
+        ENGINE_TRACE("Init UI");
+        initUI();
     }
 
     void Engine::App::run() {
@@ -126,6 +138,12 @@ namespace Engine {
                 s_showStats = !s_showStats;
             }
 
+            if (input->getIsKeyPressed(GLFW_KEY_Z)) {
+                wireframe = !wireframe;
+            }
+
+
+
             if (debugMode) {
                 // This dummy draw call is here to make sure that view 0 is cleared if no other draw calls are submitted to view 0.
                 bgfx::touch(kClearView);
@@ -140,7 +158,11 @@ namespace Engine {
                 bgfx::dbgTextPrintf(0, 3, 0x0f, "Draw call : %d",
                                     bgfx::getStats()->numDraw);
                 // Enable stats or debug text.
-                bgfx::setDebug(s_showStats ? BGFX_DEBUG_STATS : BGFX_DEBUG_TEXT);
+                if (wireframe) {
+                    bgfx::setDebug(BGFX_DEBUG_WIREFRAME);
+                } else {
+                    bgfx::setDebug(s_showStats ? BGFX_DEBUG_STATS : BGFX_DEBUG_TEXT);
+                }
             }
 
             double fixedRate = 30;
@@ -166,7 +188,7 @@ namespace Engine {
                            currentCamera->getComponent<CTransform>()->getForward();
             //at=bx::Vec3{0.0,0.0,0.0};
 
-            auto view = glm::lookAt(eye,at,glm::vec3{0.0,1.0,0.0});
+            auto view = glm::lookAt(eye, at, glm::vec3{0.0, 1.0, 0.0});
 
             renderer->setView(view);
 
@@ -219,6 +241,7 @@ namespace Engine {
         io.WantCaptureKeyboard = true;
         io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
         auto hierarchy = new UI::UIHierarchyWindow(200, 400);
+        ImGui::SetNextWindowPos({((float) (width - 500.0)), 200});
         auto details = new UI::UIDetailsWindow(400, 600);
         details->attachHierarchy(hierarchy);
         hierarchy->attachScene(editorScene);

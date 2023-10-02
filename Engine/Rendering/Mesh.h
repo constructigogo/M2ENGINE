@@ -12,6 +12,7 @@
 #include "glm/glm.hpp"
 #include "bgfx/bgfx.h"
 #include "../Components/CTransform.h"
+#include "../Core/Box.h"
 
 namespace Engine {
     class BaseMesh {
@@ -19,8 +20,9 @@ namespace Engine {
         bgfx::VertexLayout vly;
 
         std::string name;
-
     public:
+        BaseMesh()=default;
+        explicit BaseMesh(const std::string &name);
         ~BaseMesh();
 
         const std::string &getName() const;
@@ -110,6 +112,8 @@ namespace Engine {
         void initMeshAsSingle(const aiMesh* paimesh);
 
         std::vector<SubMesh> subMeshes;
+        Box boundingBox= Box({-1.0,-1.0,-1.0},{1.0,1.0,1.0});
+
 
         void loadMesh(const std::string &Filename, bool simpleImport = false);
         std::vector<vertexData> vertexesAllData;

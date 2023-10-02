@@ -11,14 +11,11 @@
 #include "CTransform.h"
 #include "../Rendering/Renderer.h"
 #include "../Rendering/Texture.h"
+#include "../Rendering/Material.h"
+#include "../Core/Box.h"
 
 
 namespace Engine {
-
-    enum TEXTURE_TYPE {
-        COLOR,
-        NORMAL,
-    };
 
     class CMeshRenderer : public Component {
     public :
@@ -27,6 +24,9 @@ namespace Engine {
         CMeshRenderer *setMesh(std::shared_ptr<BaseMesh>, CTransformMobility mobility, bool _isInstanced = false);
 
         CMeshRenderer *setMaterial(bgfx::ProgramHandle _material, int texAmount = 0);
+        CMeshRenderer *setMaterial(std::shared_ptr<MaterialInstance> mat);
+
+        const std::shared_ptr<MaterialInstance> &getMaterialInst() const;
 
         CMeshRenderer *setMaterialTexId(int idx, std::shared_ptr<Texture> texHandle);
 
@@ -47,6 +47,8 @@ namespace Engine {
 
         std::shared_ptr<BaseMesh> mesh;
         CTransform *transform;
+        std::shared_ptr<MaterialInstance> materialInst;
+
         bgfx::ProgramHandle material = BGFX_INVALID_HANDLE;
         std::vector<std::shared_ptr<Texture>> textures;
         CTransformMobility mobility;

@@ -249,7 +249,7 @@ namespace Engine {
         for (int i = 0; i < vertex.size(); ++i) {
             data.push_back({
                                    vertex[i],
-                                   normal[i],
+                                   -normal[i],
                                    glm::vec3{0.0, 0.0, 0.0},
                                    glm::vec2{0.0, 0.0},
                            });
@@ -259,7 +259,9 @@ namespace Engine {
 
 
 
-        std::shared_ptr<BaseMesh> mesh = std::make_shared<BaseMesh>();
+        std::shared_ptr<BaseMesh> mesh = std::make_shared<BaseMesh>("Implicit");
+
+        mesh->boundingBox=bbox;
         mesh->addSubMesh(sub);
         generated = mesh;
         return generated;
