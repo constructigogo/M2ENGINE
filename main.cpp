@@ -51,6 +51,7 @@ public:
         auto texHandleDiffuse = Data::loadTexture("data/diffuse.jpg", Texture::TYPE::COLOR);
         auto texHandleNormal = Data::loadTexture("data/normal.png", Texture::TYPE::NORMAL);
 
+        /*
         ENGINE_INFO("Instantiating implicit");
         auto imp = editorScene->createObject("Implicit");
         ImplicitTriangulate tr;
@@ -68,32 +69,30 @@ public:
         imp->addComponent<CMeshRenderer>()
                 ->setMesh(msh, STATIC, false)
                 ->setMaterial(debugMaterial.createInstance());
+        */
 
 
 
-        /*
         auto inst = editorScene->createObject();
         inst->setName("Backpack");
         auto transform = inst->getComponent<CTransform>();
         transform->setPosition({0.0, 0.0, 0.0});
         //transform->setScale({0.1,0.1,0.1});
-        transform->setScale(1.0);
+        transform->setScale(4.0);
         //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
         auto mRenderer = inst->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/backpack.obj", false), STATIC, false)
-                ->setMaterial(texMaterial.createInstance());
+                ->setMesh(Data::loadMesh("data/kube.off", true), STATIC, false)
+                ->setMaterial(debugMaterial.createInstance());
         auto matInst = mRenderer->getMaterialInst();
-        matInst->setTexture(texHandleDiffuse);
-        matInst->setTexture(texHandleNormal);
-         */
+
         //testMesh->addComponent<CRigidBody>();
 
 
 
 
-        auto res = Data::loadScene("data/export.obj");
-        //for (auto obj:res) {
-        //editorScene->addObject(obj);
+        //auto res = Data::loadScene("data/exterior.obj");
+        //for (auto obj: res) {
+        //    editorScene->addObject(obj);
         //}
 
         /*

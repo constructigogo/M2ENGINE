@@ -17,6 +17,8 @@ namespace Engine {
         bool isInside(const glm::vec3 &p) const;
         const std::array<glm::vec3, 8> &getVertices() const;
 
+        const glm::vec3 & getLower();
+        const glm::vec3 & getUpper();
 
         glm::vec3 &operator[](int i);
     protected:

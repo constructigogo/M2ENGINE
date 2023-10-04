@@ -25,6 +25,8 @@ namespace Engine {
 
         const bgfx::ProgramHandle &getHandle() const;
 
+        const std::string &getName() const;
+
     protected:
         std::string name;
         bgfx::ProgramHandle handle;

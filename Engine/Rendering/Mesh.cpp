@@ -15,26 +15,33 @@ void BaseMesh::loadMesh(const std::string &Filename, bool simpleImport) {
     Assimp::Importer Importer;
     name = Filename;
     const aiScene *pScene = Importer.ReadFile(Filename.c_str(),
-                                              simpleImport ? aiProcess_JoinIdenticalVertices | aiProcess_Triangulate
+                                              simpleImport ? aiProcess_JoinIdenticalVertices |
+                                                             aiProcess_GenBoundingBoxes | aiProcess_Triangulate
                                                            : aiProcessPreset_TargetRealtime_MaxQuality);
     if (pScene) {
-        std::cout << "reading mesh : " << Filename.c_str() << std::endl;
+        ENGINE_TRACE("Reading mesh " + Filename);
         initFromScene(pScene, Filename);
     } else {
-        printf("Error parsing '%s': '%s'\n", Filename.c_str(), Importer.GetErrorString());
+        //printf("Error parsing '%s': '%s'\n", Filename.c_str(), Importer.GetErrorString());
         std::string error = "Error parsing ";
         error.append(Filename);
         error.append(" : ");
         error.append(Importer.GetErrorString());
+        ENGINE_WARN(error);
     }
 }
 
 void BaseMesh::initFromScene(const aiScene *pScene, const std::string &Filename) {
-
+    if (pScene->mNumMeshes == 1) {
+        ENGINE_TRACE("Init mesh as single");
+        initMeshAsSingle(pScene->mMeshes[0]);
+        return;
+    }
     // Initialize the meshes in the scene one by one
     subMeshes.resize(pScene->mNumMeshes);
 
-    std::cout << "init mesh, size : " << subMeshes.size() << std::endl;
+    //std::cout << "init mesh, size : " << subMeshes.size() << std::endl;
+    ENGINE_TRACE("Init Mesh from scene, size : " + std::to_string(subMeshes.size()));
     for (unsigned int i = 0; i < subMeshes.size(); i++) {
         const aiMesh *paiMesh = pScene->mMeshes[i];
         initMesh(i, paiMesh);
@@ -75,7 +82,6 @@ void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
 
     vertexesData.resize(size);
     const aiVector3D Zero3D(0.0f, 0.0f, 0.0f);
-
 
     for (int i = 0; i < size; ++i) {
         const aiVector3D *pPos = &(paiMesh->mVertices[i]);
@@ -122,7 +128,7 @@ BaseMesh::~BaseMesh() {
     if (bgfx::isValid(VBH)) {
         bgfx::destroy(VBH);
     }
-    if(bgfx::isValid(IBH)) {
+    if (bgfx::isValid(IBH)) {
         bgfx::destroy(IBH);
     }
 }
@@ -152,6 +158,7 @@ const std::string &BaseMesh::getName() const {
 }
 
 void BaseMesh::initMeshAsSingle(const aiMesh *paimesh) {
+    subMeshes.resize(1);
     initMesh(0, paimesh);
 
     auto current = subMeshes[0];
@@ -178,14 +185,15 @@ BaseMesh::BaseMesh(const std::string &name) : name(name) {}
 
 
 void
-BaseMesh::SubMesh::init(const std::vector<vertexData> &Vertices, const std::vector<uint32_t> &Indices, bool hasNormal) {
+BaseMesh::SubMesh::init(std::vector<vertexData> &Vertices, const std::vector<uint32_t> &Indices, bool hasNormal) {
 
-    vertexesData = Vertices;
+    vertexesData = std::move(Vertices);
     indices = Indices;
-    NumVertices = Vertices.size();
+    NumVertices = vertexesData.size();
 
 
-    if (!hasNormal && Vertices.size() < 32) {
+    if (!hasNormal) {
+        ENGINE_TRACE("Generating adjacency");
         triangleAdjencyGenerated = true;
 
         std::map<std::pair<uint32_t, uint32_t>, std::pair<uint32_t, uint32_t>> triangleOppositeMap;
@@ -200,14 +208,14 @@ BaseMesh::SubMesh::init(const std::vector<vertexData> &Vertices, const std::vect
             triangleAdjacency.emplace_back(-1);
         }
 
+        ENGINE_DEBUG("Generating triangle adjacency");
         //Triangle adjacency
         for (int i = 0; i < indices.size() / 3; i++) {
-            vertexSingleAdjacency[indices[i]] = i;
-            vertexSingleAdjacency[indices[i + 1]] = i;
-            vertexSingleAdjacency[indices[i + 2]] = i;
 
+            vertexSingleAdjacency[indices[i*3]] = i;
+            vertexSingleAdjacency[indices[i*3 + 1]] = i;
+            vertexSingleAdjacency[indices[i*3 + 2]] = i;
 
-#pragma omp parallel for default(none) shared(i, triangleOppositeMap)
             for (int index = 0; index < 3; ++index) {
                 int first = (index % 3);
                 int second = (index + 1) % 3;
@@ -231,18 +239,70 @@ BaseMesh::SubMesh::init(const std::vector<vertexData> &Vertices, const std::vect
                 }
             }
         }
+        ENGINE_DEBUG("Vertex fast access size : " + std::to_string(vertexSingleAdjacency.size()));
+        ENGINE_DEBUG("Triangle adjacency size (1 per triangle but 3 data) : " +
+                     std::to_string(triangleAdjacency.size()));
     } else {
         triangleAdjencyGenerated = false;
     }
 
 
 #ifndef NDEBUG
-    if (vertexesData.size() < 16) {
+    if (vertexesData.size() < 16 && false) {
         auto It = vertexBegin();
         auto endIt = vertexEnd();
         for (; It != endIt; It++) {
             std::cout << It->position.x << " " << It->position.y << " " << It->position.z << std::endl;
         }
+
+        auto t_it = circulatorBegin(0);
+        auto t_endIt = circulatorEnd(0);
+
+        std::cout << std::endl;
+        for (int i = 0; i < triangleAdjacency.size(); i += 3) {
+            std::cout << "triangle index : " << i
+                      << " : " << triangleAdjacency[i] << " " << triangleAdjacency[i + 1] << " "<< triangleAdjacency[i + 2]
+                      << " : " << indices[i] << " " << indices[i + 1] << " "<< indices[i + 2]
+                      << std::endl;
+        }
+
+        std::cout << "vertex fast access" << std::endl;
+        for (int i = 0; i < vertexSingleAdjacency.size(); i += 1) {
+            std::cout << "vertex index : " << i << " : " << vertexSingleAdjacency[i] * 3 << std::endl;
+        }
+        std::cout << "with it : " << std::endl;
+
+        for (; t_it != t_endIt; ++t_it) {
+            //++t_it;
+            uint32_t val = (*t_it);
+            std::cout << val << std::endl;
+            for (uint32_t i = 0; i < 3; ++i) {
+                vertexesData[val+i].m_abgr=0xFF0000FF;
+            }
+        }
+        vertexesData[0].m_abgr=0x00FF00FF;
+
+    }
+    else{
+        auto t_it = circulatorBegin(0);
+        auto t_endIt = circulatorEnd(0);
+        std::cout << "fast access : "<< vertexSingleAdjacency[0]*3 <<std::endl;
+        std::cout << "test 0 : "<< indices[vertexSingleAdjacency[0]*3] <<std::endl;
+        std::cout << "test 1 : "<< indices[vertexSingleAdjacency[0]*3+1] <<std::endl;
+        std::cout << "test 2 : "<< indices[vertexSingleAdjacency[0]*3+2] <<std::endl;
+
+        for (; t_it != t_endIt; ++t_it) {
+            //++t_it;
+            uint32_t val = (*t_it);
+            ENGINE_DEBUG(val);
+            //std::cout << val << std::endl;
+            for (uint32_t i = 0; i < 3; ++i) {
+                std::cout << "indice : "<< indices[val+i] <<std::endl;
+                vertexesData[indices[val+i]].m_abgr=0xFF0000FF;
+            }
+        }
+        vertexesData[0].m_abgr=0xFF00FF00;
+
     }
 #endif
 

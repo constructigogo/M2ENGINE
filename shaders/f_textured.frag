@@ -118,59 +118,56 @@ void main()
     vec3 specmap;
     specmap = texture2D(s_texSpecular, texCoord).xyz;
 
-    float roughness = specmap.g*specmap.g;
+    float roughness = max(specmap.g,0.2f);
     float metallic = specmap.b;
+    vec3 diffuse = (1.0-metallic)*(color.xyz/PI);
     //float specularValue = 2.0/(roughness)-2.0;
 
 
     //light
     vec3 lightDir = normalize(-u_lightPos.xyz);
-    vec3 viewDir = v_view;
+    vec3 viewDir = normalize(v_view);
     vec3 halfwayDir = normalize(lightDir + viewDir);
 
 
-    vec3 F0 = vec3(0.04);
+    vec3 F0 = vec3_splat(0.04);
     F0 = mix(F0, color.xyz, metallic);
 
     // cook-torrance brdf
     float NDF = DistributionGGX(normal, halfwayDir, roughness);
-    float G   = GeometrySmith(normal, viewDir, lightDir, roughness);
+    float G   = GeometrySmith(normal, viewDir, lightDir, roughness*roughness);
     vec3 F    = fresnelSchlick(max(dot(halfwayDir, viewDir), 0.0), F0);
 
     vec3 kS = F;
-    vec3 kD = vec3(1.0) - kS;
+    vec3 kD = vec3_splat(1.0) - kS;
     kD *= 1.0 - metallic;
+
 
     vec3 numerator    = NDF * G * F;
     float denominator = 4.0 * max(dot(normal, viewDir), 0.0) * max(dot(normal, lightDir), 0.0) + 0.0001;
-    vec3 specular     = numerator / denominator;
+    vec3 specular     = (numerator / denominator);
 
     float NdotL = max(dot(normal, lightDir), 0.0);
-    vec3 Lo = (kD * color.xyz / PI + specular) *10.0 * NdotL;
-    /*
-    //ambiant
-    float ambient =  0.05;
-    //diffuse
-    float diff = max(dot(normal, lightDir), 0.0);
-    vec3 diffuse = diff * vec3_splat(1.0/3.14159);
-    //specular
-    float spec = (specularValue+8.0)/(8.0*3.14159) * pow(max(dot(normal, halfwayDir), 0.0), specularValue);
-    vec3 specular = vec3_splat(spec);
-    */
-    //shadow
-    //float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005);
+    //vec3 Lo = ((kD * (color.xyz / PI)) + specular) * 10.0 * NdotL;
+    vec3 Lo = (diffuse + specular) * 10.0 * NdotL;
+
+    //Shadow calc
     float bias =  0.001;
     float inShadow=ShadowCalc(s_shadowMap, v_shadowcoord, u_shadowTexelSize.xy, bias);
 
+    //Final Color
     vec3 ambient = vec3(0.03) * color.xyz;
-    vec3 final=ambient+(Lo * (1.0-inShadow));
+    vec3 final=inShadow*ambient+(Lo * (1.0-inShadow));
+
+    //Correction
     final = final / (final + vec3(1.0));
     final = pow(final, vec3(1.0/2.2));
-    //vec3 final = (ambient + (diffuse + (specular)) * (1.0-inShadow)) * color.xyz;
-    //vec3 final = (ambient + (diffuse + (specular)) * (1.0-inShadow)) * color.xyz;
-    //final = pow(final, vec3_splat(1.0/2.2));
-    //final = ambient*color.xyz + specular;
+
+    //Output
     gl_FragColor = vec4(final, 1.0);
+
+
+    //gl_FragColor = vec4(specular, 1.0);
     //gl_FragColor = vec4(texture2D(s_shadowMap, texCoord).xyz*1.0,1.0);
-    //gl_FragColor = vec4(vec3_splat(inShadow).xyz,1.0);
+    //gl_FragColor = vec4(vec3_splat(F0).xyz,1.0);
 }

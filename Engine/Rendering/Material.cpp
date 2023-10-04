@@ -23,6 +23,10 @@ namespace Engine {
         return std::make_shared<MaterialInstance>(*this);
     }
 
+    const std::string &Material::getName() const {
+        return name;
+    }
+
 
     void MaterialInstance::setTexture(Texture::TYPE type, std::shared_ptr<Texture> tex) {
         textures[type]=std::move(tex);

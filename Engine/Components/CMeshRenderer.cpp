@@ -111,7 +111,7 @@ void CMeshRenderer::EditorUIDrawContent() {
         setMesh(Data::loadMesh(std::string(str)),STATIC,false);
     }
     ImGui::SeparatorText("Material settings");
-    ImGui::Text("Material : %d", material);
+    ImGui::Text("Material : %d", materialInst->getHandle());
     int idx=0;
     for (auto & tex:textures) {
         ImGui::Text("%d : %s",idx++, tex->getName().c_str());

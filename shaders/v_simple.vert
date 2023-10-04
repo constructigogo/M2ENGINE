@@ -8,5 +8,5 @@ void main(){
     v_normal = a_normal;
     v_view = mul(vec4(0.0, 0.0, -1.0, 1.0), u_view).xyz;
     //v_color0   = vec4((a_normal+1.0)/2.0, 1.0);
-    v_color0   = vec4(vec3(1, 1, 1), 1.0);
+    v_color0   = vec4(a_color0.xyz, 1.0);
 }

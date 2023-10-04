@@ -77,14 +77,13 @@ namespace Engine {
         ENGINE_TRACE("Init Input Manager");
         KeyInput::setupKeyInputs(currentWindow);
 
-        input = std::make_unique<KeyInput>(std::vector<int>({GLFW_KEY_F1,GLFW_KEY_Z, GLFW_MOUSE_BUTTON_1, GLFW_MOUSE_BUTTON_2}));
+        input = std::make_unique<KeyInput>(std::vector<int>({GLFW_KEY_F1,GLFW_KEY_Z,GLFW_KEY_X, GLFW_MOUSE_BUTTON_1, GLFW_MOUSE_BUTTON_2}));
         time = std::make_unique<ETime>();
 
         ENGINE_TRACE("Init rendering backend");
-        //glfwSetKeyCallback(currentWindow, glfw_keyCallback);
         // Call bgfx::renderFrame before bgfx::init to signal to bgfx not to create a render thread.
         // Most graphics APIs must be used on the same thread that created the window.
-        bgfx::renderFrame();
+        // bgfx::renderFrame();
         // Initialize bgfx using the native window handle and window resolution.
         bgfx::Init init;
 
@@ -142,6 +141,10 @@ namespace Engine {
                 wireframe = !wireframe;
             }
 
+            if (input->getIsKeyPressed(GLFW_KEY_X)) {
+                renderer->toggleDrawDebugShape();
+            }
+
 
 
             if (debugMode) {
@@ -149,10 +152,8 @@ namespace Engine {
                 bgfx::touch(kClearView);
                 // Use debug font to print information about this example.
                 bgfx::dbgTextClear();
-                bgfx::dbgTextPrintf(0, 0, 0x0f, "Press F1 to toggle stats.");
+                bgfx::dbgTextPrintf(0, 0, 0x0f, "F1 : stats / W : wireframe / X : draw BBOX");
                 const bgfx::Stats *stats = bgfx::getStats();
-                bgfx::dbgTextPrintf(0, 1, 0x0f, "Backbuffer %dW x %dH in pixels, debug text %dW x %dH in characters.",
-                                    stats->width, stats->height, stats->textWidth, stats->textHeight);
                 bgfx::dbgTextPrintf(0, 2, 0x0f, "Delta Time : %f",
                                     time->getDeltaTime());
                 bgfx::dbgTextPrintf(0, 3, 0x0f, "Draw call : %d",

@@ -18,9 +18,9 @@ std::vector<CMeshRenderer *> Renderer::renderList;
 void Renderer::render() {
     const bgfx::Caps *caps = bgfx::getCaps();
 
+
     bool m_shadowSamplerSupported = 0 != (caps->supported & BGFX_CAPS_TEXTURE_COMPARE_LEQUAL);
     bool m_useShadowSampler = m_shadowSamplerSupported;
-
 
     assert(m_useShadowSampler);
     assert(bgfx::isValid(m_shadowMapFB));
@@ -77,6 +77,8 @@ void Renderer::render() {
     bgfx::setViewTransform(RENDER_PASS::Render, glm::value_ptr(view), glm::value_ptr(projGLM));
     bgfx::setViewRect(RENDER_PASS::Render, 0, 0, uint16_t(width), uint16_t(height));
 
+    DebugDrawEncoder enc;
+    enc.begin(RENDER_PASS::Render, true, bgfx::begin());
 
     for (const auto &mesh: renderList) {
         if (!mesh->isActive() || !mesh->getObject()->isActive() || !mesh->mesh) {
@@ -93,10 +95,12 @@ void Renderer::render() {
         auto scale = glm::scale(model_matrix, scal);
         glm::mat4 mtx = translate * rotate * scale;
         mtx = translate * rotate * scale;
-        ///Shadow pass
 
+
+        ///Shadow pass
         auto VP = lightProj * lightViewGLM;
-        if (!isCulled(VP, mtx, mesh->mesh->boundingBox)) {
+        auto mBBox = mesh->mesh->boundingBox;
+        if (!isCulled(VP, mtx, mBBox)) {
             bgfx::setTransform(glm::value_ptr(mtx));
             bgfx::setVertexBuffer(0, mesh->mesh->VBH);
             bgfx::setIndexBuffer(mesh->mesh->IBH);
@@ -111,26 +115,8 @@ void Renderer::render() {
 
 
         ///Render pass
-        //Culling
-        bool visible = false;
-        /*
-        int count =0;
-        for (const auto & vert : mesh->mesh->boundingBox.getVertices()) {
-            auto transformed = projGLM*view*mtx*glm::vec4(vert,1);
-            if ((transformed.x < -transformed.w )){
-                count++;
-            }
-            visible = visible ||
-                     ((transformed.x > -transformed.w));
-        }
-
-        if (count ==8){
-            continue;
-        }*/
-
-
         VP = projGLM * view;
-        if (!isCulled(VP, mtx, mesh->mesh->boundingBox)) {
+        if (!isCulled(VP, mtx, mBBox)) {
             auto matInst = mesh->getMaterialInst();
 
             if (matInst->useMap(Texture::TYPE::COLOR)) {
@@ -168,8 +154,27 @@ void Renderer::render() {
             } else {
                 bgfx::submit(RENDER_PASS::Render, debugShader, 0);
             }
+            if(glm::length(mBBox.diagonal())<=8.0 && drawDebugShapes) {
+                auto lower = mBBox.getLower();
+                auto upper = mBBox.getUpper();
+                enc.push();
+                enc.pushTransform(glm::value_ptr(mtx));
+                bx::Aabb aabb =
+                        {
+                                {lower.x, lower.y, lower.z},
+                                {upper.x, upper.y, upper.z},
+                        };
+                enc.setWireframe(true);
+                enc.setColor(0xFF0000FF);
+                enc.draw(aabb);
+                enc.popTransform();
+                enc.pop();
+            }
         }
     }
+
+    enc.end();
+
 
     const bool instancingSupported = 0 != (BGFX_CAPS_INSTANCING & caps->supported);
     if (!instancingSupported) {
@@ -334,8 +339,10 @@ void Renderer::init() {
 
     bgfx::setViewClear(RENDER_PASS::Shadow, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
     bgfx::setViewClear(RENDER_PASS::Render, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x443355FF, 1.0f, 0);
+    bgfx::setViewClear(RENDER_PASS::DEBUG, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x00000000, 1.0f, 0);
     bgfx::setViewMode(RENDER_PASS::Render, bgfx::ViewMode::Default);
     bgfx::setViewMode(RENDER_PASS::Shadow, bgfx::ViewMode::Default);
+    bgfx::setViewMode(RENDER_PASS::DEBUG, bgfx::ViewMode::Default);
 
 
     debugShader = bgfx::createProgram(
@@ -370,5 +377,9 @@ void Renderer::init() {
 
     m_shadowMapFB = bgfx::createFrameBuffer((uint8_t) 1, &shadowMapTexture, false);
 
+    ddInit();
+}
 
+void Renderer::toggleDrawDebugShape() {
+    drawDebugShapes = !drawDebugShapes;
 }

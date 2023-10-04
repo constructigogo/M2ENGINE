@@ -204,6 +204,14 @@ namespace Engine {
     bool Box::isInside(const glm::vec3 &p) const {
         return a.x <= p.x && p.x <= b.x && a.y <= p.y && p.y <= b.y;
     }
+
+    const glm::vec3 &Box::getLower() {
+        return a;
+    }
+
+    const glm::vec3 &Box::getUpper() {
+        return b;
+    }
 }
 
 

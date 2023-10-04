@@ -6,6 +6,7 @@
 #include <iostream>
 #include <filesystem>
 #include "Data.h"
+#include "Log.h"
 #include "bimg/bimg.h"
 #include "bx/readerwriter.h"
 #include "../Components/CTransform.h"
@@ -31,15 +32,16 @@ std::unordered_set<std::string> Engine::Data::loadableMesh;
 
 std::shared_ptr<BaseMesh> Engine::Data::loadMesh(const std::string &fileName, bool simpleImport) {
     if (meshCache.contains(fileName)) {
+        ENGINE_TRACE("Loading mesh " + fileName + " from cache");
         return meshCache[fileName];
     } else {
+        ENGINE_TRACE("Loading mesh " + fileName);
         auto created = std::make_shared<BaseMesh>();
         created->loadMesh(fileName, simpleImport);
         meshCache[fileName] = created;
         return created;
     }
 }
-
 
 
 bgfx::ShaderHandle Engine::Data::loadShaderBin(const char *_name) {
@@ -130,17 +132,15 @@ bgfx::TextureHandle Data::loadTextureRaw(const char *_name) {
 }
 
 void Data::init() {
-
     static bx::DefaultAllocator s_allocator;
     allocator = &s_allocator;
     s_fileReader = BX_NEW(allocator, FileReader);
 
     const std::filesystem::path data{"data"};
-    for (auto &file_it: std::filesystem::directory_iterator({data}))
-    {
-        const std::filesystem::path& file(file_it);
+    for (auto &file_it: std::filesystem::directory_iterator({data})) {
+        const std::filesystem::path &file(file_it);
         auto ext = file.extension();
-        if(ext==".off" || ext == ".obj"){
+        if (ext == ".off" || ext == ".obj") {
             std::cout << file << '\n';
             Data::loadableMesh.emplace(file);
         }
@@ -177,12 +177,14 @@ const std::unordered_set<std::string> &Data::getLoadableMesh() {
     return loadableMesh;
 }
 
-std::shared_ptr<Texture> Data::loadTexture(const char *_name,Texture::TYPE type) {
+std::shared_ptr<Texture> Data::loadTexture(const char *_name, Texture::TYPE type) {
 
     if (textureCache.contains(_name)) {
+        ENGINE_TRACE("Loading Texture " + std::string(_name) + " from cache");
         return textureCache[_name];
     }
-    int w=0,h=0;
+    ENGINE_TRACE("Loading Texture " + std::string(_name));
+    int w = 0, h = 0;
 
     bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
     uint64_t _flags = 0;
@@ -216,8 +218,8 @@ std::shared_ptr<Texture> Data::loadTexture(const char *_name,Texture::TYPE type)
                         1 < imageContainer->m_numMips, imageContainer->m_numLayers,
                         bgfx::TextureFormat::Enum(imageContainer->m_format), _flags, mem
                 );
-                w=imageContainer->m_width;
-                h=imageContainer->m_height;
+                w = imageContainer->m_width;
+                h = imageContainer->m_height;
             }
 
         }
@@ -227,7 +229,7 @@ std::shared_ptr<Texture> Data::loadTexture(const char *_name,Texture::TYPE type)
         }
     }
     std::string name(_name);
-    auto buff = std::make_shared<Texture>(name,w,h,handle,type);
+    auto buff = std::make_shared<Texture>(name, w, h, handle, type);
 
     textureCache[_name] = buff;
     return buff;
@@ -236,7 +238,9 @@ std::shared_ptr<Texture> Data::loadTexture(const char *_name,Texture::TYPE type)
 std::vector<Object *> Data::loadScene(const std::string &fileName) {
     Assimp::Importer Importer;
     std::vector<Object *> res;
-    const aiScene *pScene = Importer.ReadFile(fileName.c_str(), aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_GenBoundingBoxes);
+    ENGINE_TRACE("Try Read Scene " + fileName);
+    const aiScene *pScene = Importer.ReadFile(fileName.c_str(),
+                                              aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_GenBoundingBoxes);
     auto root = new Object();
     root->setName(fileName);
     root->addComponent<CTransform>();
@@ -247,19 +251,18 @@ std::vector<Object *> Data::loadScene(const std::string &fileName) {
             Data::loadShaderBin("f_textured.frag"),
             true
     );
-    Material material("textured",textured);
+    Material material("textured", textured);
 
     if (pScene) {
-        std::cout << "init mesh, size : " << pScene->mNumMeshes << std::endl;
-        std::cout << "reading mesh as scene : " << fileName.c_str() << std::endl;
+        ENGINE_TRACE("Loading scene," + fileName + " , size : " + std::to_string(pScene->mNumMeshes));
 
-        for (int i = 0; i < pScene->mNumMeshes; ++i) {
+        for (int i = 0; i < pScene->mNumMeshes; i+=1) {
             const aiMesh *paiMesh = pScene->mMeshes[i];
-            if(paiMesh->mPrimitiveTypes!= aiPrimitiveType_TRIANGLE){
+            if (paiMesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
                 continue;
             }
             std::string name = fileName + std::to_string(i);
-            std::cout<<name<<std::endl;
+            ENGINE_TRACE("Loading Mesh " + name);
 
             auto obj = new Object(name);
             obj->setParent(root);
@@ -271,63 +274,59 @@ std::vector<Object *> Data::loadScene(const std::string &fileName) {
             mesh->subMeshes.resize(1);
 
             mesh->initMeshAsSingle(paiMesh);
-            rend->setMesh(mesh,STATIC, false);
+            rend->setMesh(mesh, STATIC, false);
             auto matIdx = paiMesh->mMaterialIndex;
             auto mat = pScene->mMaterials[matIdx];
             auto matInst = material.createInstance();
             rend->setMaterial(matInst);
 
 
-            std::cout<< pScene->mMaterials[matIdx]->GetName().C_Str()<<std::endl;
+            ENGINE_TRACE("Material instance from [" + material.getName() + "] as " +
+                         std::string(pScene->mMaterials[matIdx]->GetName().C_Str()));
             aiString textureName;//Filename of the texture using the aiString assimp structure
-            if(mat->GetTextureCount(aiTextureType_DIFFUSE)){
+            if (mat->GetTextureCount(aiTextureType_DIFFUSE)) {
                 //Get the file name of the texture by passing the variable by reference again
                 //Second param is 0, which is the first diffuse texture
                 //There can be more diffuse textures but for now we are only interested in the first one
                 auto ret = mat->Get(AI_MATKEY_TEXTURE(aiTextureType_DIFFUSE, 0), textureName);
-                std::string path = "data/"+std::string(textureName.data);
+                std::string path = "data/" + std::string(textureName.data);
                 std::string textureType = "diffuse ";
                 std::string textureFileName = textureType + textureName.data;//The actual name of the texture file
-                std::cout <<textureFileName<<std::endl;
-                matInst->setTexture(Data::loadTexture(path.c_str(),Texture::TYPE::COLOR));
+                matInst->setTexture(Data::loadTexture(path.c_str(), Texture::TYPE::COLOR));
             } else {
-                matInst->setTexture(Data::loadTexture("data/color_flat.png",Texture::TYPE::COLOR));
+                matInst->setTexture(Data::loadTexture("data/color_flat.png", Texture::TYPE::COLOR));
             }
 
-            if(mat->GetTextureCount(aiTextureType_HEIGHT)){
+            if (mat->GetTextureCount(aiTextureType_HEIGHT)) {
                 auto ret = mat->Get(AI_MATKEY_TEXTURE(aiTextureType_HEIGHT, 0), textureName);
-                std::string path = "data/"+std::string(textureName.data);
+                std::string path = "data/" + std::string(textureName.data);
                 std::string textureType = "normal ";
                 std::string textureFileName = textureType + textureName.data;//The actual name of the texture file
-                std::cout <<textureFileName<<std::endl;
-                matInst->setTexture(Data::loadTexture(path.c_str(),Texture::TYPE::NORMAL));
+                matInst->setTexture(Data::loadTexture(path.c_str(), Texture::TYPE::NORMAL));
             } else {
-                matInst->setTexture(Data::loadTexture("data/normal_flat.png",Texture::TYPE::NORMAL));
+                matInst->setTexture(Data::loadTexture("data/normal_flat.png", Texture::TYPE::NORMAL));
             }
 
-            if(mat->GetTextureCount(aiTextureType_SPECULAR)){
+            if (mat->GetTextureCount(aiTextureType_SPECULAR)) {
                 auto ret = mat->Get(AI_MATKEY_TEXTURE(aiTextureType_SPECULAR, 0), textureName);
-                std::string path = "data/"+std::string(textureName.data);
+                std::string path = "data/" + std::string(textureName.data);
                 std::string textureType = "specular ";
                 std::string textureFileName = textureType + textureName.data;//The actual name of the texture file
-                std::cout <<textureFileName<<std::endl;
-                matInst->setTexture(Data::loadTexture(path.c_str(),Texture::TYPE::SPECULAR));
+                matInst->setTexture(Data::loadTexture(path.c_str(), Texture::TYPE::SPECULAR));
             } else {
-                matInst->setTexture(Texture::TYPE::SPECULAR,Data::loadTexture("data/color_flat.png",Texture::TYPE::COLOR));
+                matInst->setTexture(Texture::TYPE::SPECULAR,
+                                    Data::loadTexture("data/color_flat.png", Texture::TYPE::COLOR));
             }
 
 
             // material index is the ID of the material you are interested in
             float shininess;
-            if(AI_SUCCESS != aiGetMaterialFloat(mat, AI_MATKEY_SHININESS, &shininess))
-            {
+            if (AI_SUCCESS != aiGetMaterialFloat(mat, AI_MATKEY_SHININESS, &shininess)) {
                 shininess = 20.f;
-            }
-            else {
-                matInst->setSpecColor({1.0,1.0,1.0});
+            } else {
+                matInst->setSpecColor({1.0, 1.0, 1.0});
                 matInst->setSpecularStr(shininess);
             }
-
 
 
             meshCache[name] = mesh;
@@ -346,11 +345,11 @@ std::vector<Object *> Data::loadScene(const std::string &fileName) {
 }
 
 bgfx::ProgramHandle Data::loadProgram(const char *vertex, const char *fragment) {
-    std::string cat = std::string(vertex)+std::string(fragment);
+    std::string cat = std::string(vertex) + std::string(fragment);
     if (programCache.contains(cat)) {
         return programCache[cat];
     } else {
-        auto created =  bgfx::createProgram(
+        auto created = bgfx::createProgram(
                 Data::loadShaderBin(vertex),
                 Data::loadShaderBin(fragment),
                 true

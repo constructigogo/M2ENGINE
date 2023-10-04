@@ -10,6 +10,7 @@
 #include "../Components/CTransform.h"
 #include "Texture.h"
 #include "Mesh.h"
+#include "debugdraw/debugdraw.h"
 
 using namespace Engine;
 
@@ -33,6 +34,8 @@ namespace Engine {
 
         void setProj(float *proj);
 
+        void toggleDrawDebugShape();
+
         static void registerAsDynamic(CMeshRenderer *);
 
         static void registerAsStatic(CMeshRenderer *);
@@ -48,6 +51,7 @@ namespace Engine {
             //Geometry, UNUSED
             ZPREPASS,
             Render,
+            DEBUG,
             SSAO,
             SSS,
             Count
@@ -79,6 +83,7 @@ namespace Engine {
         glm::mat4x4 proj;
         int width;
         int height;
+        bool drawDebugShapes= false;
 
 
         int shadowmap_size = 1024;
