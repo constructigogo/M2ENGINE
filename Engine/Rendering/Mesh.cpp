@@ -60,16 +60,8 @@ void BaseMesh::initFromScene(const aiScene *pScene, const std::string &Filename)
 
     }
 
-    vly.begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-            .end();
-
     VBH = bgfx::createVertexBuffer(bgfx::makeRef(vertexesAllData.data(), vertexesAllData.size() * sizeof(vertexData)),
-                                   vly);
+                                   getVLY());
     IBH = bgfx::createIndexBuffer(bgfx::makeRef(indicesAllData.data(), indicesAllData.size() * sizeof(uint32_t)),
                                   BGFX_BUFFER_INDEX32);
 }
@@ -138,16 +130,8 @@ void BaseMesh::addSubMesh(BaseMesh::SubMesh &toAdd) {
 
     vertexesAllData = toAdd.vertexesData;
 
-    vly.begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-            .end();
-
     VBH = bgfx::createVertexBuffer(
-            bgfx::copy(toAdd.vertexesData.data(), toAdd.vertexesData.size() * sizeof(vertexData)), vly);
+            bgfx::copy(toAdd.vertexesData.data(), toAdd.vertexesData.size() * sizeof(vertexData)), getVLY());
     IBH = bgfx::createIndexBuffer(bgfx::copy(toAdd.indices.data(), toAdd.indices.size() * sizeof(uint32_t)),
                                   BGFX_BUFFER_INDEX32);
 
@@ -167,21 +151,38 @@ void BaseMesh::initMeshAsSingle(const aiMesh *paimesh) {
     glm::vec3 max(aabb.mMax.x, aabb.mMax.y, aabb.mMax.z);
     boundingBox = Box(min, max);
 
-    vly.begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float, true)
-            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
-            .end();
-
     VBH = bgfx::createVertexBuffer(
-            bgfx::copy(current.vertexesData.data(), current.vertexesData.size() * sizeof(vertexData)), vly);
+            bgfx::copy(current.vertexesData.data(), current.vertexesData.size() * sizeof(vertexData)), getVLY());
     IBH = bgfx::createIndexBuffer(bgfx::copy(current.indices.data(), current.indices.size() * sizeof(uint32_t)),
                                   BGFX_BUFFER_INDEX32);
 }
 
 BaseMesh::BaseMesh(const std::string &name) : name(name) {}
+
+void BaseMesh::refreshBuffers() {
+    ENGINE_TRACE("Init Mesh from scene, size : " + std::to_string(subMeshes.size()));
+    vertexesAllData.clear();
+    indicesAllData.clear();
+    for (auto &subMeshe: subMeshes) {
+        uint32_t offset = vertexesAllData.size();
+
+        vertexesAllData.insert(
+                vertexesAllData.end(),
+                subMeshe.vertexesData.begin(),
+                subMeshe.vertexesData.end());
+
+        for (const auto &index: subMeshe.indices) {
+            indicesAllData.emplace_back(offset + index);
+        }
+
+
+    }
+
+    VBH = bgfx::createVertexBuffer(bgfx::makeRef(vertexesAllData.data(), vertexesAllData.size() * sizeof(vertexData)),
+                                   getVLY());
+    IBH = bgfx::createIndexBuffer(bgfx::makeRef(indicesAllData.data(), indicesAllData.size() * sizeof(uint32_t)),
+                                  BGFX_BUFFER_INDEX32);
+}
 
 
 void
@@ -196,6 +197,8 @@ BaseMesh::SubMesh::init(std::vector<vertexData> &Vertices, const std::vector<uin
         ENGINE_TRACE("Generating adjacency");
         triangleAdjencyGenerated = true;
 
+        //key : Lower edge id first, then highest
+        //val : first triangle id found with this edge, then opposite offset
         std::map<std::pair<uint32_t, uint32_t>, std::pair<uint32_t, uint32_t>> triangleOppositeMap;
 
 
@@ -212,9 +215,9 @@ BaseMesh::SubMesh::init(std::vector<vertexData> &Vertices, const std::vector<uin
         //Triangle adjacency
         for (int i = 0; i < indices.size() / 3; i++) {
 
-            vertexSingleAdjacency[indices[i*3]] = i;
-            vertexSingleAdjacency[indices[i*3 + 1]] = i;
-            vertexSingleAdjacency[indices[i*3 + 2]] = i;
+            vertexSingleAdjacency[indices[i * 3]] = i;
+            vertexSingleAdjacency[indices[i * 3 + 1]] = i;
+            vertexSingleAdjacency[indices[i * 3 + 2]] = i;
 
             for (int index = 0; index < 3; ++index) {
                 int first = (index % 3);
@@ -261,8 +264,9 @@ BaseMesh::SubMesh::init(std::vector<vertexData> &Vertices, const std::vector<uin
         std::cout << std::endl;
         for (int i = 0; i < triangleAdjacency.size(); i += 3) {
             std::cout << "triangle index : " << i
-                      << " : " << triangleAdjacency[i] << " " << triangleAdjacency[i + 1] << " "<< triangleAdjacency[i + 2]
-                      << " : " << indices[i] << " " << indices[i + 1] << " "<< indices[i + 2]
+                      << " : " << triangleAdjacency[i] << " " << triangleAdjacency[i + 1] << " "
+                      << triangleAdjacency[i + 2]
+                      << " : " << indices[i] << " " << indices[i + 1] << " " << indices[i + 2]
                       << std::endl;
         }
 
@@ -277,19 +281,22 @@ BaseMesh::SubMesh::init(std::vector<vertexData> &Vertices, const std::vector<uin
             uint32_t val = (*t_it);
             std::cout << val << std::endl;
             for (uint32_t i = 0; i < 3; ++i) {
-                vertexesData[val+i].m_abgr=0xFF0000FF;
+                vertexesData[val + i].m_abgr = 0xFF0000FF;
             }
         }
-        vertexesData[0].m_abgr=0x00FF00FF;
+        vertexesData[0].m_abgr = 0x00FF00FF;
 
-    }
-    else{
-        auto t_it = circulatorBegin(0);
-        auto t_endIt = circulatorEnd(0);
-        std::cout << "fast access : "<< vertexSingleAdjacency[0]*3 <<std::endl;
-        std::cout << "test 0 : "<< indices[vertexSingleAdjacency[0]*3] <<std::endl;
-        std::cout << "test 1 : "<< indices[vertexSingleAdjacency[0]*3+1] <<std::endl;
-        std::cout << "test 2 : "<< indices[vertexSingleAdjacency[0]*3+2] <<std::endl;
+    } else {
+        splitTriangleCompactId(0, 0.2, 0.2);
+        auto t_it = circulatorBegin(8);
+        auto t_endIt = circulatorEnd(8);
+        std::cout << "fast access : " << vertexSingleAdjacency[0] * 3 << std::endl;
+        std::cout << "test 0 : " << indices[vertexSingleAdjacency[0] * 3] << std::endl;
+        std::cout << "test 1 : " << indices[vertexSingleAdjacency[0] * 3 + 1] << std::endl;
+        std::cout << "test 2 : " << indices[vertexSingleAdjacency[0] * 3 + 2] << std::endl;
+
+
+
 
         for (; t_it != t_endIt; ++t_it) {
             //++t_it;
@@ -297,16 +304,207 @@ BaseMesh::SubMesh::init(std::vector<vertexData> &Vertices, const std::vector<uin
             ENGINE_DEBUG(val);
             //std::cout << val << std::endl;
             for (uint32_t i = 0; i < 3; ++i) {
-                std::cout << "indice : "<< indices[val+i] <<std::endl;
-                vertexesData[indices[val+i]].m_abgr=0xFF0000FF;
+                //std::cout << "indice : "<< indices[val+i] <<std::endl;
+                vertexesData[indices[val + i]].m_abgr = 0xFF0000FF;
             }
         }
-        vertexesData[0].m_abgr=0xFF00FF00;
+        vertexesData[8].m_abgr = 0xFF00FF00;
+        //flipEdgeCompactId(0, 1);
+        //flipEdgeCompactId(1, 2);
+        //flipEdgeCompactId(4, 5);
+
+        computeLaplacian();
 
     }
 #endif
 
 }
 
-BaseMesh::SubMesh::~SubMesh() {
+void BaseMesh::SubMesh::flipEdgeCompactId(uint32_t t1_id, uint32_t t2_id) {
+    flipEdge(t1_id * 3, t2_id * 3);
 }
+
+void BaseMesh::SubMesh::flipEdge(uint32_t t1_id, uint32_t t2_id) {
+    bool isAdj = false;
+    std::pair<uint32_t, uint32_t> commonEdge;
+    uint32_t oppositeID;
+    for (int i = 0; i < 3; ++i) {
+        int first = (i % 3);
+        uint32_t indexedFirst = t1_id + first;
+        oppositeID = triangleAdjacency[indexedFirst];
+        if (oppositeID == t2_id) {
+            int second = (i + 1) % 3;
+            int third = (i + 2) % 3;
+            uint32_t indexedSecond = t1_id + second;
+            uint32_t indexedThird = t1_id + third;
+            isAdj = true;
+            commonEdge = std::make_pair(
+                    std::min(indices[indexedSecond], indices[indexedThird]),
+                    std::max(indices[indexedSecond], indices[indexedThird]));
+            break;
+        }
+    }
+    if (!isAdj) {
+        ENGINE_DEBUG("Edges not adj");
+        return;
+    }
+    //ENGINE_DEBUG("Flipping edge");
+    ENGINE_DEBUG("Common edge : " +
+                 std::to_string(t1_id) + "^" + std::to_string(commonEdge.first) +
+                 "---" +
+                 std::to_string(commonEdge.second) + "^" + std::to_string(t2_id));
+
+    uint32_t oppositeVT1 = getOppositeFromEdge(t1_id, commonEdge.first, commonEdge.second);
+    uint32_t oppositeVT2 = getOppositeFromEdge(t2_id, commonEdge.first, commonEdge.second);
+
+    ENGINE_DEBUG(oppositeVT1);
+    ENGINE_DEBUG(oppositeVT2);
+
+
+}
+
+int BaseMesh::SubMesh::getOppositeFromEdge(uint32_t t, uint32_t v1, uint32_t v2) {
+    for (int i = 0; i < 3; ++i) {
+        int first = (i % 3);
+        int second = (i + 1) % 3;
+        int third = (i + 2) % 3;
+        uint32_t indexedFirst = t + first;
+        uint32_t indexedSecond = t + second;
+        uint32_t indexedThird = t + third;
+        if (std::min(v1, v2) == std::min(indices[indexedFirst], indices[indexedSecond]) &&
+            std::max(v1, v2) == std::max(indices[indexedFirst], indices[indexedSecond])
+                ) {
+            return (uint32_t) indexedThird;
+        }
+    }
+    ENGINE_WARN("SubMesh::getOppositeFromEdge : Opp not found, check common edge");
+    return -1;
+}
+
+std::pair<int,int> BaseMesh::SubMesh::getEdgeFromOpposite(uint32_t t, uint32_t v) {
+    for (int i = 0; i < 3; ++i) {
+        int first = (i % 3);
+        int second = (i + 1) % 3;
+        int third = (i + 2) % 3;
+        uint32_t indexedFirst = t + first;
+        uint32_t indexedSecond = t + second;
+        uint32_t indexedThird = t + third;
+        if(indices[indexedFirst] == v){
+            return std::make_pair(std::min(indices[indexedSecond], indices[indexedThird]),std::max(indices[indexedSecond], indices[indexedThird]));
+        }
+    }
+    ENGINE_WARN("SubMesh::getEdgeFromOpposite : Edge not found, check opposite indice");
+
+    return std::make_pair(-1,-1);
+}
+
+void BaseMesh::SubMesh::computeLaplacian() {
+    for (uint32_t i = 0; i < vertexesData.size(); ++i) {
+        computeLaplacianLocal(i);
+    }
+}
+
+void BaseMesh::SubMesh::computeLaplacianLocal(uint32_t v) {
+    uint32_t root = v;
+    auto it_begin = circulatorBegin(v);
+    auto it_end = circulatorEnd(v);
+    for (; it_begin!=it_end ; ++it_begin) {
+        auto triangle_root = it_begin.getAroundID();
+        auto [p1,p2] = getEdgeFromOpposite(*it_begin,triangle_root);
+        if(p1==-1){
+            continue;
+        }
+
+
+    }
+}
+
+void BaseMesh::SubMesh::splitTriangleCompactId(uint32_t tId, float u, float v) {
+    splitTriangle(tId * 3, u, v);
+}
+
+void BaseMesh::SubMesh::splitTriangle(uint32_t tId, float u, float v) {
+    if (u > 1.0 || v > 1.0 || u < 0.0 || v < 0.0 || u + v > 1.0) {
+        return;
+    }
+    uint32_t oppId1 = triangleAdjacency[tId];
+    uint32_t oppId2 = triangleAdjacency[tId + 1];
+    uint32_t oppId3 = triangleAdjacency[tId + 2];
+
+    uint32_t aId = indices[tId];
+    uint32_t bId = indices[tId + 1];
+    uint32_t cId = indices[tId + 2];
+    glm::vec3 a = vertexesData[indices[tId]].position;
+    glm::vec3 b = vertexesData[indices[tId + 1]].position;
+    glm::vec3 c = vertexesData[indices[tId + 2]].position;
+
+    glm::vec3 AB = b - a;
+    glm::vec3 AC = c - a;
+
+    std::pair<uint32_t, uint32_t> edge1 = std::make_pair(aId, bId);
+    std::pair<uint32_t, uint32_t> edge2 = std::make_pair(bId, cId);
+    std::pair<uint32_t, uint32_t> edge3 = std::make_pair(cId, aId);
+
+    glm::vec3 p = a * (1 - u - v) + b * u + c * v;
+
+    uint32_t otherOpposite2 = getOppositeFromEdge(oppId1, bId, cId);
+    uint32_t otherOpposite3 = getOppositeFromEdge(oppId2, cId, aId);
+
+    vertexData data{};
+    data.position = p;
+    vertexesData.push_back(data);
+    uint32_t nId = vertexesData.size() - 1;
+    uint32_t t1id = tId;
+    indices[tId + 2] = nId;
+
+    uint32_t t2id = indices.size();
+    indices.push_back(bId);
+    indices.push_back(cId);
+    indices.push_back(nId);
+
+    uint32_t t3id = indices.size();
+    indices.push_back(cId);
+    indices.push_back(aId);
+    indices.push_back(nId);
+
+    triangleAdjacency[otherOpposite2] = t2id;
+    triangleAdjacency[otherOpposite3] = t3id;
+    triangleAdjacency[t1id] = t2id;
+    triangleAdjacency[t1id + 1] = t3id;
+    //triangleAdjacency[tId + 2] = oppId3;
+
+    triangleAdjacency.push_back(t3id);
+    triangleAdjacency.push_back(t1id);
+    triangleAdjacency.push_back(oppId1);
+
+    triangleAdjacency.push_back(t1id);
+    triangleAdjacency.push_back(t2id);
+    triangleAdjacency.push_back(oppId2);
+
+    vertexSingleAdjacency[aId] = t3id/3;
+    vertexSingleAdjacency[bId] = t2id/3;
+    vertexSingleAdjacency[cId] = t3id/3;
+    vertexSingleAdjacency.push_back(t3id/3);
+
+}
+
+float BaseMesh::SubMesh::getTriangleAreaCompactId(uint32_t tId) {
+    return getTriangleArea(tId * 3);
+}
+
+float BaseMesh::SubMesh::getTriangleArea(uint32_t tId) {
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

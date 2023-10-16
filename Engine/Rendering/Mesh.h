@@ -31,6 +31,18 @@ namespace Engine {
         const std::string &getName() const;
 
 
+        static bgfx::VertexLayout getVLY() {
+            bgfx::VertexLayout vly;
+            vly.begin()
+                    .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+                    .add(bgfx::Attrib::Normal, 3, bgfx::AttribType::Float, true)
+                    .add(bgfx::Attrib::Tangent, 3, bgfx::AttribType::Float, true)
+                    .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float, true)
+                    .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8, true)
+                    .end();
+            return vly;
+        }
+
         struct vertexData {
             glm::vec3 position;
             glm::vec3 normal;
@@ -42,13 +54,32 @@ namespace Engine {
         struct SubMesh {
             SubMesh() = default;
 
-            ~SubMesh();
+            ~SubMesh() = default;
 
             void init(std::vector<vertexData> &Vertices, const std::vector<uint32_t> &Indices, bool hasNormal);
 
+            float getTriangleArea(uint32_t tId);
+
+            float getTriangleAreaCompactId(uint32_t tId);
+
+            void splitTriangle(uint32_t tId, float u = 0.5f, float v = 0.5f);
+
+            void splitTriangleCompactId(uint32_t tId, float u = 0.5f, float v = 0.5f);
+
+            void flipEdge(uint32_t t1_id, uint32_t t2_id);
+
+            void flipEdgeCompactId(uint32_t t1_id, uint32_t t2_id);
+
+            int getOppositeFromEdge(uint32_t t, uint32_t v1, uint32_t v2);
+            std::pair<int,int>  getEdgeFromOpposite(uint32_t t, uint32_t v);
+
+            void computeLaplacian();
+            void computeLaplacianLocal(uint32_t v);
+
+
             std::vector<vertexData> vertexesData;
             std::vector<uint32_t> indices; // 3-point triangle indices
-            std::vector<uint32_t> vertexSingleAdjacency; //indice (value) of the first point of the triangle access, same indice as vertexData
+            std::vector<uint32_t> vertexSingleAdjacency; //COMPACT !!!!!indice (value) of the first point of the triangle access, same indice as vertexData
             std::vector<int> triangleAdjacency; //Indice (value) of the first point of every adjacent triangle, same indice as indices vector
 
             bool triangleAdjencyGenerated = false;
@@ -106,34 +137,42 @@ namespace Engine {
 
             class triangleCirculator {
                 using iterator_category = std::forward_iterator_tag;
-                using difference_type = std::ptrdiff_t;
-                using value_type = std::vector<int>::iterator;
-                using pointer = std::vector<int>::iterator *;  // or also value_type*
-                using reference = std::vector<int>::iterator &;  // or also value_type&
                 int aroundVertexID;
-                int offset = 1;
-                uint32_t firstTriangleID;
+                uint32_t offset = 0;
+                uint32_t currentTriangleID;
                 bool startingPoint;
-                const std::vector<uint32_t>& m_t;
-                const std::vector<uint32_t>& m_vAdj;
-                const std::vector<int>& m_tAdj;
+                const std::vector<uint32_t> &m_t;
+                const std::vector<uint32_t> &m_vAdj;
+                const std::vector<int> &m_tAdj;
             public:
-                explicit triangleCirculator(int vertexID,const std::vector<uint32_t>& triangles , const std::vector<uint32_t>& vAdj, const std::vector<int>& tAdj, bool start) : m_t(triangles), m_vAdj(vAdj), m_tAdj(tAdj){
-                    startingPoint=start;
+                explicit triangleCirculator(int vertexID, const std::vector<uint32_t> &triangles,
+                                            const std::vector<uint32_t> &vAdj, const std::vector<int> &tAdj, bool start)
+                        : m_t(triangles), m_vAdj(vAdj), m_tAdj(tAdj) {
+                    assert(vertexID < vAdj.size());
+                    startingPoint = start;
                     aroundVertexID = vertexID;
-                    firstTriangleID = m_vAdj[aroundVertexID]*3;
+                    currentTriangleID = m_vAdj[aroundVertexID] * 3;
+                    ENGINE_DEBUG("STARTING ON TRIANGLE : " + std::to_string(currentTriangleID));
                 }
 
+                uint32_t getOffset() const {
+                    return offset;
+                }
+
+                uint32_t getAroundID() const {
+                    return aroundVertexID;
+                }
 
                 triangleCirculator &operator++() {
-                    startingPoint=false;
-                    uint32_t i=0;
-                    for (; i <3 ; ++i) {
-                        if(m_t[firstTriangleID+i]==aroundVertexID){
+                    startingPoint = false;
+                    uint32_t i = 0;
+                    for (; i < 3; ++i) {
+                        if (m_t[currentTriangleID + i] == aroundVertexID) {
+                            offset = i;
                             break;
                         }
                     }
-                    firstTriangleID=m_tAdj[firstTriangleID+((i+2)%3)];
+                    currentTriangleID = m_tAdj[currentTriangleID + ((i + 2) % 3)];
                     return *this;
                 }
 
@@ -144,27 +183,29 @@ namespace Engine {
                 }
 
                 bool operator==(const triangleCirculator &b) const {
-                    return  !startingPoint&&(b.firstTriangleID == firstTriangleID);
+                    return !startingPoint && (b.currentTriangleID == currentTriangleID);
                 }
 
-                bool operator!=(triangleCirculator &other) const { return startingPoint||(firstTriangleID != other.firstTriangleID); }
+                bool operator!=(triangleCirculator &other) const {
+                    return startingPoint || (currentTriangleID != other.currentTriangleID);
+                }
 
 
                 uint32_t operator*() const {
-                    return firstTriangleID;
+                    return currentTriangleID;
                 }
 
                 uint32_t *operator->() {
-                    return &firstTriangleID;
+                    return &currentTriangleID;
                 }
             };
 
-            triangleCirculator circulatorBegin(int index){
-                return triangleCirculator(index,indices,vertexSingleAdjacency,triangleAdjacency,true);
+            triangleCirculator circulatorBegin(int index) {
+                return triangleCirculator(index, indices, vertexSingleAdjacency, triangleAdjacency, true);
             }
 
-            triangleCirculator circulatorEnd(int index){
-                return triangleCirculator(index,indices,vertexSingleAdjacency,triangleAdjacency,false);
+            triangleCirculator circulatorEnd(int index) {
+                return triangleCirculator(index, indices, vertexSingleAdjacency, triangleAdjacency, false);
             }
 
 
@@ -182,6 +223,8 @@ namespace Engine {
 
 
         void loadMesh(const std::string &Filename, bool simpleImport = false);
+
+        void refreshBuffers();
 
         std::vector<vertexData> vertexesAllData;
         std::vector<uint32_t> indicesAllData;

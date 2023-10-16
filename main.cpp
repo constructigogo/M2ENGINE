@@ -81,7 +81,7 @@ public:
         transform->setScale(4.0);
         //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
         auto mRenderer = inst->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/kube.off", true), STATIC, false)
+                ->setMesh(Data::loadMesh("data/bbox.obj", true), STATIC, false)
                 ->setMaterial(debugMaterial.createInstance());
         auto matInst = mRenderer->getMaterialInst();
 

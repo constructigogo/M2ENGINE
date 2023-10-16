@@ -56,6 +56,7 @@ namespace Engine {
 
         Scene *editorScene;
 
+        std::string w_name;
         std::unique_ptr<KeyInput> input;
         std::unique_ptr<ETime> time;
         Renderer *renderer;

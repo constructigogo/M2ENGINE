@@ -50,7 +50,9 @@ static void glfw_keyCallback(GLFWwindow *window, int key, int scancode, int acti
 
 namespace Engine {
 
-    Engine::App::App(int width, int height, const char *title) : width(width), height(height) {}
+    Engine::App::App(int width, int height, const char *title) : width(width), height(height) {
+        w_name=title;
+    }
 
     void Engine::App::init() {
         Log::Init();
@@ -66,7 +68,7 @@ namespace Engine {
             return;
         }
         glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-        currentWindow = glfwCreateWindow(width, height, "don't look here", nullptr, nullptr);
+        currentWindow = glfwCreateWindow(width, height, w_name.c_str(), nullptr, nullptr);
         if (!currentWindow) {
             ENGINE_FATAL("Failed to create window, exiting");
             return;
@@ -154,9 +156,9 @@ namespace Engine {
                 bgfx::dbgTextClear();
                 bgfx::dbgTextPrintf(0, 0, 0x0f, "F1 : stats / W : wireframe / X : draw BBOX");
                 const bgfx::Stats *stats = bgfx::getStats();
-                bgfx::dbgTextPrintf(0, 2, 0x0f, "Delta Time : %f",
+                bgfx::dbgTextPrintf(0, 1, 0x0f, "Delta Time : %f",
                                     time->getDeltaTime());
-                bgfx::dbgTextPrintf(0, 3, 0x0f, "Draw call : %d",
+                bgfx::dbgTextPrintf(0, 2, 0x0f, "Draw call : %d",
                                     bgfx::getStats()->numDraw);
                 // Enable stats or debug text.
                 if (wireframe) {
