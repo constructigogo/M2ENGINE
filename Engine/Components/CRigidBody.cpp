@@ -19,13 +19,14 @@ namespace Engine {
         if (!transform) {
             transform = getObject()->addComponent<CTransform>();
         }
-
         meshRenderer = getObject()->getComponent<CMeshRenderer>();
-        computeTensor();
+        //computeTensor();
     }
 
     void CRigidBody::fixedUpdate(double delta) {
-
+        this->computeAuxilaries();
+        this->computeForces(delta);
+        this->physicUpdate(delta);
     }
 
     void CRigidBody::update(double delta) {
@@ -92,13 +93,29 @@ namespace Engine {
 
     void CRigidBody::physicUpdate(double delta) {
         auto fdelta = (float)delta;
-        transform->translate(fdelta * velocity);
+        //transform->translate(fdelta * velocity);
         if (transform->getPosition().y <0){
-            transform->Position.y=0;
+            //transform->Position.y=0;
         }
         //TODO ROTATION
         LinMomentum+=fdelta*force;
         AngMomentum+=fdelta*torque;
+    }
+
+    CRigidBody::CRigidBody(Implicit *_collider) : CRigidBody() {
+        ImplCollider = _collider;
+    }
+
+    CRigidBody::~CRigidBody() {
+        delete ImplCollider;
+    }
+
+    Implicit *CRigidBody::getImplCollider() const {
+        return ImplCollider;
+    }
+
+    void CRigidBody::setImplCollider(Implicit *implCollider) {
+        ImplCollider = implCollider;
     }
 
 } // Engine

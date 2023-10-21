@@ -287,6 +287,9 @@ BaseMesh::SubMesh::init(std::vector<vertexData> &Vertices, const std::vector<uin
         vertexesData[0].m_abgr = 0x00FF00FF;
 
     } else {
+        if (hasNormal){
+            return;
+        }
         splitTriangleCompactId(0, 0.2, 0.2);
         auto t_it = circulatorBegin(8);
         auto t_endIt = circulatorEnd(8);
@@ -309,9 +312,9 @@ BaseMesh::SubMesh::init(std::vector<vertexData> &Vertices, const std::vector<uin
             }
         }
         vertexesData[8].m_abgr = 0xFF00FF00;
-        //flipEdgeCompactId(0, 1);
-        //flipEdgeCompactId(1, 2);
-        //flipEdgeCompactId(4, 5);
+        flipEdgeCompactId(0, 1);
+        flipEdgeCompactId(1, 2);
+        flipEdgeCompactId(4, 5);
 
         computeLaplacian();
 

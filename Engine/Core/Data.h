@@ -33,6 +33,8 @@ namespace Engine {
         static std::shared_ptr<Texture> loadTexture(const char *_name, Texture::TYPE type);
         static bx::AllocatorI * allocator;
         static bx::FileReaderI* s_fileReader;
+        static void exportToOBJ(std::shared_ptr<BaseMesh>& mesh, std::string filename);
+
 
         class FileReader : public bx::FileReader
         {

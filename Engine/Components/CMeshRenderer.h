@@ -30,6 +30,7 @@ namespace Engine {
 
         CMeshRenderer *setMaterialTexId(int idx, std::shared_ptr<Texture> texHandle);
 
+        Box getBBox();
 
         void start() override;
 

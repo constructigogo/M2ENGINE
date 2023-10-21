@@ -9,6 +9,7 @@
 #include "CTransform.h"
 #include "CMeshRenderer.h"
 #include "../Physic/Physic.h"
+#include "../Implicits/ImplicitAll.h"
 
 namespace Engine {
 
@@ -18,6 +19,9 @@ namespace Engine {
     public:
 
         CRigidBody();
+        CRigidBody(Implicit * _collider);
+
+        ~CRigidBody() override;
 
         void start() override;
 
@@ -31,17 +35,19 @@ namespace Engine {
 
         bool affectedByGravity=true;
 
+        Implicit *getImplCollider() const;
+
+        void setImplCollider(Implicit *implCollider);
+
     private:
-
-        friend Physic;
-
         void computeTensor();
         void computeAuxilaries ();
         void computeForces(double delta);
 
         void physicUpdate(double delta);
 
-        CMeshRenderer *meshRenderer;
+        CMeshRenderer* meshRenderer;
+        Implicit* ImplCollider;
 
         /* Constant */
         float mass = 1;

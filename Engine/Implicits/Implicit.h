@@ -27,4 +27,17 @@ namespace Engine {
     private:
     };
 
+    class ImplicitTransform :public Implicit{
+    public:
+        ImplicitTransform()=delete;
+        ImplicitTransform(const glm::vec3 &pos, const glm::vec3 &rot);
+
+    protected:
+        glm::vec3 transPoint(const glm::vec3 & _p) const;
+
+        glm::vec3 pos;
+        glm::vec3 rot;
+        glm::mat4x4 mtx;
+    };
+
 } // Engine

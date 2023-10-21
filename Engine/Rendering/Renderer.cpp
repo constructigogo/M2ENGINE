@@ -93,8 +93,8 @@ void Renderer::render() {
         auto translate = glm::translate(model_matrix, pos);
         auto rotate = glm::mat4_cast(rot);
         auto scale = glm::scale(model_matrix, scal);
-        glm::mat4 mtx = translate * rotate * scale;
-        mtx = translate * rotate * scale;
+        glm::mat4 mtx = mesh->transform->getTransformMTX();
+        //mtx = translate * rotate * scale;
 
 
         ///Shadow pass

@@ -104,6 +104,15 @@ glm::vec3 Engine::CTransform::getUp() const {
 
 }
 
+const glm::mat4x4 Engine::CTransform::getTransformMTX() const {
+    glm::mat4 model_matrix(1.0f);
+    auto translate = glm::translate(model_matrix, getPosition());
+    auto rotate = glm::mat4_cast(getRotation());
+    auto scale = glm::scale(model_matrix, getScale());
+    glm::mat4 mtx = translate * rotate * scale;
+    return mtx;
+}
+
 
 
 

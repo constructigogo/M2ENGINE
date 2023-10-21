@@ -177,8 +177,8 @@ namespace Engine {
 
             int pFCount = 0;
             while (lastFixedFrame >= fixedDelta && pFCount < physicFrameCountLimit) {
-                Physic::compute(fixedDelta);
                 Component::processFixedUpdate(fixedDelta);
+                Physic::compute(fixedDelta);
                 lastFixedFrame -= fixedDelta;
                 pFCount++;
             }

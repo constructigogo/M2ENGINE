@@ -358,3 +358,24 @@ bgfx::ProgramHandle Data::loadProgram(const char *vertex, const char *fragment) 
         return created;
     }
 }
+
+void Data::exportToOBJ(std::shared_ptr<BaseMesh> &mesh, std::string filename) {
+    std::ofstream myfile;
+    myfile.open ("saved/"+filename+".obj");
+    for (auto & vert:mesh->subMeshes[0].vertexesData) {
+        const glm::vec3& pos = vert.position;
+        std::string line = "v ";
+        line += std::to_string(pos.x) + " " + std::to_string(pos.y) + " " + std::to_string(pos.z);
+        myfile << line << "\n";
+    }
+    myfile << "\n";
+    for (int i = 0; i < mesh->subMeshes[0].indices.size(); i+=3) {
+        uint32_t v1 = mesh->subMeshes[0].indices[i]+1;
+        uint32_t v2 = mesh->subMeshes[0].indices[i+1]+1;
+        uint32_t v3 = mesh->subMeshes[0].indices[i+2]+1;
+        std::string line = "f ";
+        line += std::to_string(v1) + " " + std::to_string(v2) + " " + std::to_string(v3);
+        myfile << line << "\n";
+    }
+    myfile.close();
+}

@@ -116,6 +116,10 @@ void CMeshRenderer::EditorUIDrawContent() {
     for (auto & tex:textures) {
         ImGui::Text("%d : %s",idx++, tex->getName().c_str());
     }
+    ImGui::Separator();
+    if(ImGui::Button("Export OBJ")){
+        Data::exportToOBJ(mesh,getObject()->getName());
+    }
 }
 
 CMeshRenderer *CMeshRenderer::setMaterial(std::shared_ptr<MaterialInstance> mat) {
@@ -125,6 +129,10 @@ CMeshRenderer *CMeshRenderer::setMaterial(std::shared_ptr<MaterialInstance> mat)
 
 const std::shared_ptr<MaterialInstance> &CMeshRenderer::getMaterialInst() const {
     return materialInst;
+}
+
+Box CMeshRenderer::getBBox() {
+    return mesh->boundingBox;
 }
 
 

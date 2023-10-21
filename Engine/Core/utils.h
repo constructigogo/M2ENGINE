@@ -12,7 +12,12 @@
 #include "bx/math.h"
 
 namespace Engine::Utils {
-        glm::mat3 QuaternionToMat(glm::quat quat);
+    glm::mat3 QuaternionToMat(glm::quat quat);
+    float ndot(glm::vec2 a, glm::vec2 b);
+
+    float dot2( glm::vec2 v );
+    float dot2( glm::vec3 v );
+    int factorial(int n);
 }
 
 #endif //ENGINE_UTILS_H

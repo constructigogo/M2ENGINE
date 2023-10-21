@@ -7,6 +7,7 @@
 
 #include "../Components/CRigidBody.h"
 #include "../Core/App.h"
+#include "../Core/Ray.h"
 
 namespace Engine {
 
@@ -15,7 +16,7 @@ namespace Engine {
 
     class Physic {
     public:
-
+        static bool raycast(const Ray & ray, RayHit& hit);
     private:
         friend App;
         friend CRigidBody;
@@ -23,8 +24,10 @@ namespace Engine {
         static void init();
         static void compute(double delta);
 
+
         static void registerBody(CRigidBody * body);
         static std::vector<CRigidBody*> bodies;
+        static float e;
     };
 
 } // Engine
