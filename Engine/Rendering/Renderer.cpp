@@ -83,7 +83,6 @@ void Renderer::render() {
     DebugDrawEncoder enc;
     enc.begin(RENDER_PASS::Render, true, bgfx::begin());
 
-    std::vector<>()
 
     for (const auto &mesh: renderList) {
         if (!mesh->isActive() || !mesh->getObject()->isActive() || !mesh->mesh) {
