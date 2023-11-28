@@ -46,12 +46,6 @@ namespace Engine {
 
     private:
 
-        struct RenderData{
-            glm::mat4x4 mtx;
-            bgfx::VertexBufferHandle vertexHandle;
-            bgfx::IndexBufferHandle indexHandle;
-        };
-
         enum RENDER_PASS {
             Shadow,
             //Geometry, UNUSED
