@@ -691,6 +691,7 @@ public:
         */
 
 
+        for (int i = 0; i < 64; ++i) {
 
         auto inst = editorScene->createObject();
         inst->setName("Backpack");
@@ -700,21 +701,21 @@ public:
         transform->setScale(4.0);
         //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
         auto mRenderer = inst->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/triangle.obj", true), STATIC, false)
+                ->setMesh(Data::loadMesh("data/backpack.obj", true), STATIC, false)
                 ->setMaterial(debugMaterial.createInstance());
         auto matInst = mRenderer->getMaterialInst();
+        }
 
         //testMesh->addComponent<CRigidBody>();
 
 
 
-        /*
-        auto res = Data::loadScene("data/exterior.obj");
+/*
+        auto res = Data::loadScene("data/export.obj");
         for (auto obj: res) {
             editorScene->addObject(obj);
         }
-         */
-
+*/
         /*
         auto imp = editorScene->createObject();
         ImplicitTriangulate tr;

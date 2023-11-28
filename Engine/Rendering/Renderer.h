@@ -46,10 +46,19 @@ namespace Engine {
 
     private:
 
-        struct RenderData{
-            glm::mat4x4 mtx;
-            bgfx::VertexBufferHandle vertexHandle;
-            bgfx::IndexBufferHandle indexHandle;
+        struct InstanceDrawData {
+            float vertexOffset;
+            float vertexCount;
+            float indexOffset;
+            float indexCount;
+        };
+
+
+        struct MultiDrawData {
+            uint  count;
+            uint  instanceCount;
+            uint  first;
+            uint  baseInstance;
         };
 
         enum RENDER_PASS {
@@ -62,6 +71,7 @@ namespace Engine {
             SSS,
             Count
         };
+
 
         static std::map<BaseMesh *, std::pair<bgfx::ProgramHandle *, std::pair<std::vector<std::shared_ptr<Texture>>, std::vector<CTransform *>>>> instancing;
         static std::map<BaseMesh *, std::pair<bgfx::ProgramHandle *, std::pair<bgfx::InstanceDataBuffer, int>>> staticInstanceCache;
@@ -84,8 +94,14 @@ namespace Engine {
         bgfx::UniformHandle u_shadowTexelSize;
         bgfx::UniformHandle u_depthScaleOffset;
 
+        bgfx::ProgramHandle indirect_program;
+        bgfx::IndirectBufferHandle indirect_buffer_handle;
+        bgfx::IndexBufferHandle indirect_count_buffer_handle;
+        bgfx::VertexBufferHandle object_list_buffer;
+        bgfx::DynamicVertexBufferHandle instance_buffer;
 
         bgfx::ProgramHandle debugShader;
+        bgfx::ProgramHandle debugInstancedShader;
         bgfx::ProgramHandle shadowmapShader;
 
         glm::mat4x4 view;

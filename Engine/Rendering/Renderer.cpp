@@ -84,158 +84,95 @@ void Renderer::render() {
     enc.begin(RENDER_PASS::Render, true, bgfx::begin());
 
 
-    for (const auto &mesh: renderList) {
-        if (!mesh->isActive() || !mesh->getObject()->isActive() || !mesh->mesh) {
-            continue;
+    static bool cache = false;
+    static bgfx::VertexBufferHandle VBH;
+    static bgfx::IndexBufferHandle IBH;
+    static bgfx::VertexLayout ms_layout;
+    static bgfx::VertexLayout ms_instance_layout;
+    if (!cache && renderList.size() > 0) {
+        auto res = Data::buildIndirectCache();
+        VBH = res.first;
+        IBH = res.second;
+        ms_layout
+                .begin()
+                .add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
+                .end();
+
+
+        ms_instance_layout
+                .begin()
+                .add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord1, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord2, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord3, 4, bgfx::AttribType::Float)
+                //.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Float)
+                .end();
+
+        cache = true;
+    }
+
+    std::vector<glm::mat4> models(renderList.size());
+    std::vector<InstanceDrawData> instData;
+    std::vector<MultiDrawData> multData;
+
+    if (!renderList.empty()) {
+        const bgfx::Memory *mem = bgfx::alloc(sizeof(InstanceDrawData) * renderList.size());
+        InstanceDrawData *objs = (InstanceDrawData *) mem->data;
+
+        bgfx::InstanceDataBuffer idb;
+        bgfx::allocInstanceDataBuffer(&idb, renderList.size(), 64);
+        uint8_t* data = idb.data;
+
+        int counter = 0;
+        for (const auto &mesh: renderList) {
+            glm::mat4 mtx = mesh->transform->getTransformMTX();
+            models.push_back(mtx);
+            objs[counter].vertexOffset = mesh->mesh->vOffsetInGlobal;
+            objs[counter].vertexCount = mesh->mesh->vertexesAllData.size(); // m_vertexCount is unused in compute shader, its only here for completeness
+            objs[counter].indexOffset = mesh->mesh->IOffsetInGlobal;
+            objs[counter].indexCount = mesh->mesh->indicesAllData.size();
+            counter++;
+            float* Mmtx = (float*)data;
+            for (int i = 0; i < 16; ++i) {
+                Mmtx[i]=0.0;
+            }
+            Mmtx[12]=0.0;
+            Mmtx[13]=0.0;
+            Mmtx[14]=0.0;
+            Mmtx[0]=1.0;
+            Mmtx[5]=1.0;
+            Mmtx[10]=1.0;
+            Mmtx[15]=1.0;
+
+            //*Mmtx=*glm::value_ptr(mtx);
+            data+=64;
         }
-        glm::mat4 mtx = mesh->transform->getTransformMTX();
 
-
-        ///Shadow pass
-        auto VP = lightProj * lightViewGLM;
-        auto mBBox = mesh->mesh->boundingBox;
-        if (!isCulled(VP, mtx, mBBox)) {
-            bgfx::setTransform(glm::value_ptr(mtx));
-            bgfx::setVertexBuffer(0, mesh->mesh->VBH);
-            bgfx::setIndexBuffer(mesh->mesh->IBH);
-            bx::mtxMul(lightMtx, glm::value_ptr(mtx), mtxShadow);
-            bgfx::setState(0 | BGFX_STATE_WRITE_RGB
-                           | BGFX_STATE_WRITE_Z
-                           | BGFX_STATE_DEPTH_TEST_LESS
-                           | BGFX_STATE_CULL_CW);
-            bgfx::submit(RENDER_PASS::Shadow, shadowmapShader, 0);
+        if (bgfx::isValid(object_list_buffer)){
+            bgfx::destroy(object_list_buffer);
         }
-
-        ///ZPREPASS
-
-
-        ///Render pass
-        VP = projGLM * view;
-        if (!isCulled(VP, mtx, mBBox)) {
-            auto matInst = mesh->getMaterialInst();
-
-            if (matInst->useMap(Texture::TYPE::COLOR)) {
-                bgfx::setTexture(Texture::TYPE::COLOR, s_texColor, matInst->getMap(Texture::TYPE::COLOR)->getHandle());
-            }
-            if (matInst->useMap(Texture::TYPE::NORMAL)) {
-                bgfx::setTexture(Texture::TYPE::NORMAL, s_texNormal,
-                                 matInst->getMap(Texture::TYPE::NORMAL)->getHandle());
-            }
-            if (matInst->useMap(Texture::TYPE::SPECULAR)) {
-                bgfx::setTexture(Texture::TYPE::SPECULAR, s_texSpecular,
-                                 matInst->getMap(Texture::TYPE::SPECULAR)->getHandle());
-            }
-            bgfx::setTexture(3, s_shadowMap, shadowMapTexture);
-
-            //Uniform binding
-            bgfx::setTransform(glm::value_ptr(mtx));
-            bgfx::setVertexBuffer(0, mesh->mesh->VBH);
-            bgfx::setIndexBuffer(mesh->mesh->IBH);
-            glm::mat4x4 lightMtxGLM = lightProj * lightViewGLM;
-            bgfx::setUniform(u_shadowTexelSize, shadowTexel);
-            bgfx::setUniform(u_specular, glm::value_ptr(matInst->getSpecular()));
-            bgfx::setUniform(u_lightMtx, mtxShadow);
-            bgfx::setUniform(u_lightPos, lightPos);
-            bgfx::setState(0
-                           | BGFX_STATE_WRITE_RGB
-                           | BGFX_STATE_WRITE_A
-                           | BGFX_STATE_WRITE_Z
-                           | BGFX_STATE_DEPTH_TEST_LESS
-                           | BGFX_STATE_CULL_CW
-                           | BGFX_STATE_MSAA);
-            if (bgfx::isValid(matInst->getHandle())) {
-                bgfx::submit(RENDER_PASS::Render, matInst->getHandle(), 0);
-            } else {
-                bgfx::submit(RENDER_PASS::Render, debugShader, 0);
-            }
-            if(glm::length(mBBox.diagonal())<=8.0 && drawDebugShapes) {
-                auto lower = mBBox.getLower();
-                auto upper = mBBox.getUpper();
-                enc.push();
-                enc.pushTransform(glm::value_ptr(mtx));
-                bx::Aabb aabb =
-                        {
-                                {lower.x, lower.y, lower.z},
-                                {upper.x, upper.y, upper.z},
-                        };
-                enc.setWireframe(true);
-                enc.setColor(0xFF0000FF);
-                enc.draw(aabb);
-                enc.popTransform();
-                enc.pop();
-            }
+        object_list_buffer = bgfx::createVertexBuffer(mem, ms_layout, BGFX_BUFFER_COMPUTE_READ);
+        instance_buffer = bgfx::createDynamicVertexBuffer(renderList.size(), ms_instance_layout, BGFX_BUFFER_COMPUTE_WRITE);
+        if (bgfx::isValid(indirect_buffer_handle)){
+            bgfx::destroy(indirect_buffer_handle);
         }
+        indirect_buffer_handle = bgfx::createIndirectBuffer(renderList.size());
+
+        bgfx::setBuffer(0, object_list_buffer, bgfx::Access::Read);
+        bgfx::setBuffer(1, indirect_buffer_handle, bgfx::Access::Write);
+        bgfx::setBuffer(2, instance_buffer, bgfx::Access::Write);
+        bgfx::dispatch(RENDER_PASS::Render, indirect_program, uint32_t(renderList.size()/64 + 1), 1, 1);
+
+        bgfx::setVertexBuffer(0, VBH);
+        bgfx::setIndexBuffer(IBH);
+        bgfx::setInstanceDataBuffer(instance_buffer,0,renderList.size());
+
+        bgfx::setState(BGFX_STATE_DEFAULT);
+        bgfx::submit(RENDER_PASS::Render,debugInstancedShader,indirect_buffer_handle,0,renderList.size());
     }
 
     enc.end();
 
-
-    const bool instancingSupported = 0 != (BGFX_CAPS_INSTANCING & caps->supported);
-    if (!instancingSupported) {
-        return;
-    }
-    const uint16_t instanceStride = 64;
-    for (const auto &batch: instancing) {
-        const auto mesh = batch.first;
-        const auto &batchData = batch.second;
-        const auto &transformList = batchData.second.second;
-        const auto &texturesList = batchData.second.first;
-        uint32_t drawnInst = bgfx::getAvailInstanceDataBuffer(transformList.size(), instanceStride);
-
-        bgfx::InstanceDataBuffer idb;
-        bgfx::allocInstanceDataBuffer(&idb, drawnInst, instanceStride);
-        uint8_t *data = idb.data;
-
-#pragma omp parallel for default(none) shared(transformList, data)
-        for (int i = 0; i < transformList.size(); ++i) {
-            int dataIdx = i * instanceStride;
-            const auto ptr = transformList[i];
-            const auto &pos = ptr->getPosition();
-            const auto &rot = ptr->getRotation();
-            const auto &scale = ptr->getScale();
-
-            float mtxQuat[16];
-            //bx::mtxFromQuaternion(mtxQuat, glm::value_ptr(rot));
-            mtxQuat[12] = pos.x;
-            mtxQuat[13] = pos.y;
-            mtxQuat[14] = pos.z;
-            float mtxScale[16];
-            bx::mtxScale(mtxScale, scale.x, scale.y, scale.z);
-
-
-            auto *mtx = (float *) (data + i * instanceStride);
-            //bx::mtxTranslate(mtx, pos.x, pos.y, pos.z);
-            bx::mtxMul(mtx, mtxQuat, mtxScale);
-
-        }
-        bgfx::setVertexBuffer(0, mesh->VBH);
-        bgfx::setIndexBuffer(mesh->IBH);
-        bgfx::setInstanceDataBuffer(&idb);
-        /*
-        if (!texturesList.empty()) {
-            if (bgfx::isValid(texturesList[0]->getHandle())) {
-                bgfx::setTexture(0, s_texColor, texturesList[0]->getHandle());
-            }
-            if (bgfx::isValid(texturesList[1]->getHandle())) {
-                bgfx::setTexture(1, s_texNormal, texturesList[1]->getHandle());
-            }
-            if (bgfx::isValid(texturesList[2]->getHandle())) {
-                bgfx::setTexture(2, s_texSpecular, texturesList[2]->getHandle());
-            }
-        }
-        */
-
-
-        bgfx::setState(0
-                       | BGFX_STATE_WRITE_RGB
-                       | BGFX_STATE_WRITE_A
-                       | BGFX_STATE_WRITE_Z
-                       | BGFX_STATE_DEPTH_TEST_LESS
-                       | BGFX_STATE_CULL_CCW
-                       | BGFX_STATE_MSAA);
-        bgfx::submit(0, *batchData.first);
-
-    }
 
     bgfx::touch(RENDER_PASS::Render);
     bgfx::touch(RENDER_PASS::Shadow);
@@ -338,10 +275,21 @@ void Renderer::init() {
     bgfx::setViewMode(RENDER_PASS::Shadow, bgfx::ViewMode::Default);
     bgfx::setViewMode(RENDER_PASS::DEBUG, bgfx::ViewMode::Default);
 
+    indirect_program=bgfx::createProgram(Data::loadShaderBin("cs_indirect.compute"),true);
+    indirect_buffer_handle = BGFX_INVALID_HANDLE;
+    indirect_count_buffer_handle = BGFX_INVALID_HANDLE;
+    object_list_buffer = BGFX_INVALID_HANDLE;
+
 
     debugShader = bgfx::createProgram(
             Data::loadShaderBin("v_simple.vert"),
             Data::loadShaderBin("f_simple.frag"),
+            true
+    );
+
+    debugInstancedShader = bgfx::createProgram(
+            Data::loadShaderBin("v_simple_inst.vert"),
+            Data::loadShaderBin("f_simple_inst.frag"),
             true
     );
 

@@ -205,7 +205,7 @@ std::vector<Object *> Data::loadScene(const std::string &fileName) {
     if (pScene) {
         ENGINE_TRACE("Loading scene," + fileName + " , size : " + std::to_string(pScene->mNumMeshes));
 
-        for (int i = 0; i < pScene->mNumMeshes; i+=1) {
+        for (int i = 0; i < pScene->mNumMeshes && i<15; i += 1) {
             const aiMesh *paiMesh = pScene->mMeshes[i];
             if (paiMesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
                 continue;
@@ -310,21 +310,57 @@ bgfx::ProgramHandle Data::loadProgram(const char *vertex, const char *fragment) 
 
 void Data::exportToOBJ(std::shared_ptr<BaseMesh> &mesh, std::string filename) {
     std::ofstream myfile;
-    myfile.open ("saved/"+filename+".obj");
-    for (auto & vert:mesh->subMeshes[0].vertexesData) {
-        const glm::vec3& pos = vert.position;
+    myfile.open("saved/" + filename + ".obj");
+    for (auto &vert: mesh->subMeshes[0].vertexesData) {
+        const glm::vec3 &pos = vert.position;
         std::string line = "v ";
         line += std::to_string(pos.x) + " " + std::to_string(pos.y) + " " + std::to_string(pos.z);
         myfile << line << "\n";
     }
     myfile << "\n";
-    for (int i = 0; i < mesh->subMeshes[0].indices.size(); i+=3) {
-        uint32_t v1 = mesh->subMeshes[0].indices[i]+1;
-        uint32_t v2 = mesh->subMeshes[0].indices[i+1]+1;
-        uint32_t v3 = mesh->subMeshes[0].indices[i+2]+1;
+    for (int i = 0; i < mesh->subMeshes[0].indices.size(); i += 3) {
+        uint32_t v1 = mesh->subMeshes[0].indices[i] + 1;
+        uint32_t v2 = mesh->subMeshes[0].indices[i + 1] + 1;
+        uint32_t v3 = mesh->subMeshes[0].indices[i + 2] + 1;
         std::string line = "f ";
         line += std::to_string(v1) + " " + std::to_string(v2) + " " + std::to_string(v3);
         myfile << line << "\n";
     }
     myfile.close();
+}
+
+std::pair<bgfx::VertexBufferHandle, bgfx::IndexBufferHandle> Data::buildIndirectCache() {
+    std::vector<BaseMesh::vertexData> allVerts;
+    std::vector<uint32_t> allIndices;
+    int vOffset=0;
+    int iOffset=0;
+    for (auto &[name, mesh]: meshCache) {
+        auto &verts = mesh->vertexesAllData;
+        auto &indices = mesh->indicesAllData;
+        allVerts.insert(allVerts.end(), verts.begin(), verts.end());
+        for (auto &ind: indices) {
+            allIndices.push_back(ind + iOffset);
+        }
+        mesh->vOffsetInGlobal = vOffset;
+        mesh->IOffsetInGlobal = iOffset;
+        vOffset+=verts.size();
+        iOffset+=indices.size();
+        mesh->release();
+    }
+    bgfx::VertexBufferHandle vertHandle=BGFX_INVALID_HANDLE;
+    bgfx::IndexBufferHandle indHandle=BGFX_INVALID_HANDLE;
+    if (bgfx::isValid(vertHandle)) {
+        bgfx::destroy(vertHandle);
+    }
+    if (bgfx::isValid(indHandle)) {
+        bgfx::destroy(indHandle);
+    }
+
+    vertHandle = bgfx::createVertexBuffer(
+            bgfx::copy(allVerts.data(), allVerts.size() * sizeof(BaseMesh::vertexData)),
+            BaseMesh::getVLY());
+    indHandle = bgfx::createIndexBuffer(bgfx::copy(allIndices.data(), allIndices.size() * sizeof(uint32_t)),
+                                        BGFX_BUFFER_INDEX32);
+
+    return std::make_pair(vertHandle, indHandle);
 }

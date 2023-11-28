@@ -34,7 +34,7 @@ namespace Engine {
         static bx::AllocatorI * allocator;
         static bx::FileReaderI* s_fileReader;
         static void exportToOBJ(std::shared_ptr<BaseMesh>& mesh, std::string filename);
-
+        static std::pair<bgfx::VertexBufferHandle,bgfx::IndexBufferHandle> buildIndirectCache();
 
         class FileReader : public bx::FileReader
         {

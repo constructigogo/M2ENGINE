@@ -33,6 +33,9 @@ namespace Engine {
         void bind();
         void release();
 
+        int vOffsetInGlobal=0;
+        int IOffsetInGlobal=0;
+
         static bgfx::VertexLayout getVLY() {
             bgfx::VertexLayout vly;
             vly.begin()

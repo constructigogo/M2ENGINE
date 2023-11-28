@@ -82,12 +82,14 @@ function(engine_build_shaders SHADER_OUT FILES)
         get_filename_component(SHADER_FILE_ABSOLUTE ${SHADER_FILE} ABSOLUTE)
         get_filename_component(SHADER_FILE_EXT ${SHADER_FILE} EXT)
         set(EXT_TYPE "")
+        set(PROFILE "120")
         if (${SHADER_FILE_EXT} STREQUAL ".vert")
             set(EXT_TYPE "VERTEX")
         elseif (${SHADER_FILE_EXT} STREQUAL ".frag")
             set(EXT_TYPE "FRAGMENT")
         elseif (${SHADER_FILE_EXT} STREQUAL ".compute")
             set(EXT_TYPE "COMPUTE")
+            set(PROFILE "430")
         endif ()
 
         list(APPEND RES ${SHADER_BUILD_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin)
@@ -97,7 +99,7 @@ function(engine_build_shaders SHADER_OUT FILES)
                 OUTPUT ${SHADER_BUILD_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin
                 ${EXT_TYPE}
                 ${SHADER_PLATFORM}
-                #PROFILE 150
+                PROFILE ${PROFILE}
                 VARYING_DEF ${PROJECT_SOURCE_DIR}/shaders/varying.def.sc
         )
         message(${RESULT})
