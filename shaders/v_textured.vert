@@ -23,14 +23,13 @@ void main(){
     //v_view = mul(weyepos - wpos, TBN);
 
 
-    vec3 normal = a_normal * 2.0 - 1.0;
     v_normal = N;
     v_tangent=T;
     v_bitangent=B;
 
     v_texcoord0 = a_texcoord0;
 
-    const float shadowMapOffset = 0.001;
+    const float shadowMapOffset = 0.01;
     vec3 posOffset = a_position + a_normal.xyz * shadowMapOffset;
     v_shadowcoord = mul(u_lightMtx, vec4(wpos, 1.0) );
 }

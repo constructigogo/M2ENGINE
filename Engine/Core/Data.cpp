@@ -81,56 +81,6 @@ bgfx::ShaderHandle Engine::Data::loadShaderBin(const char *_name) {
     return handle;
 }
 
-bgfx::TextureHandle Data::loadTextureRaw(const char *_name) {
-    if (textureCacheRaw.contains(_name)) {
-        return textureCacheRaw[_name];
-    }
-
-
-    bgfx::TextureHandle handle = BGFX_INVALID_HANDLE;
-    uint64_t _flags = 0;
-    uint32_t size;
-    void *data = load(_name, &size);
-    if (data != nullptr) {
-        bimg::ImageContainer *imageContainer = bimg::imageParse(allocator, data, size);
-
-        if (imageContainer != nullptr) {
-            const bgfx::Memory *mem = bgfx::makeRef(
-                    imageContainer->m_data, imageContainer->m_size, imageReleaseCb, imageContainer
-            );
-            bx::free(allocator, data);
-
-
-            if (imageContainer->m_cubeMap) {
-                handle = bgfx::createTextureCube(
-                        uint16_t(imageContainer->m_width), 1 < imageContainer->m_numMips, imageContainer->m_numLayers,
-                        bgfx::TextureFormat::Enum(imageContainer->m_format), _flags, mem
-                );
-            } else if (1 < imageContainer->m_depth) {
-                handle = bgfx::createTexture3D(
-                        uint16_t(imageContainer->m_width), uint16_t(imageContainer->m_height),
-                        uint16_t(imageContainer->m_depth), 1 < imageContainer->m_numMips,
-                        bgfx::TextureFormat::Enum(imageContainer->m_format), _flags, mem
-                );
-            } else if (bgfx::isTextureValid(0, false, imageContainer->m_numLayers,
-                                            bgfx::TextureFormat::Enum(imageContainer->m_format), _flags)) {
-                handle = bgfx::createTexture2D(
-                        uint16_t(imageContainer->m_width), uint16_t(imageContainer->m_height),
-                        1 < imageContainer->m_numMips, imageContainer->m_numLayers,
-                        bgfx::TextureFormat::Enum(imageContainer->m_format), _flags, mem
-                );
-            }
-
-        }
-
-        if (bgfx::isValid(handle)) {
-            bgfx::setName(handle, _name);
-        }
-    }
-    textureCacheRaw[_name] = handle;
-    return handle;
-}
-
 void Data::init() {
     static bx::DefaultAllocator s_allocator;
     allocator = &s_allocator;
@@ -221,7 +171,6 @@ std::shared_ptr<Texture> Data::loadTexture(const char *_name, Texture::TYPE type
                 w = imageContainer->m_width;
                 h = imageContainer->m_height;
             }
-
         }
 
         if (bgfx::isValid(handle)) {

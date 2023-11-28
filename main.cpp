@@ -78,8 +78,11 @@ public:
         rb->setImplCollider(form);
         rb->affectedByGravity = false;
         **/
+        /*
+        double timer = glfwGetTime();
         auto imp2 = editorScene->createObject("ImplicitBoxFrame");
         //imp2->getComponent<CTransform>()->setRotation(glm::quat(glm::vec3(0.0,0.0,M_PI/4)));
+
         Implicit *turretBase =
                 new Union(
                         new Union(
@@ -241,7 +244,7 @@ public:
                               glm::vec3(1.0, 0.0, 0.0))
             );
 
-            //shipCore = new Union(shipCore,backBlock);
+            shipCore = new Union(shipCore, backBlock);
         }
 
         {
@@ -449,7 +452,7 @@ public:
                     habitat
             );
 
-            //shipCore = new Union(habitat,shipCore);
+            shipCore = new Union(habitat, shipCore);
         }
 
         {
@@ -628,43 +631,51 @@ public:
                     reactorsRight
             );
 
-            //shipCore = new Union(reactors,shipCore);
+            shipCore = new Union(reactors, shipCore);
         }
 
 
         auto msh = (tr.Triangulate(shipCore,
-                                   512,
-                                   Box({-s, -s/2.0, -10}, {s, s/2.0, 10})
+                                   64,
+                                   Box({-s, -s / 2.0, -10}, {s, s / 2.0, 10})
         ));
         imp2->addComponent<CMeshRenderer>()
                 ->setMesh(msh, STATIC, false)
                 ->setMaterial(debugMaterial.createInstance());
         auto rb = imp2->addComponent<CRigidBody>();
         rb->setImplCollider(shipCore);
+        for (int i = 2; i <= 10; ++i) {
+            double ltimer = glfwGetTime();
+            int pow = std::pow(2, i);
+            auto tst_res = (tr.Triangulate(shipCore,
+                                           pow,
+                                           Box({-s, -s / 2.0, -10}, {s, s / 2.0, 10})
+            ));
+            ltimer = glfwGetTime() - ltimer;
+            ENGINE_INFO("Generation time for res " + std::to_string(pow) + " : " + std::to_string(ltimer));
 
-        //Data::exportToOBJ(msh,"test");
+        }
 
         /*
-        std::vector<std::vector<glm::vec3>> pts;
-        pts.push_back({glm::vec3(0.0, 0.0, 0.0), glm::vec3(1.0, 0.5, 0.0), glm::vec3(2.0, 0.0, 0.0)});
-        pts.push_back({glm::vec3(0.0, 0.5, 1.0), glm::vec3(1.0, 3.0, 1.0), glm::vec3(2.0, 0.5, 1.0)});
-        pts.push_back({glm::vec3(0.0, 0.0, 2.0), glm::vec3(1.0, 0.5, 2.0), glm::vec3(2.0, 0.0, 2.0)});
+       std::vector<std::vector<glm::vec3>> pts;
+       pts.push_back({glm::vec3(0.0, 0.0, 0.0), glm::vec3(1.0, 0.5, 0.0), glm::vec3(2.0, 0.0, 0.0)});
+       pts.push_back({glm::vec3(0.0, 0.5, 1.0), glm::vec3(1.0, 3.0, 1.0), glm::vec3(2.0, 0.5, 1.0)});
+       pts.push_back({glm::vec3(0.0, 0.0, 2.0), glm::vec3(1.0, 0.5, 2.0), glm::vec3(2.0, 0.0, 2.0)});
 
-        Bezier curve(pts);
+       Bezier curve(pts);
 
-        for (int i = 2; i < 8; ++i) {
-            auto tst_res = MeshBuilder::Polygonize(curve, std::pow(2,i));
-            Data::exportToOBJ(tst_res,"surface"+std::to_string(std::pow(2,i)));
-        }
-        auto tst_res = MeshBuilder::Polygonize(curve, 4);
-        auto curveInst = editorScene->createObject();
-        auto curvTr = curveInst->getComponent<CTransform>();
-        curvTr->setScale(10.0f);
-        auto curveMRenderer = curveInst->addComponent<CMeshRenderer>()
-                ->setMesh(tst_res, STATIC, false)
-                ->setMaterial(debugMaterial.createInstance());
-        */
-
+       for (int i = 2; i < 8; ++i) {
+           auto tst_res = MeshBuilder::Polygonize(curve, std::pow(2,i));
+           Data::exportToOBJ(tst_res,"surface"+std::to_string(std::pow(2,i)));
+       }
+       auto tst_res = MeshBuilder::Polygonize(curve, 4);
+       auto curveInst = editorScene->createObject();
+       auto curvTr = curveInst->getComponent<CTransform>();
+       curvTr->setScale(10.0f);
+       auto curveMRenderer = curveInst->addComponent<CMeshRenderer>()
+               ->setMesh(tst_res, STATIC, false)
+               ->setMaterial(debugMaterial.createInstance());
+       */
         /*
         Bezier curve({glm::vec3(0.0, 0.5, 0.0), glm::vec3(0.0, 1.0, 0.0), glm::vec3(1.0, 0.5, 0.0),glm::vec3(3.0, 1.0, 0.0)});
         Bezier axis({glm::vec3(0.0,0.0,0.0),glm::vec3(1.0,0.0,0.0)});
@@ -680,9 +691,7 @@ public:
         */
 
 
-        //Implicit *turret
 
-        /*
         auto inst = editorScene->createObject();
         inst->setName("Backpack");
         auto transform = inst->getComponent<CTransform>();
@@ -691,19 +700,20 @@ public:
         transform->setScale(4.0);
         //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
         auto mRenderer = inst->addComponent<CMeshRenderer>()
-                ->setMesh(Data::loadMesh("data/bbox.obj", true), STATIC, false)
+                ->setMesh(Data::loadMesh("data/triangle.obj", true), STATIC, false)
                 ->setMaterial(debugMaterial.createInstance());
         auto matInst = mRenderer->getMaterialInst();
-        */
+
         //testMesh->addComponent<CRigidBody>();
 
 
 
-
-        //auto res = Data::loadScene("data/exterior.obj");
-        //for (auto obj: res) {
-        //    editorScene->addObject(obj);
-        //}
+        /*
+        auto res = Data::loadScene("data/exterior.obj");
+        for (auto obj: res) {
+            editorScene->addObject(obj);
+        }
+         */
 
         /*
         auto imp = editorScene->createObject();

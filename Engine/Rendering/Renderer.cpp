@@ -18,14 +18,16 @@ std::vector<CMeshRenderer *> Renderer::renderList;
 void Renderer::render() {
     const bgfx::Caps *caps = bgfx::getCaps();
 
+    const bool computeSupported = !!(BGFX_CAPS_COMPUTE & bgfx::getCaps()->supported);
+    const bool indirectSupported = !!(BGFX_CAPS_DRAW_INDIRECT & bgfx::getCaps()->supported);
 
-    bool m_shadowSamplerSupported = 0 != (caps->supported & BGFX_CAPS_TEXTURE_COMPARE_LEQUAL);
+    const bool m_shadowSamplerSupported = 0 != (caps->supported & BGFX_CAPS_TEXTURE_COMPARE_LEQUAL);
     bool m_useShadowSampler = m_shadowSamplerSupported;
 
     assert(m_useShadowSampler);
     assert(bgfx::isValid(m_shadowMapFB));
 
-    // Define matrices.
+    // Define matrices.qe
     shadowmap_size = 2048;
     float shadowTexel[4]{
             1.0f / (float) shadowmap_size, 1.0f / (float) shadowmap_size, 0.0, 0.0
@@ -40,7 +42,7 @@ void Renderer::render() {
     const float area = 32.0f;
     glm::mat4x4 lightViewGLM = glm::lookAt(glm::vec3{lightPos[0], lightPos[1], lightPos[2]}, {0.0, 0.0, 0.0},
                                            {0.0, 1.0, 0.0});
-    glm::mat4x4 lightProj = glm::orthoRH_NO(-area, area, -area, area, -50.0f, 100.0f);
+    glm::mat4x4 lightProj = glm::orthoRH_NO(-area, area, -area, area, -100.0f, 30.0f);
 
 
     float mtxShadow[16];
@@ -61,7 +63,7 @@ void Renderer::render() {
     bx::mtxMul(mtxTmp, glm::value_ptr(lightProj), mtxCrop);
     bx::mtxMul(mtxShadow, glm::value_ptr(lightViewGLM), mtxTmp);
 
-
+    //Shadow Settings
     bgfx::setViewTransform(RENDER_PASS::Shadow, glm::value_ptr(lightViewGLM), glm::value_ptr(lightProj));
     bgfx::setViewFrameBuffer(RENDER_PASS::Shadow, m_shadowMapFB);
     bgfx::setViewRect(RENDER_PASS::Shadow, 0, 0, shadowmap_size, shadowmap_size);
@@ -72,6 +74,7 @@ void Renderer::render() {
     glm::mat4x4 viewGLM = glm::lookAt(glm::vec3{0.0, 0.0, 10.0}, {0.0, 0.0, 0.0}, {0.0, 1.0, 0.0});
     glm::mat4x4 projGLM = glm::perspective(glm::radians(75.0f), float(width) / float(height), near, far);
 
+    //Render Frustum
     Box bbox({0.0, 0.0, near}, {1.0, 1.0, -far});
 
     bgfx::setViewTransform(RENDER_PASS::Render, glm::value_ptr(view), glm::value_ptr(projGLM));
@@ -80,21 +83,13 @@ void Renderer::render() {
     DebugDrawEncoder enc;
     enc.begin(RENDER_PASS::Render, true, bgfx::begin());
 
+    std::vector<>()
+
     for (const auto &mesh: renderList) {
         if (!mesh->isActive() || !mesh->getObject()->isActive() || !mesh->mesh) {
             continue;
         }
-
-        const glm::vec3 &pos = mesh->transform->getPosition();
-        const glm::vec3 &scal = mesh->transform->getScale();
-        const glm::quat &rot = mesh->transform->getRotation();
-        //std::cout<< pos.x <<" "<<pos.y <<" "<<pos.z <<" " <<std::endl;
-        glm::mat4 model_matrix(1.0f);
-        auto translate = glm::translate(model_matrix, pos);
-        auto rotate = glm::mat4_cast(rot);
-        auto scale = glm::scale(model_matrix, scal);
         glm::mat4 mtx = mesh->transform->getTransformMTX();
-        //mtx = translate * rotate * scale;
 
 
         ///Shadow pass
@@ -105,13 +100,14 @@ void Renderer::render() {
             bgfx::setVertexBuffer(0, mesh->mesh->VBH);
             bgfx::setIndexBuffer(mesh->mesh->IBH);
             bx::mtxMul(lightMtx, glm::value_ptr(mtx), mtxShadow);
-
             bgfx::setState(0 | BGFX_STATE_WRITE_RGB
                            | BGFX_STATE_WRITE_Z
                            | BGFX_STATE_DEPTH_TEST_LESS
-                           | BGFX_STATE_CULL_CCW);
+                           | BGFX_STATE_CULL_CW);
             bgfx::submit(RENDER_PASS::Shadow, shadowmapShader, 0);
         }
+
+        ///ZPREPASS
 
 
         ///Render pass
@@ -130,7 +126,6 @@ void Renderer::render() {
                 bgfx::setTexture(Texture::TYPE::SPECULAR, s_texSpecular,
                                  matInst->getMap(Texture::TYPE::SPECULAR)->getHandle());
             }
-
             bgfx::setTexture(3, s_shadowMap, shadowMapTexture);
 
             //Uniform binding

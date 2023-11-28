@@ -30,6 +30,8 @@ namespace Engine {
 
         const std::string &getName() const;
 
+        void bind();
+        void release();
 
         static bgfx::VertexLayout getVLY() {
             bgfx::VertexLayout vly;
@@ -57,25 +59,32 @@ namespace Engine {
             ~SubMesh() = default;
 
             void init(std::vector<vertexData> &Vertices, const std::vector<uint32_t> &Indices, bool hasNormal);
+            void generateSingleVertexNormal();
 
             float getTriangleArea(uint32_t tId);
-
             float getTriangleAreaCompactId(uint32_t tId);
 
             void splitTriangle(uint32_t tId, float u = 0.5f, float v = 0.5f);
-
             void splitTriangleCompactId(uint32_t tId, float u = 0.5f, float v = 0.5f);
 
             void flipEdge(uint32_t t1_id, uint32_t t2_id);
-
             void flipEdgeCompactId(uint32_t t1_id, uint32_t t2_id);
 
-            int getOppositeFromEdge(uint32_t t, uint32_t v1, uint32_t v2);
-            std::pair<int,int>  getEdgeFromOpposite(uint32_t t, uint32_t v);
+            void localDelaunay(uint32_t vId);
+
+            int getOppositeFromEdge(int t, uint32_t v1, uint32_t v2);
+            std::pair<int,int>  getEdgeFromOpposite(int t, uint32_t v);
 
             void computeLaplacian();
             void computeLaplacianLocal(uint32_t v);
 
+            void makeDelaunay();
+            bool delaunayLocal(uint32_t t1,uint32_t t2);
+            bool delaunayLocal(uint32_t t);
+            bool delaunayLocalCompactId(uint32_t t1,uint32_t t2);
+            bool delaunayLocalCompactId(uint32_t t);
+            bool inCircle(uint32_t t1, uint32_t v);
+            bool inCircle(uint32_t a,uint32_t b,uint32_t c, uint32_t v);
 
             std::vector<vertexData> vertexesData;
             std::vector<uint32_t> indices; // 3-point triangle indices
@@ -139,7 +148,7 @@ namespace Engine {
                 using iterator_category = std::forward_iterator_tag;
                 int aroundVertexID;
                 uint32_t offset = 0;
-                uint32_t currentTriangleID;
+                int currentTriangleID;
                 bool startingPoint;
                 const std::vector<uint32_t> &m_t;
                 const std::vector<uint32_t> &m_vAdj;
@@ -183,19 +192,19 @@ namespace Engine {
                 }
 
                 bool operator==(const triangleCirculator &b) const {
-                    return !startingPoint && (b.currentTriangleID == currentTriangleID);
+                    return !startingPoint && (b.currentTriangleID == currentTriangleID) && currentTriangleID!=-1;
                 }
 
                 bool operator!=(triangleCirculator &other) const {
-                    return startingPoint || (currentTriangleID != other.currentTriangleID);
+                    return (startingPoint || (currentTriangleID != other.currentTriangleID)) && currentTriangleID!=-1 ;
                 }
 
 
-                uint32_t operator*() const {
+                int operator*() const {
                     return currentTriangleID;
                 }
 
-                uint32_t *operator->() {
+                int *operator->() {
                     return &currentTriangleID;
                 }
             };

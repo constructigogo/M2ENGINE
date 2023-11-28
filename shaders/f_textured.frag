@@ -60,8 +60,7 @@ float ShadowCalc(Sampler _sampler, vec4 coord, vec2 texelSize, float bias){
     vec2 texCoord = coord.xy/coord.w;
 
     bool outside = any(greaterThan(texCoord, vec2_splat(1.0)))
-    || any(lessThan   (texCoord, vec2_splat(0.0)))
-    ;
+    || any(lessThan   (texCoord, vec2_splat(0.0)));
 
     // perform perspective divide
     vec3 projCoords = coord.xyz / coord.w;
@@ -76,8 +75,6 @@ float ShadowCalc(Sampler _sampler, vec4 coord, vec2 texelSize, float bias){
     // check whether current frag pos is in shadow
     //float shadow = currentDepth - bias > closestDepth  ? 1.0 : 0.0;
     float shadow = 0.0;
-
-
     for (int x = -1; x <= 1; ++x)
     {
         for (int y = -1; y <= 1; ++y)
@@ -100,7 +97,6 @@ void main()
 {
     mat3 TBN = mat3(v_tangent, v_bitangent, v_normal);
     //vec3 lpos = vec3(-2.0,2.0,2.0);
-    float shadowMapBias = 0.005;
     vec2 texCoord = v_texcoord0;
     texCoord.y = 1.0 - texCoord.y;
 
@@ -118,7 +114,7 @@ void main()
     vec3 specmap;
     specmap = texture2D(s_texSpecular, texCoord).xyz;
 
-    float roughness = max(specmap.g,0.2f);
+    float roughness = max(specmap.g, 0.2f);
     float metallic = specmap.b;
     vec3 diffuse = (1.0-metallic)*(color.xyz/PI);
     //float specularValue = 2.0/(roughness)-2.0;
@@ -152,12 +148,13 @@ void main()
     vec3 Lo = (diffuse + specular) * 10.0 * NdotL;
 
     //Shadow calc
-    float bias =  0.001;
+    float bias =  0.0001;
     float inShadow=ShadowCalc(s_shadowMap, v_shadowcoord, u_shadowTexelSize.xy, bias);
 
     //Final Color
     vec3 ambient = vec3(0.03) * color.xyz;
     vec3 final=inShadow*ambient+(Lo * (1.0-inShadow));
+    //final=(vec3(1.0)-inShadow);
 
     //Correction
     final = final / (final + vec3(1.0));

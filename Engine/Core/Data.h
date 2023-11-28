@@ -29,7 +29,7 @@ namespace Engine {
 
         static bgfx::ProgramHandle loadProgram(const char *vertex, const char* fragment);
         static bgfx::ShaderHandle loadShaderBin(const char *_name);
-        static bgfx::TextureHandle loadTextureRaw(const char *_name);
+
         static std::shared_ptr<Texture> loadTexture(const char *_name, Texture::TYPE type);
         static bx::AllocatorI * allocator;
         static bx::FileReaderI* s_fileReader;

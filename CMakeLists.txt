@@ -56,7 +56,7 @@ bgfx_compile_shader_to_header(
         OUTPUT_DIR ${CMAKE_SOURCE_DIR}/shaders/generated
 )
 
-file(GLOB_RECURSE SHADERS_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/shaders/*.frag ${PROJECT_SOURCE_DIR}/shaders/*.vert)
+file(GLOB_RECURSE SHADERS_FILES CONFIGURE_DEPENDS ${PROJECT_SOURCE_DIR}/shaders/*.frag ${PROJECT_SOURCE_DIR}/shaders/*.vert ${PROJECT_SOURCE_DIR}/shaders/*.compute)
 
 
 if(PROJECT_IS_TOP_LEVEL)
@@ -86,6 +86,8 @@ function(engine_build_shaders SHADER_OUT FILES)
             set(EXT_TYPE "VERTEX")
         elseif (${SHADER_FILE_EXT} STREQUAL ".frag")
             set(EXT_TYPE "FRAGMENT")
+        elseif (${SHADER_FILE_EXT} STREQUAL ".compute")
+            set(EXT_TYPE "COMPUTE")
         endif ()
 
         list(APPEND RES ${SHADER_BUILD_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin)
