@@ -85,7 +85,7 @@ namespace Engine {
         ENGINE_TRACE("Init rendering backend");
         // Call bgfx::renderFrame before bgfx::init to signal to bgfx not to create a render thread.
         // Most graphics APIs must be used on the same thread that created the window.
-        // bgfx::renderFrame();
+        bgfx::renderFrame();
         // Initialize bgfx using the native window handle and window resolution.
         bgfx::Init init;
 
@@ -205,6 +205,7 @@ namespace Engine {
 
     void Engine::App::cleanup() {
         delete currentCamera;
+        delete renderer;
     }
 
     Engine::App::~App() {

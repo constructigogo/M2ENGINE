@@ -1,5 +1,12 @@
 #include "bgfx_compute.sh"
 
+
+BUFFER_RO(instanceBBOXIn,vec4,0);
+BUFFER_RO(instanceDataIn, vec4, 1);
+BUFFER_WR(instanceDataOut, vec4, 2);
+BUFFER_WR(instanceRemap,uint,3);
+BUFFER_RW(indirectCountBuffer, int, 4);
+
 NUM_THREADS(256, 1, 1)
 void main(){
 

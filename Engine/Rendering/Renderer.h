@@ -11,6 +11,7 @@
 #include "Texture.h"
 #include "Mesh.h"
 #include "debugdraw/debugdraw.h"
+#include "../Core/GenericHandle.h"
 
 using namespace Engine;
 
@@ -54,11 +55,10 @@ namespace Engine {
         };
 
 
-        struct MultiDrawData {
-            uint  count;
-            uint  instanceCount;
-            uint  first;
-            uint  baseInstance;
+        struct InstanceObjectData {
+            glm::mat4x4 transform;
+            glm::vec4 bmin;
+            glm::vec4 bmax;
         };
 
         enum RENDER_PASS {
@@ -82,27 +82,32 @@ namespace Engine {
         bgfx::TextureHandle shadowMapTexture;
 
         //Samplers
-        bgfx::UniformHandle s_texColor;
-        bgfx::UniformHandle s_texNormal;
-        bgfx::UniformHandle s_texSpecular;
-        bgfx::UniformHandle s_shadowMap;
+        UniformHandle s_texColor;
+        UniformHandle s_texNormal;
+        UniformHandle s_texSpecular;
+        UniformHandle s_shadowMap;
 
         //Uniforms
-        bgfx::UniformHandle u_specular;
-        bgfx::UniformHandle u_lightPos;
-        bgfx::UniformHandle u_lightMtx;
-        bgfx::UniformHandle u_shadowTexelSize;
-        bgfx::UniformHandle u_depthScaleOffset;
+        UniformHandle u_fmin;
+        UniformHandle u_fmax;
+        UniformHandle u_specular;
+        UniformHandle u_lightPos;
+        UniformHandle u_lightMtx;
+        UniformHandle u_shadowTexelSize;
+        UniformHandle u_depthScaleOffset;
 
-        bgfx::ProgramHandle indirect_program;
+        ProgramHandle indirect_program;
+        ProgramHandle indirect_count_program;
+        ProgramHandle indirect_culling_program;
         bgfx::IndirectBufferHandle indirect_buffer_handle;
         bgfx::IndexBufferHandle indirect_count_buffer_handle;
         bgfx::VertexBufferHandle object_list_buffer;
         bgfx::DynamicVertexBufferHandle instance_buffer;
+        bgfx::DynamicVertexBufferHandle instance_OutBuffer;
 
-        bgfx::ProgramHandle debugShader;
-        bgfx::ProgramHandle debugInstancedShader;
-        bgfx::ProgramHandle shadowmapShader;
+        ProgramHandle debugShader;
+        ProgramHandle debugInstancedShader;
+        ProgramHandle shadowmapShader;
 
         glm::mat4x4 view;
         glm::mat4x4 proj;

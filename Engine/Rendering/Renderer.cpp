@@ -88,6 +88,7 @@ void Renderer::render() {
     static bgfx::VertexBufferHandle VBH;
     static bgfx::IndexBufferHandle IBH;
     static bgfx::VertexLayout ms_layout;
+    static bgfx::VertexLayout ms_DataLayout;
     static bgfx::VertexLayout ms_instance_layout;
     if (!cache && renderList.size() > 0) {
         auto res = Data::buildIndirectCache();
@@ -98,6 +99,10 @@ void Renderer::render() {
                 .add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
                 .end();
 
+        ms_DataLayout.begin()
+                .add(bgfx::Attrib::TexCoord0, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord1, 4, bgfx::AttribType::Float)
+                .end();
 
         ms_instance_layout
                 .begin()
@@ -105,7 +110,8 @@ void Renderer::render() {
                 .add(bgfx::Attrib::TexCoord1, 4, bgfx::AttribType::Float)
                 .add(bgfx::Attrib::TexCoord2, 4, bgfx::AttribType::Float)
                 .add(bgfx::Attrib::TexCoord3, 4, bgfx::AttribType::Float)
-                //.add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord4, 4, bgfx::AttribType::Float)
+                .add(bgfx::Attrib::TexCoord5, 4, bgfx::AttribType::Float)
                 .end();
 
         cache = true;
@@ -113,15 +119,14 @@ void Renderer::render() {
 
     std::vector<glm::mat4> models(renderList.size());
     std::vector<InstanceDrawData> instData;
-    std::vector<MultiDrawData> multData;
+    //std::vector<MultiDrawData> multData;
 
     if (!renderList.empty()) {
         const bgfx::Memory *mem = bgfx::alloc(sizeof(InstanceDrawData) * renderList.size());
         InstanceDrawData *objs = (InstanceDrawData *) mem->data;
 
-        bgfx::InstanceDataBuffer idb;
-        bgfx::allocInstanceDataBuffer(&idb, renderList.size(), 64);
-        uint8_t* data = idb.data;
+        const bgfx::Memory *datamem = bgfx::alloc(sizeof(InstanceObjectData) * renderList.size());
+        InstanceObjectData *objData = (InstanceObjectData *) datamem->data;
 
         int counter = 0;
         for (const auto &mesh: renderList) {
@@ -131,44 +136,83 @@ void Renderer::render() {
             objs[counter].vertexCount = mesh->mesh->vertexesAllData.size(); // m_vertexCount is unused in compute shader, its only here for completeness
             objs[counter].indexOffset = mesh->mesh->IOffsetInGlobal;
             objs[counter].indexCount = mesh->mesh->indicesAllData.size();
-            counter++;
-            float* Mmtx = (float*)data;
-            for (int i = 0; i < 16; ++i) {
-                Mmtx[i]=0.0;
-            }
-            Mmtx[12]=0.0;
-            Mmtx[13]=0.0;
-            Mmtx[14]=0.0;
-            Mmtx[0]=1.0;
-            Mmtx[5]=1.0;
-            Mmtx[10]=1.0;
-            Mmtx[15]=1.0;
 
-            //*Mmtx=*glm::value_ptr(mtx);
-            data+=64;
+            objData[counter].transform= mesh->transform->getTransformMTX();
+            objData[counter].bmin = glm::vec4(mesh->getBBox().getLower(),0);
+            objData[counter].bmax = glm::vec4(mesh->getBBox().getUpper(),0);
+            counter++;
+
+            if(drawDebugShapes) {
+                auto lower = mesh->getBBox().getLower();
+                auto upper = mesh->getBBox().getUpper();
+                enc.push();
+                enc.pushTransform(glm::value_ptr(mtx));
+                bx::Aabb aabb =
+                        {
+                                {lower.x, lower.y, lower.z},
+                                {upper.x, upper.y, upper.z},
+                        };
+                enc.setWireframe(true);
+                enc.setColor(0xFF0000FF);
+                enc.draw(aabb);
+                enc.popTransform();
+                enc.pop();
+            }
         }
 
-        if (bgfx::isValid(object_list_buffer)){
+        if (bgfx::isValid(object_list_buffer)) {
             bgfx::destroy(object_list_buffer);
         }
         object_list_buffer = bgfx::createVertexBuffer(mem, ms_layout, BGFX_BUFFER_COMPUTE_READ);
-        instance_buffer = bgfx::createDynamicVertexBuffer(renderList.size(), ms_instance_layout, BGFX_BUFFER_COMPUTE_WRITE);
-        if (bgfx::isValid(indirect_buffer_handle)){
+
+        if (bgfx::isValid(instance_buffer)) {
+            bgfx::destroy(instance_buffer);
+        }
+        //instance_buffer = bgfx::createDynamicVertexBuffer(renderList.size(), ms_instance_layout,BGFX_BUFFER_COMPUTE_WRITE);
+        instance_buffer = bgfx::createDynamicVertexBuffer(datamem, ms_instance_layout, BGFX_BUFFER_COMPUTE_READ);
+        if (bgfx::isValid(indirect_buffer_handle)) {
             bgfx::destroy(indirect_buffer_handle);
         }
         indirect_buffer_handle = bgfx::createIndirectBuffer(renderList.size());
 
+
+        if (bgfx::isValid(indirect_count_buffer_handle)) {
+            bgfx::destroy(indirect_count_buffer_handle);
+        }
+        const bgfx::Memory *countMem = bgfx::alloc(sizeof(uint32_t));
+        *(uint32_t *) countMem->data = 0;
+        indirect_count_buffer_handle = bgfx::createIndexBuffer(countMem,
+                                                               BGFX_BUFFER_INDEX32 | BGFX_BUFFER_COMPUTE_WRITE |
+                                                               BGFX_BUFFER_DRAW_INDIRECT);
+
+        if (/*do fustrum culling*/ false) {
+            bgfx::setBuffer(1, object_list_buffer, bgfx::Access::ReadWrite);
+            bgfx::setBuffer(2, object_list_buffer, bgfx::Access::Write);
+
+            bgfx::setBuffer(4, indirect_count_buffer_handle, bgfx::Access::Write);
+            bgfx::dispatch(RENDER_PASS::Render, indirect_culling_program, uint32_t(renderList.size()), 1, 1);
+
+        }
+
+
         bgfx::setBuffer(0, object_list_buffer, bgfx::Access::Read);
         bgfx::setBuffer(1, indirect_buffer_handle, bgfx::Access::Write);
-        bgfx::setBuffer(2, instance_buffer, bgfx::Access::Write);
-        bgfx::dispatch(RENDER_PASS::Render, indirect_program, uint32_t(renderList.size()/64 + 1), 1, 1);
+        bgfx::setBuffer(2, instance_buffer, bgfx::Access::Read);
+        bgfx::setBuffer(3, indirect_count_buffer_handle, bgfx::Access::Write);
+        glm::vec4 fmin=glm::vec4(bbox.getLower(),1.0);
+        glm::vec4 fmax=glm::vec4(bbox.getUpper(),1.0);
+        bgfx::setUniform(u_fmin,glm::value_ptr(fmin));
+        bgfx::setUniform(u_fmax,glm::value_ptr(fmax));
+
+        bgfx::dispatch(RENDER_PASS::Render, indirect_count_program, uint32_t(renderList.size() / 64 + 1), 1, 1);
 
         bgfx::setVertexBuffer(0, VBH);
         bgfx::setIndexBuffer(IBH);
-        bgfx::setInstanceDataBuffer(instance_buffer,0,renderList.size());
+        bgfx::setInstanceDataBuffer(instance_buffer, 0, renderList.size());
 
         bgfx::setState(BGFX_STATE_DEFAULT);
-        bgfx::submit(RENDER_PASS::Render,debugInstancedShader,indirect_buffer_handle,0,renderList.size());
+        bgfx::submit(RENDER_PASS::Render, debugInstancedShader, indirect_buffer_handle, 0,
+                     indirect_count_buffer_handle);
     }
 
     enc.end();
@@ -262,6 +306,8 @@ void Renderer::init() {
     s_texNormal = bgfx::createUniform("s_texNormal", bgfx::UniformType::Sampler);
     s_texSpecular = bgfx::createUniform("s_texSpecular", bgfx::UniformType::Sampler);
     s_shadowMap = bgfx::createUniform("s_shadowMap", bgfx::UniformType::Sampler);
+    u_fmin = bgfx::createUniform("u_fmin", bgfx::UniformType::Vec4);
+    u_fmax = bgfx::createUniform("u_fmax", bgfx::UniformType::Vec4);
     u_specular = bgfx::createUniform("u_specular", bgfx::UniformType::Vec4);
     u_lightPos = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4);
     u_lightMtx = bgfx::createUniform("u_lightMtx", bgfx::UniformType::Mat4);
@@ -275,10 +321,15 @@ void Renderer::init() {
     bgfx::setViewMode(RENDER_PASS::Shadow, bgfx::ViewMode::Default);
     bgfx::setViewMode(RENDER_PASS::DEBUG, bgfx::ViewMode::Default);
 
-    indirect_program=bgfx::createProgram(Data::loadShaderBin("cs_indirect.compute"),true);
+
+    indirect_program = bgfx::createProgram(Data::loadShaderBin("cs_indirect.compute"), true);
+    indirect_count_program = bgfx::createProgram(Data::loadShaderBin("cs_indirect_count.compute"), true);
+    indirect_culling_program = bgfx::createProgram(Data::loadShaderBin("cs_culling.compute"), true);
     indirect_buffer_handle = BGFX_INVALID_HANDLE;
     indirect_count_buffer_handle = BGFX_INVALID_HANDLE;
     object_list_buffer = BGFX_INVALID_HANDLE;
+    instance_buffer = BGFX_INVALID_HANDLE;
+    instance_OutBuffer = BGFX_INVALID_HANDLE;
 
 
     debugShader = bgfx::createProgram(
@@ -310,7 +361,6 @@ void Renderer::init() {
         depthScaleOffset[1] = 0.5f;
     }
     bgfx::setUniform(u_depthScaleOffset, depthScaleOffset);
-
 
     shadowMapTexture = bgfx::createTexture2D(
             shadowmap_size, shadowmap_size, false, 1, bgfx::TextureFormat::D16,
