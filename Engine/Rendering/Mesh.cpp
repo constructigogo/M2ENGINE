@@ -292,7 +292,7 @@ BaseMesh::SubMesh::init(std::vector<vertexData> &Vertices, const std::vector<uin
 
 
 
-        computeLaplacian();
+        //computeLaplacian();
 
 
         //flipEdgeCompactId(1, 4);
@@ -405,25 +405,23 @@ std::pair<int, int> BaseMesh::SubMesh::getEdgeFromOpposite(int t, uint32_t v) {
     return std::make_pair(-1, -1);
 }
 
-bool BaseMesh::SubMesh::faceOrientationTest2D(uint32_t t)
-{
-    glm::vec3& p = vertexesData[t * 3    ].position;
-    glm::vec3& q = vertexesData[t * 3 + 1].position;
-    glm::vec3& r = vertexesData[t * 3 + 2].position;
+bool BaseMesh::SubMesh::faceOrientationTest2D(uint32_t t) {
+    glm::vec3 &p = vertexesData[t * 3].position;
+    glm::vec3 &q = vertexesData[t * 3 + 1].position;
+    glm::vec3 &r = vertexesData[t * 3 + 2].position;
 
     float det = (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
 
     return det > 0 ? 1 : -1;
 }
 
-int BaseMesh::SubMesh::facePointInclusionTest2D(uint32_t t, glm::vec3 position)
-{
-    glm::vec3& a = vertexesData[t * 3    ].position;
-    glm::vec3& b = vertexesData[t * 3 + 1].position;
-    glm::vec3& c = vertexesData[t * 3 + 2].position;
-    glm::vec3& d = position;
+int BaseMesh::SubMesh::facePointInclusionTest2D(uint32_t t, glm::vec3 position) {
+    glm::vec3 &a = vertexesData[t * 3].position;
+    glm::vec3 &b = vertexesData[t * 3 + 1].position;
+    glm::vec3 &c = vertexesData[t * 3 + 2].position;
+    glm::vec3 &d = position;
 
-    float surfaceT   = getTriangleArea(a, b, c);
+    float surfaceT = getTriangleArea(a, b, c);
     if (surfaceT == 0)
         return -1;
 
@@ -434,14 +432,12 @@ int BaseMesh::SubMesh::facePointInclusionTest2D(uint32_t t, glm::vec3 position)
     if (surfaceST0 == 0 || surfaceST1 == 0 || surfaceST2 == 0)
         return 0;
 
-    if (surfaceST0 > 0 && surfaceST1 > 0 && surfaceST2 > 0)
-    {
+    if (surfaceST0 > 0 && surfaceST1 > 0 && surfaceST2 > 0) {
         return surfaceST0 + surfaceST1 + surfaceST2;
     }
 
-    if (surfaceST0 < 0 && surfaceST1 < 0 && surfaceST2 < 0)
-    {
-        return surfaceST0*-1 + surfaceST1*-1 + surfaceST2*-1;
+    if (surfaceST0 < 0 && surfaceST1 < 0 && surfaceST2 < 0) {
+        return surfaceST0 * -1 + surfaceST1 * -1 + surfaceST2 * -1;
     }
 
     return -1;
@@ -545,20 +541,17 @@ float BaseMesh::SubMesh::getTriangleAreaCompactId(uint32_t tId) {
     return getTriangleArea(tId * 3);
 }
 
-float BaseMesh::SubMesh::getTriangleArea(glm::vec3 a, glm::vec3 b, glm::vec3 c)
-{
+float BaseMesh::SubMesh::getTriangleArea(glm::vec3 &a, glm::vec3 &b, glm::vec3 &c) {
     glm::vec3 AB = b - a;
     glm::vec3 AC = c - a;
 
     return glm::cross(AB, AC).z;
 }
 
-float BaseMesh::SubMesh::getTriangleArea(uint32_t tId)
-{
-    glm::vec3& a = vertexesData[t * 3    ].position;
-    glm::vec3& b = vertexesData[t * 3 + 1].position;
-    glm::vec3& c = vertexesData[t * 3 + 2].position;
-
+float BaseMesh::SubMesh::getTriangleArea(uint32_t tId) {
+    glm::vec3 &a = vertexesData[indices[tId * 3]].position;
+    glm::vec3 &b = vertexesData[indices[tId * 3 + 1]].position;
+    glm::vec3 &c = vertexesData[indices[tId * 3 + 2]].position;
     return getTriangleArea(a, b, c);
 }
 

@@ -61,7 +61,7 @@ namespace Engine {
             void init(std::vector<vertexData> &Vertices, const std::vector<uint32_t> &Indices, bool hasNormal);
             void generateSingleVertexNormal();
 
-            float getTriangleArea(glm::vec3 a, glm::vec3 b, glm::vec3 c);
+            float getTriangleArea(glm::vec3 &a, glm::vec3 &b, glm::vec3 &c);
             float getTriangleArea(uint32_t tId);
             float getTriangleAreaCompactId(uint32_t tId);
 
