@@ -61,6 +61,7 @@ namespace Engine {
             void init(std::vector<vertexData> &Vertices, const std::vector<uint32_t> &Indices, bool hasNormal);
             void generateSingleVertexNormal();
 
+            float getTriangleArea(glm::vec3 a, glm::vec3 b, glm::vec3 c);
             float getTriangleArea(uint32_t tId);
             float getTriangleAreaCompactId(uint32_t tId);
 
@@ -74,6 +75,14 @@ namespace Engine {
 
             int getOppositeFromEdge(int t, uint32_t v1, uint32_t v2);
             std::pair<int,int>  getEdgeFromOpposite(int t, uint32_t v);
+
+            bool faceOrientationTest2D(uint32_t t);
+            inline bool faceOrientationTest2DCompactId(uint32_t t)
+                {return faceOrientationTest2D(t * 3);}
+
+            int facePointInclusionTest2D(uint32_t t, glm::vec3 position);
+            int faceOrientationTest2DCompactIdCompactId(uint32_t t, glm::vec3 position)
+                {return facePointInclusionTest2D(t * 3, position);}
 
             void computeLaplacian();
             void computeLaplacianLocal(uint32_t v);
