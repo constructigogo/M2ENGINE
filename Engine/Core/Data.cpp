@@ -205,13 +205,13 @@ std::vector<Object *> Data::loadScene(const std::string &fileName) {
     if (pScene) {
         ENGINE_TRACE("Loading scene," + fileName + " , size : " + std::to_string(pScene->mNumMeshes));
 
-        for (int i = 0; i < pScene->mNumMeshes && i<15; i += 1) {
+        for (int i = 0; i < pScene->mNumMeshes; i += 1) {
             const aiMesh *paiMesh = pScene->mMeshes[i];
             if (paiMesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
                 continue;
             }
             std::string name = fileName + std::to_string(i);
-            ENGINE_TRACE("Loading Mesh " + name);
+            ENGINE_TRACE("[Data] Loading Mesh " + name);
 
             auto obj = new Object(name);
             obj->setParent(root);
@@ -221,8 +221,8 @@ std::vector<Object *> Data::loadScene(const std::string &fileName) {
 
             auto mesh = std::make_shared<BaseMesh>();
             mesh->subMeshes.resize(1);
-
             mesh->initMeshAsSingle(paiMesh);
+
             rend->setMesh(mesh, STATIC, false);
             auto matIdx = paiMesh->mMaterialIndex;
             auto mat = pScene->mMaterials[matIdx];
@@ -335,11 +335,12 @@ std::pair<bgfx::VertexBufferHandle, bgfx::IndexBufferHandle> Data::buildIndirect
     int vOffset=0;
     int iOffset=0;
     for (auto &[name, mesh]: meshCache) {
+        ENGINE_TRACE("BAKING "+name);
         auto &verts = mesh->vertexesAllData;
         auto &indices = mesh->indicesAllData;
         allVerts.insert(allVerts.end(), verts.begin(), verts.end());
         for (auto &ind: indices) {
-            allIndices.push_back(ind + iOffset);
+            allIndices.push_back(ind);
         }
         mesh->vOffsetInGlobal = vOffset;
         mesh->IOffsetInGlobal = iOffset;
@@ -361,6 +362,6 @@ std::pair<bgfx::VertexBufferHandle, bgfx::IndexBufferHandle> Data::buildIndirect
             BaseMesh::getVLY());
     indHandle = bgfx::createIndexBuffer(bgfx::copy(allIndices.data(), allIndices.size() * sizeof(uint32_t)),
                                         BGFX_BUFFER_INDEX32);
-
+    ENGINE_TRACE(allIndices.size());
     return std::make_pair(vertHandle, indHandle);
 }

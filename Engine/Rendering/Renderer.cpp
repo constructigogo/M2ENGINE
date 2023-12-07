@@ -130,6 +130,7 @@ void Renderer::render() {
 
         int counter = 0;
         for (const auto &mesh: renderList) {
+            if (!mesh->getObject()->isActive()) continue;
             glm::mat4 mtx = mesh->transform->getTransformMTX();
             models.push_back(mtx);
             objs[counter].vertexOffset = mesh->mesh->vOffsetInGlobal;
@@ -201,10 +202,12 @@ void Renderer::render() {
         bgfx::setBuffer(3, indirect_count_buffer_handle, bgfx::Access::Write);
         glm::vec4 fmin=glm::vec4(bbox.getLower(),1.0);
         glm::vec4 fmax=glm::vec4(bbox.getUpper(),1.0);
+        glm::vec4 numtodraw =glm::vec4(counter,0,0,0);
         bgfx::setUniform(u_fmin,glm::value_ptr(fmin));
         bgfx::setUniform(u_fmax,glm::value_ptr(fmax));
+        bgfx::setUniform(u_numToDraw,glm::value_ptr(numtodraw));
 
-        bgfx::dispatch(RENDER_PASS::Render, indirect_count_program, uint32_t(renderList.size() / 64 + 1), 1, 1);
+        bgfx::dispatch(RENDER_PASS::Render, indirect_count_program, uint32_t(counter / 64 + 1), 1, 1);
 
         bgfx::setVertexBuffer(0, VBH);
         bgfx::setIndexBuffer(IBH);
@@ -308,6 +311,7 @@ void Renderer::init() {
     s_shadowMap = bgfx::createUniform("s_shadowMap", bgfx::UniformType::Sampler);
     u_fmin = bgfx::createUniform("u_fmin", bgfx::UniformType::Vec4);
     u_fmax = bgfx::createUniform("u_fmax", bgfx::UniformType::Vec4);
+    u_numToDraw = bgfx::createUniform("u_numToDraw", bgfx::UniformType::Vec4);
     u_specular = bgfx::createUniform("u_specular", bgfx::UniformType::Vec4);
     u_lightPos = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4);
     u_lightMtx = bgfx::createUniform("u_lightMtx", bgfx::UniformType::Mat4);

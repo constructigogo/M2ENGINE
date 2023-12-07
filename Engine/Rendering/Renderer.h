@@ -90,6 +90,7 @@ namespace Engine {
         //Uniforms
         UniformHandle u_fmin;
         UniformHandle u_fmax;
+        UniformHandle u_numToDraw;
         UniformHandle u_specular;
         UniformHandle u_lightPos;
         UniformHandle u_lightMtx;

@@ -14,6 +14,7 @@ BUFFER_RO(instanceBufferOut, vec4, 2);
 BUFFER_WR(indirectCountBuffer, int, 3);
 #endif
 
+uniform vec4 u_numToDraw;
 uniform vec4 u_fmin;
 uniform vec4 u_fmax;
 
@@ -22,8 +23,7 @@ NUM_THREADS(64, 1, 1)
 void main()
 {
     int tId = int(gl_GlobalInvocationID.x);
-    int numDrawItems = int(64);
-    int sideSize = int(8);
+    int numDrawItems = int(u_numToDraw.x);
     float time = 0.0;
 
     // Work out the amount of work we're going to do here
@@ -50,18 +50,18 @@ void main()
 
         vec3 bboxSize = pmax.xyz - pmin.xyz;
         vec3 boxCorners[] = {
-        pmin.xyz,
-        pmin.xyz + vec3(bboxSize.x, 0, 0),
-        pmin.xyz + vec3(0, bboxSize.y, 0),
-        pmin.xyz + vec3(0, 0, bboxSize.z),
-        pmin.xyz + vec3(bboxSize.xy, 0),
-        pmin.xyz + vec3(0, bboxSize.yz),
-        pmin.xyz + vec3(bboxSize.x, 0, bboxSize.z),
-        pmin.xyz + vec3(bboxSize.xyz)
+            pmin.xyz,
+            pmin.xyz + vec3(bboxSize.x, 0, 0),
+            pmin.xyz + vec3(0, bboxSize.y, 0),
+            pmin.xyz + vec3(0, 0, bboxSize.z),
+            pmin.xyz + vec3(bboxSize.xy, 0),
+            pmin.xyz + vec3(0, bboxSize.yz),
+            pmin.xyz + vec3(bboxSize.x, 0, bboxSize.z),
+            pmin.xyz + vec3(bboxSize.xyz)
         };
         vec4 VPCorners[8];
         for (int p=0;p<8;p++){
-            VPCorners[p]= u_proj * u_view * modelMat * vec4(boxCorners[p],1.0);
+            VPCorners[p]= u_proj * u_view * modelMat * vec4(boxCorners[p], 1.0);
         }
 
         bool left = true;
@@ -74,28 +74,15 @@ void main()
 
         for (int p=0;p<8;p++){
             left = left && VPCorners[p].x < -VPCorners[p].w;
-        }
-        for (int p=0;p<8;p++){
             right = right &&VPCorners[p].x > VPCorners[p].w;
-        }
-        for (int p=0;p<8;p++){
             up = up&&VPCorners[p].y < -VPCorners[p].w;
-
-        }
-        for (int p=0;p<8;p++){
             down =down&& VPCorners[p].y > VPCorners[p].w;
-
-        }
-        for (int p=0;p<8;p++){
             front = front && VPCorners[p].z < -VPCorners[p].w;
-
-        }
-        for (int p=0;p<8;p++){
             far = far && VPCorners[p].z > VPCorners[p].w;
         }
 
         bool isAllOutside = left || right || up || down || front || far;
-        if(isAllOutside){
+        if (isAllOutside){
             draw=0u;
         }
 
