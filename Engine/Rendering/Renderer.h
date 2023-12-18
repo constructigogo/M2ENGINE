@@ -12,6 +12,7 @@
 #include "Mesh.h"
 #include "debugdraw/debugdraw.h"
 #include "../Core/GenericHandle.h"
+#include "../Components/CParticleContainer.h"
 
 using namespace Engine;
 
@@ -45,6 +46,9 @@ namespace Engine {
 
         static void unregisterStatic(CMeshRenderer *);
 
+        static void registerEmitter(CParticleContainer*);
+        static void unregisterEmitter(CParticleContainer*);
+
     private:
 
         struct InstanceDrawData {
@@ -59,6 +63,10 @@ namespace Engine {
             glm::mat4x4 transform;
             glm::vec4 bmin;
             glm::vec4 bmax;
+        };
+
+        struct ParticleData{
+            glm::vec3 position;
         };
 
         enum RENDER_PASS {
@@ -76,6 +84,7 @@ namespace Engine {
         static std::map<BaseMesh *, std::pair<bgfx::ProgramHandle *, std::pair<std::vector<std::shared_ptr<Texture>>, std::vector<CTransform *>>>> instancing;
         static std::map<BaseMesh *, std::pair<bgfx::ProgramHandle *, std::pair<bgfx::InstanceDataBuffer, int>>> staticInstanceCache;
         static std::vector<CMeshRenderer *> renderList;
+        static std::vector<CParticleContainer *> emittersList;
 
         bgfx::FrameBufferHandle m_shadowMapFB = BGFX_INVALID_HANDLE;
 
@@ -96,15 +105,22 @@ namespace Engine {
         UniformHandle u_lightMtx;
         UniformHandle u_shadowTexelSize;
         UniformHandle u_depthScaleOffset;
+        UniformHandle u_particle_draw;
 
         ProgramHandle indirect_program;
         ProgramHandle indirect_count_program;
         ProgramHandle indirect_culling_program;
+        ProgramHandle particle_program;
         bgfx::IndirectBufferHandle indirect_buffer_handle;
         bgfx::IndexBufferHandle indirect_count_buffer_handle;
         bgfx::VertexBufferHandle object_list_buffer;
         bgfx::DynamicVertexBufferHandle instance_buffer;
         bgfx::DynamicVertexBufferHandle instance_OutBuffer;
+        bgfx::DynamicVertexBufferHandle particle_buffer;
+
+
+        bgfx::VertexLayout ms_particle_layout;
+
 
         ProgramHandle debugShader;
         ProgramHandle debugInstancedShader;

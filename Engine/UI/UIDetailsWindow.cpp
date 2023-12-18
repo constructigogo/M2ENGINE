@@ -9,6 +9,7 @@
 #include "../Core/Serialize.h"
 #include "../Components/CDummy.h"
 #include "../Components/CMeshRenderer.h"
+#include "../Components/CParticleContainer.h"
 
 namespace Engine::UI {
     UIDetailsWindow::UIDetailsWindow(float width, float height) : UIWindow("Details",width, height) {}
@@ -70,6 +71,7 @@ namespace Engine::UI {
 
                 COMPONENTSELECT(CTransform,target,"Transform")
                 COMPONENTSELECT(CMeshRenderer,target,"Mesh Renderer")
+                COMPONENTSELECT(CParticleContainer,target,"Particle Container")
                 COMPONENTSELECT(CDummy,target,"dummy")
 
                 ImGui::EndPopup();

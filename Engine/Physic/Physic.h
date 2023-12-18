@@ -8,6 +8,7 @@
 #include "../Components/CRigidBody.h"
 #include "../Core/App.h"
 #include "../Core/Ray.h"
+#include "../Components/CParticleContainer.h"
 
 namespace Engine {
 
@@ -27,6 +28,7 @@ namespace Engine {
 
         static void registerBody(CRigidBody * body);
         static std::vector<CRigidBody*> bodies;
+        static std::vector<CParticleContainer*> particles;
         static float e;
     };
 

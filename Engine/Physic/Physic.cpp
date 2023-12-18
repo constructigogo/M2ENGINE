@@ -7,6 +7,7 @@
 namespace Engine {
 
     std::vector<CRigidBody *> Physic::bodies;
+    std::vector<CParticleContainer *> Physic::particles;
     float Physic::e = 1e-5;
 
     void Physic::init() {

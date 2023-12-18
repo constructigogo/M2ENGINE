@@ -9,10 +9,12 @@
 #include "../Core/Box.h"
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
+#include "../Physic/PBDContainer.h"
 
 std::map<BaseMesh *, std::pair<bgfx::ProgramHandle *, std::pair<std::vector<std::shared_ptr<Texture>>, std::vector<CTransform *>>>> Renderer::instancing;
 std::map<BaseMesh *, std::pair<bgfx::ProgramHandle *, std::pair<bgfx::InstanceDataBuffer, int>>> Renderer::staticInstanceCache;
 std::vector<CMeshRenderer *> Renderer::renderList;
+std::vector<CParticleContainer *> Renderer::emittersList;
 
 
 void Renderer::render() {
@@ -113,9 +115,40 @@ void Renderer::render() {
                 .add(bgfx::Attrib::TexCoord4, 4, bgfx::AttribType::Float)
                 .add(bgfx::Attrib::TexCoord5, 4, bgfx::AttribType::Float)
                 .end();
-
         cache = true;
     }
+
+    for (auto & Cparticle: emittersList) {
+        auto & cont = Cparticle->getContainer();
+        auto data = cont->data();
+        if(!data.empty()&&Cparticle->isActive()) {
+            const bgfx::Memory *datamem = bgfx::alloc(sizeof(ParticleData) * data.size());
+            ParticleData *objData = (ParticleData *) datamem->data;
+            int counter = 0;
+            for (auto pos: data) {
+                objData[counter].position = pos;
+                counter++;
+            }
+
+
+            if (bgfx::isValid(particle_buffer)) {
+                bgfx::destroy(particle_buffer);
+            }
+            //instance_buffer = bgfx::createDynamicVertexBuffer(renderList.size(), ms_instance_layout,BGFX_BUFFER_COMPUTE_WRITE);
+            particle_buffer = bgfx::createDynamicVertexBuffer(datamem, ms_particle_layout, BGFX_BUFFER_NONE);
+            //particle_buffer = bgfx::createDynamicVertexBuffer(bgfx::copy(data.data(),data.size()*sizeof(glm::vec3)), ms_particle_layout, BGFX_BUFFER_NONE);
+            bgfx::setVertexBuffer(0, particle_buffer);
+            bgfx::setState(0
+                           | BGFX_STATE_WRITE_RGB
+                           | BGFX_STATE_WRITE_A
+                           | BGFX_STATE_WRITE_Z
+                           | BGFX_STATE_DEPTH_TEST_LESS
+                           | BGFX_STATE_PT_POINTS
+                           | BGFX_STATE_POINT_SIZE(15));
+            bgfx::submit(RENDER_PASS::Render, particle_program);
+        }
+    }
+
 
     std::vector<glm::mat4> models(renderList.size());
     std::vector<InstanceDrawData> instData;
@@ -138,12 +171,12 @@ void Renderer::render() {
             objs[counter].indexOffset = mesh->mesh->IOffsetInGlobal;
             objs[counter].indexCount = mesh->mesh->indicesAllData.size();
 
-            objData[counter].transform= mesh->transform->getTransformMTX();
-            objData[counter].bmin = glm::vec4(mesh->getBBox().getLower(),0);
-            objData[counter].bmax = glm::vec4(mesh->getBBox().getUpper(),0);
+            objData[counter].transform = mesh->transform->getTransformMTX();
+            objData[counter].bmin = glm::vec4(mesh->getBBox().getLower(), 0);
+            objData[counter].bmax = glm::vec4(mesh->getBBox().getUpper(), 0);
             counter++;
 
-            if(drawDebugShapes) {
+            if (drawDebugShapes) {
                 auto lower = mesh->getBBox().getLower();
                 auto upper = mesh->getBBox().getUpper();
                 enc.push();
@@ -186,13 +219,27 @@ void Renderer::render() {
                                                                BGFX_BUFFER_INDEX32 | BGFX_BUFFER_COMPUTE_WRITE |
                                                                BGFX_BUFFER_DRAW_INDIRECT);
 
-        if (/*do fustrum culling*/ false) {
-            bgfx::setBuffer(1, object_list_buffer, bgfx::Access::ReadWrite);
-            bgfx::setBuffer(2, object_list_buffer, bgfx::Access::Write);
+        if (true) {///ShadowPass
+            bgfx::setBuffer(0, object_list_buffer, bgfx::Access::Read);
+            bgfx::setBuffer(1, indirect_buffer_handle, bgfx::Access::Write);
+            bgfx::setBuffer(2, instance_buffer, bgfx::Access::Read);
+            bgfx::setBuffer(3, indirect_count_buffer_handle, bgfx::Access::Write);
+            glm::vec4 fmin = glm::vec4(bbox.getLower(), 1.0);
+            glm::vec4 fmax = glm::vec4(bbox.getUpper(), 1.0);
+            glm::vec4 numtodraw = glm::vec4(counter, 0, 0, 0);
+            bgfx::setUniform(u_fmin, glm::value_ptr(fmin));
+            bgfx::setUniform(u_fmax, glm::value_ptr(fmax));
+            bgfx::setUniform(u_numToDraw, glm::value_ptr(numtodraw));
 
-            bgfx::setBuffer(4, indirect_count_buffer_handle, bgfx::Access::Write);
-            bgfx::dispatch(RENDER_PASS::Render, indirect_culling_program, uint32_t(renderList.size()), 1, 1);
+            bgfx::dispatch(RENDER_PASS::Shadow, indirect_count_program, uint32_t(counter / 64 + 1), 1, 1);
 
+            bgfx::setVertexBuffer(0, VBH);
+            bgfx::setIndexBuffer(IBH);
+            bgfx::setInstanceDataBuffer(instance_buffer, 0, renderList.size());
+
+            bgfx::setState(BGFX_STATE_DEFAULT);
+            bgfx::submit(RENDER_PASS::Shadow, shadowmapShader, indirect_buffer_handle, 0,
+                         indirect_count_buffer_handle);
         }
 
 
@@ -200,12 +247,12 @@ void Renderer::render() {
         bgfx::setBuffer(1, indirect_buffer_handle, bgfx::Access::Write);
         bgfx::setBuffer(2, instance_buffer, bgfx::Access::Read);
         bgfx::setBuffer(3, indirect_count_buffer_handle, bgfx::Access::Write);
-        glm::vec4 fmin=glm::vec4(bbox.getLower(),1.0);
-        glm::vec4 fmax=glm::vec4(bbox.getUpper(),1.0);
-        glm::vec4 numtodraw =glm::vec4(counter,0,0,0);
-        bgfx::setUniform(u_fmin,glm::value_ptr(fmin));
-        bgfx::setUniform(u_fmax,glm::value_ptr(fmax));
-        bgfx::setUniform(u_numToDraw,glm::value_ptr(numtodraw));
+        glm::vec4 fmin = glm::vec4(bbox.getLower(), 1.0);
+        glm::vec4 fmax = glm::vec4(bbox.getUpper(), 1.0);
+        glm::vec4 numtodraw = glm::vec4(counter, 0, 0, 0);
+        bgfx::setUniform(u_fmin, glm::value_ptr(fmin));
+        bgfx::setUniform(u_fmax, glm::value_ptr(fmax));
+        bgfx::setUniform(u_numToDraw, glm::value_ptr(numtodraw));
 
         bgfx::dispatch(RENDER_PASS::Render, indirect_count_program, uint32_t(counter / 64 + 1), 1, 1);
 
@@ -316,7 +363,12 @@ void Renderer::init() {
     u_lightPos = bgfx::createUniform("u_lightPos", bgfx::UniformType::Vec4);
     u_lightMtx = bgfx::createUniform("u_lightMtx", bgfx::UniformType::Mat4);
     u_shadowTexelSize = bgfx::createUniform("u_shadowTexelSize", bgfx::UniformType::Vec4);
+    u_particle_draw = bgfx::createUniform("u_particle_draw", bgfx::UniformType::Vec4);
 
+    ms_particle_layout
+            .begin()
+            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .end();
 
     bgfx::setViewClear(RENDER_PASS::Shadow, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x303030ff, 1.0f, 0);
     bgfx::setViewClear(RENDER_PASS::Render, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x443355FF, 1.0f, 0);
@@ -334,6 +386,7 @@ void Renderer::init() {
     object_list_buffer = BGFX_INVALID_HANDLE;
     instance_buffer = BGFX_INVALID_HANDLE;
     instance_OutBuffer = BGFX_INVALID_HANDLE;
+    particle_buffer = BGFX_INVALID_HANDLE;
 
 
     debugShader = bgfx::createProgram(
@@ -349,8 +402,14 @@ void Renderer::init() {
     );
 
     shadowmapShader = bgfx::createProgram(
-            Data::loadShaderBin("v_shadowmap.vert"),
+            Data::loadShaderBin("v_shadowmap_inst.vert"),
             Data::loadShaderBin("f_shadowmap.frag"),
+            true
+    );
+
+    particle_program = bgfx::createProgram(
+            Data::loadShaderBin("v_particle.vert"),
+            Data::loadShaderBin("f_particle.frag"),
             true
     );
 
@@ -378,4 +437,12 @@ void Renderer::init() {
 
 void Renderer::toggleDrawDebugShape() {
     drawDebugShapes = !drawDebugShapes;
+}
+
+void Renderer::registerEmitter(CParticleContainer * ptr) {
+    emittersList.push_back(ptr);
+}
+
+void Renderer::unregisterEmitter(CParticleContainer * ptr) {
+    emittersList.erase(std::remove(emittersList.begin(), emittersList.end(), ptr), emittersList.end());
 }

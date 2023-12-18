@@ -35,6 +35,7 @@
 #include "../UI/UIHierarchyWindow.h"
 #include "../UI/UIDetailsWindow.h"
 #include "../Components/CDummy.h"
+#include "../Components/CParticleContainer.h"
 
 static bool s_showStats = false;
 
@@ -259,6 +260,7 @@ namespace Engine {
     void App::initComponentType() {
         REGISTER_COMPONENT(CTransform, "Transform")
         REGISTER_COMPONENT(CMeshRenderer, "Mesh Renderer")
+        REGISTER_COMPONENT(CParticleContainer, "Particle Container")
         REGISTER_COMPONENT(CDummy, "Dummy Comp lol")
     }
 }

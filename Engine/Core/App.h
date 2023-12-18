@@ -64,7 +64,7 @@ namespace Engine {
 
 
         GLFWwindow *currentWindow;
-        bgfx::ViewId kClearView;
+        bgfx::ViewId kClearView=0;
         int width, height;
         int64_t m_timeOffset;
 

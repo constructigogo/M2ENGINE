@@ -100,7 +100,7 @@ public:
             auto transform = inst->getComponent<CTransform>();
             transform->setPosition({0.0, 0.0, 0.0});
             //transform->setScale({0.1,0.1,0.1});
-            transform->setScale(4.0);
+            transform->setScale(.02);
             //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
             auto mRenderer = inst->addComponent<CMeshRenderer>()
                     ->setMesh(Data::loadMesh("data/backpack.obj", true), STATIC, false)
@@ -110,7 +110,8 @@ public:
 
         //testMesh->addComponent<CRigidBody>();
 
-        auto res = Data::loadScene("data/export.obj");
+        /*
+        auto res = Data::loadScene("data/exterior.obj");
         for (auto obj: res) {
             editorScene->addObject(obj);
         }
