@@ -97,7 +97,7 @@ function(engine_build_shaders SHADER_OUT FILES)
                 OUTPUT ${SHADER_BUILD_DIR}/shaders/generated/${SHADER_FILE_BASENAME}.bin
                 ${EXT_TYPE}
                 ${SHADER_PLATFORM}
-                #PROFILE 150
+                PROFILE 150
                 VARYING_DEF ${PROJECT_SOURCE_DIR}/shaders/varying.def.sc
         )
         message(${RESULT})

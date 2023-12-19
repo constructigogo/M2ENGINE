@@ -28,7 +28,7 @@ void Renderer::render() {
     assert(bgfx::isValid(m_shadowMapFB));
 
     // Define matrices.qe
-    shadowmap_size = 2048;
+    shadowmap_size = 4096;
     float shadowTexel[4]{
             1.0f / (float) shadowmap_size, 1.0f / (float) shadowmap_size, 0.0, 0.0
     };

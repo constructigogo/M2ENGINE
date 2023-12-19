@@ -89,7 +89,7 @@ namespace Engine {
         bool drawDebugShapes= false;
 
 
-        int shadowmap_size = 1024;
+        int shadowmap_size = 4096;
     };
 
     inline bool isCulled(const glm::mat4x4 &VP, const glm::mat4x4 &M, const Box &bbox) {
