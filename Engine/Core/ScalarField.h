@@ -13,12 +13,12 @@ namespace Engine {
     public:
         ScalarField(int sizeX, int sizeY);
 
-        glm::vec3& gradient(int x,int y);
-
-
         glm::vec3 gradientAt(int x, int y) const;
+        float laplacianAt(int x, int y) const;
+
         ScalarField buildGradientNorm();
-        ScalarField buildLaplacian();
+        ScalarField buildLaplacian() const;
+        ScalarField buildLaplacianNorm() const;
 
         void normalize();
         void clamp(float min,float max);
@@ -27,6 +27,9 @@ namespace Engine {
         void blur(int size);
 
     protected:
+
+
+
         int _cachedMin;
         int _cachedMax;
     private:

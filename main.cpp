@@ -97,8 +97,8 @@ public:
                 ->setMesh(tst_res, STATIC, false)
                 ->setMaterial(debugMaterial.createInstance());
         */
-        //HeightField landscape = Data::loadHeightFieldFromImage("iceland_heightmap.png",100);
-        //editorScene->setLandscapeAsSingle(landscape,0.1,0.1,0.1);
+        HeightField landscape = Data::loadHeightFieldFromImage("mymap.png",30);
+        editorScene->setLandscapeAsSingle(landscape,0.1,0.1,0.1);
 
         for (int i = 0; i < 0; ++i) {
             auto inst = editorScene->createObject();
