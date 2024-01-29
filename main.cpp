@@ -709,10 +709,10 @@ public:
 
 
 
-        auto res = Data::loadScene("data/exterior.obj");
-        for (auto obj: res) {
-            editorScene->addObject(obj);
-        }
+        //auto res = Data::loadScene("data/exterior.obj");
+        //for (auto obj: res) {
+            //editorScene->addObject(obj);
+        //}
 
 
         /*

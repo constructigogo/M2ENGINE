@@ -244,7 +244,7 @@ BaseMesh::SubMesh::init(std::vector<vertexData> &Vertices, const std::vector<uin
     }
 
 
-#ifndef NDEBUG
+//#ifndef NDEBUG
     if (vertexesData.size() < 16 && false) {
         auto It = vertexBegin();
         auto endIt = vertexEnd();
@@ -292,15 +292,15 @@ BaseMesh::SubMesh::init(std::vector<vertexData> &Vertices, const std::vector<uin
 
 
 
-        //computeLaplacian();
+        computeLaplacian();
 
 
         //flipEdgeCompactId(1, 4);
         ENGINE_DEBUG(delaunayLocal(3, 12));
 
-        makeDelaunay();
+        //makeDelaunay();
     }
-#endif
+//#endif
 
 }
 
@@ -458,11 +458,8 @@ void BaseMesh::SubMesh::computeLaplacianLocal(uint32_t v) {
         auto triangle_root = it_begin.getAroundID();
         auto [p1, p2] = getEdgeFromOpposite(*it_begin, triangle_root);
         if (p1 == -1) {
-
             continue;
         }
-
-
     }
 }
 
