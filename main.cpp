@@ -31,6 +31,7 @@ public:
                 true
         );
 
+
         auto light = editorScene->createObject("Directional light");
         light->addComponent<CDirectionalLight>();
 
@@ -45,19 +46,24 @@ public:
         auto texMaterial = Material("textured", textured);
         auto debugMaterial = Material("debug", debugProgram);
 
+        Material::Default=debugMaterial;
+        Material::Debug=debugMaterial;
+
+
+
         auto texturedInst = bgfx::createProgram(
                 Data::loadShaderBin("v_textured_inst.vert"),
                 Data::loadShaderBin("f_textured.frag"),
                 true
         );
 
-        auto texHandleDiffuse = Data::loadTexture("data/diffuse.jpg", Texture::TYPE::COLOR);
-        auto texHandleNormal = Data::loadTexture("data/normal.png", Texture::TYPE::NORMAL);
+        //auto texHandleDiffuse = Data::loadTexture("data/diffuse.jpg", Texture::TYPE::COLOR);
+        //auto texHandleNormal = Data::loadTexture("data/normal.png", Texture::TYPE::NORMAL);
 
 
-        ENGINE_INFO("Instantiating implicit");
-        ImplicitTriangulate tr;
-        float s = 20;
+        //ENGINE_INFO("Instantiating implicit");
+        //ImplicitTriangulate tr;
+        //float s = 20;
         /*
        std::vector<std::vector<glm::vec3>> pts;
        pts.push_back({glm::vec3(0.0, 0.0, 0.0), glm::vec3(1.0, 0.5, 0.0), glm::vec3(2.0, 0.0, 0.0)});
@@ -91,16 +97,16 @@ public:
                 ->setMesh(tst_res, STATIC, false)
                 ->setMaterial(debugMaterial.createInstance());
         */
-
+        //HeightField landscape = Data::loadHeightFieldFromImage("iceland_heightmap.png",100);
+        //editorScene->setLandscapeAsSingle(landscape,0.1,0.1,0.1);
 
         for (int i = 0; i < 0; ++i) {
-
             auto inst = editorScene->createObject();
             inst->setName("Backpack");
             auto transform = inst->getComponent<CTransform>();
-            transform->setPosition({0.0, 0.0, 0.0});
+            transform->setPosition({-1.8+1.8, 0.3-0.7, 1.2-3.3+10.9});
             //transform->setScale({0.1,0.1,0.1});
-            transform->setScale(.02);
+            transform->setScale(0.5);
             //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
             auto mRenderer = inst->addComponent<CMeshRenderer>()
                     ->setMesh(Data::loadMesh("data/backpack.obj", true), STATIC, false)
@@ -108,13 +114,12 @@ public:
             auto matInst = mRenderer->getMaterialInst();
         }
 
+
         //testMesh->addComponent<CRigidBody>();
 
-        /*
-        auto res = Data::loadScene("data/exterior.obj");
-        for (auto obj: res) {
-            editorScene->addObject(obj);
-        }
+
+        //auto res = Data::loadScene("data/exterior.obj");
+        //editorScene->addObjects(res);
 
         /*
         auto imp = editorScene->createObject();
@@ -136,23 +141,6 @@ public:
                 ->setMaterial(debugProgram, 0);
 
         */
-
-        for (int i = 0; i < 0; ++i) {
-            for (int j = 0; j < 3; ++j) {
-                auto inst = editorScene->createObject();
-                auto transform = inst->addComponent<CTransform>();
-                transform->setPosition({(float) i * 2 - 9, -4, (float) j * 2 - 2});
-                //transform->setScale({0.1,0.1,0.1});
-                transform->setScale({0.1, 0.1, 0.1});
-                //transform->setRotation(bx::fromEuler({0.0, 0.0, 45.0f*(i+j)}));
-                inst->addComponent<CMeshRenderer>()
-                        ->setMesh(Data::loadMesh("data/backpack.obj", false), STATIC, true)
-                        ->setMaterial(texturedInst)
-                        ->setMaterialTexId(0, texHandleDiffuse)
-                        ->setMaterialTexId(1, texHandleNormal);
-                //testMesh->addComponent<CRigidBody>();
-            }
-        }
     }
 };
 

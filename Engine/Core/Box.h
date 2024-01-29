@@ -11,6 +11,7 @@ namespace Engine {
 
     class Box {
     public:
+        Box();
         Box(const glm::vec3 &a, const glm::vec3 &b);
 
         glm::vec3 diagonal();

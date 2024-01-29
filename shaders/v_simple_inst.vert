@@ -9,4 +9,6 @@ void main(){
     gl_Position = mul(u_viewProj, worldPos);
     //gl_Position = mul(u_viewProj, vec4(a_position, 1.0));
     v_color0   = vec4((a_normal+1.0)/2.0,1.0);
+    //v_color0   = vec4(a_normal,1.0);
+    //v_color0   = vec4(a_color0);
 }

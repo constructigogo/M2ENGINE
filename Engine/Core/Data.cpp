@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <filesystem>
+#include <utility>
 #include "Data.h"
 #include "Log.h"
 #include "bimg/bimg.h"
@@ -15,13 +16,14 @@
 #include "assimp/postprocess.h"
 #include "../Components/CMeshRenderer.h"
 #include "bimg/decode.h"
+#include "Image.h"
 
 
 using namespace Engine;
 
 bx::FileReaderI *Data::s_fileReader = nullptr;
 bx::AllocatorI *Data::allocator = nullptr;
-
+bool Data::isCached = false;
 
 std::unordered_map<std::string, std::shared_ptr<BaseMesh>> Engine::Data::meshCache;
 std::unordered_map<std::string, std::shared_ptr<Texture>> Engine::Data::textureCache;
@@ -31,6 +33,7 @@ std::unordered_set<std::string> Engine::Data::loadableMesh;
 
 
 std::shared_ptr<BaseMesh> Engine::Data::loadMesh(const std::string &fileName, bool simpleImport) {
+    isCached=false;
     if (meshCache.contains(fileName)) {
         ENGINE_TRACE("Loading mesh " + fileName + " from cache");
         return meshCache[fileName];
@@ -204,14 +207,14 @@ std::vector<Object *> Data::loadScene(const std::string &fileName) {
 
     if (pScene) {
         ENGINE_TRACE("Loading scene," + fileName + " , size : " + std::to_string(pScene->mNumMeshes));
-
+        isCached=false;
         for (int i = 0; i < pScene->mNumMeshes; i += 1) {
             const aiMesh *paiMesh = pScene->mMeshes[i];
             if (paiMesh->mPrimitiveTypes != aiPrimitiveType_TRIANGLE) {
                 continue;
             }
             std::string name = fileName + std::to_string(i);
-            ENGINE_TRACE("[Data] Loading Mesh " + name);
+            ENGINE_TRACE("Loading Mesh " + name);
 
             auto obj = new Object(name);
             obj->setParent(root);
@@ -334,8 +337,12 @@ std::pair<bgfx::VertexBufferHandle, bgfx::IndexBufferHandle> Data::buildIndirect
     std::vector<uint32_t> allIndices;
     int vOffset=0;
     int iOffset=0;
+    if(meshCache.empty()){
+        return {BGFX_INVALID_HANDLE,BGFX_INVALID_HANDLE};
+    }
+    ENGINE_TRACE("Rebuilding Cache");
     for (auto &[name, mesh]: meshCache) {
-        ENGINE_TRACE("BAKING "+name);
+        ENGINE_DEBUG("BAKING "+name);
         auto &verts = mesh->vertexesAllData;
         auto &indices = mesh->indicesAllData;
         allVerts.insert(allVerts.end(), verts.begin(), verts.end());
@@ -362,6 +369,32 @@ std::pair<bgfx::VertexBufferHandle, bgfx::IndexBufferHandle> Data::buildIndirect
             BaseMesh::getVLY());
     indHandle = bgfx::createIndexBuffer(bgfx::copy(allIndices.data(), allIndices.size() * sizeof(uint32_t)),
                                         BGFX_BUFFER_INDEX32);
-    ENGINE_TRACE(allIndices.size());
+    ENGINE_TRACE("cache indices count : {}", allIndices.size());
+
+    isCached=true;
+
     return std::make_pair(vertHandle, indHandle);
+}
+
+HeightField Data::loadHeightFieldFromImage(const std::string &fileName, float scale) {
+
+    std::string name = "data/"+fileName;
+    Image img(name);
+    int w = img.getWidth();
+    int h = img.getHeight();
+    HeightField res(w,h,scale);
+#pragma omp parallel for
+    for (int x = 0; x < w; ++x) {
+        for (int y = 0; y < h; ++y) {
+            res.at(x,y) = ((float)img.at(x,y).r)/255.0f;
+            //res.setAt(img.at(x,y).r,x,y) ;
+            //res.at(x,y) = 0;
+        }
+    }
+    return res;
+}
+
+void Data::trackMesh(std::shared_ptr<BaseMesh> mesh, const std::string &name) {
+    meshCache[name]=std::move(mesh);
+    loadableMesh.emplace(name);
 }

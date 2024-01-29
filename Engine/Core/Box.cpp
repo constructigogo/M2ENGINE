@@ -212,6 +212,10 @@ namespace Engine {
     const glm::vec3 &Box::getUpper() {
         return b;
     }
+
+    Box::Box(): a({-0.5f,-0.5f,-0.5f}), b({-0.5f,-0.5f,-0.5f}){
+        computeVertices();
+    }
 }
 
 

@@ -16,7 +16,6 @@ namespace Engine {
 
     class Material {
     public:
-        Material() = delete;
 
         Material(const std::string &name, const bgfx::ProgramHandle &handle);
         Material(const std::string &name, const std::string& vertex,const std::string& fragment);
@@ -27,7 +26,12 @@ namespace Engine {
 
         const std::string &getName() const;
 
+        static Material Default;
+        static Material Debug;
+
     protected:
+        Material()=default;
+
         std::string name;
         bgfx::ProgramHandle handle;
     private:

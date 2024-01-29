@@ -15,7 +15,7 @@ void main(){
     T = normalize(T - dot(T, N) * N);
     vec3 B = cross(N, T);
     //mat3 TBN = mat3(T, B, N);
-    mat3 TBN = transpose(mat3(T, B, N));
+    //mat3 TBN = transpose(mat3(T, B, N));
     // eye position in world space
     vec3 weyepos = mul(vec4(0.0, 0.0, 0.0, 1.0), u_view).xyz;
     // tangent space view dir
@@ -23,7 +23,7 @@ void main(){
     //v_view = mul(weyepos - wpos, TBN);
 
 
-    v_normal = N;
+    v_normal =N;
     v_tangent=T;
     v_bitangent=B;
 

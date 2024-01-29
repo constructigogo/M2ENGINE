@@ -13,6 +13,8 @@
 #include "../Rendering/Texture.h"
 #include "bx/readerwriter.h"
 #include "bx/file.h"
+#include "ScalarField.h"
+#include "HeightField.h"
 #include <memory>
 
 namespace Engine {
@@ -20,21 +22,27 @@ namespace Engine {
     public:
         static void init();
         static void cleanup();
+        static bool isCached;
 
-
+        static void trackMesh(std::shared_ptr<BaseMesh> mesh, const std::string &name);
         static const std::unordered_set<std::string> &getLoadableMesh();
         static std::shared_ptr<BaseMesh> loadMesh(const std::string &fileName, bool simpleImport=false);
         static std::vector<Object *> loadScene(const std::string &fileName);
-
-
         static bgfx::ProgramHandle loadProgram(const char *vertex, const char* fragment);
         static bgfx::ShaderHandle loadShaderBin(const char *_name);
-
         static std::shared_ptr<Texture> loadTexture(const char *_name, Texture::TYPE type);
+
+        static HeightField loadHeightFieldFromImage(const std::string &fileName, float scale =1.0); // TODO
+
+
+
+        static void exportToOBJ(std::shared_ptr<BaseMesh>& mesh, std::string filename);
+        static void exportToImage(ScalarField SF); // TODO
+
+        static std::pair<bgfx::VertexBufferHandle,bgfx::IndexBufferHandle> buildIndirectCache();
+
         static bx::AllocatorI * allocator;
         static bx::FileReaderI* s_fileReader;
-        static void exportToOBJ(std::shared_ptr<BaseMesh>& mesh, std::string filename);
-        static std::pair<bgfx::VertexBufferHandle,bgfx::IndexBufferHandle> buildIndirectCache();
 
         class FileReader : public bx::FileReader
         {

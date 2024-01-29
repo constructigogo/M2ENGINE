@@ -4,10 +4,12 @@
 
 #ifndef ENGINE_LOG_H
 #define ENGINE_LOG_H
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE // Must: define SPDLOG_ACTIVE_LEVEL before `#include "spdlog/spdlog.h"`
 
 #include "../CoreInc.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/fmt/ostr.h"
+#include "spdlog/sinks/stdout_sinks.h"
 
 namespace Engine {
 
@@ -26,18 +28,18 @@ namespace Engine {
 
 } // Engine
 
-#define ENGINE_TRACE(...) Engine::Log::GetCoreLogger()->trace(__VA_ARGS__)
-#define ENGINE_INFO(...)  Engine::Log::GetCoreLogger()->info(__VA_ARGS__)
-#define ENGINE_WARN(...)  Engine::Log::GetCoreLogger()->warn(__VA_ARGS__)
-#define ENGINE_ERROR(...) Engine::Log::GetCoreLogger()->error(__VA_ARGS__)
-#define ENGINE_FATAL(...) Engine::Log::GetCoreLogger()->critical(__VA_ARGS__)
+#define ENGINE_TRACE(...) SPDLOG_LOGGER_TRACE(Engine::Log::GetCoreLogger(),__VA_ARGS__)
+#define ENGINE_INFO(...)  SPDLOG_LOGGER_INFO(Engine::Log::GetCoreLogger(),__VA_ARGS__)
+#define ENGINE_WARN(...)  SPDLOG_LOGGER_WARN(Engine::Log::GetCoreLogger(),__VA_ARGS__)
+#define ENGINE_ERROR(...) SPDLOG_LOGGER_ERROR(Engine::Log::GetCoreLogger(),__VA_ARGS__)
+#define ENGINE_FATAL(...) SPDLOG_LOGGER_CRITICAL(Engine::Log::GetCoreLogger(),__VA_ARGS__)
 
 #if NDEBUG
-    #define APP_DEBUG(...)
-    #define ENGINE_DEBUG(...)
+#define APP_DEBUG(...)
+#define ENGINE_DEBUG(...)
 #else
-    #define APP_DEBUG(...) Engine::Log::GetClientLogger()->debug(__VA_ARGS__)
-    #define ENGINE_DEBUG(...) Engine::Log::GetCoreLogger()->debug(__VA_ARGS__)
+#define APP_DEBUG(...) Engine::Log::GetClientLogger()->debug(__VA_ARGS__)
+#define ENGINE_DEBUG(...) Engine::Log::GetCoreLogger()->debug(__VA_ARGS__)
 
 #endif
 #endif //ENGINE_LOG_H

@@ -6,7 +6,7 @@
 #include "bgfx_compute.sh"
 
 //instance data for all instances (pre culling)
-BUFFER_RO(instanceDataIn, vec4, 0);
+BUFFER_RO(instanceDrawDataIn, vec4, 0);
 // Output
 BUFFER_WR(indirectBuffer, uvec4, 1);
 BUFFER_RO(instanceBufferOut, vec4, 2);
@@ -92,10 +92,10 @@ void main()
         indirectBuffer, // target buffer
         k, // index in buffer
         // Draw call params:
-        instanceDataIn[k].w, // number of indices for this draw call
+        instanceDrawDataIn[k].w, // number of indices for this draw call
         draw, // number of instances for this draw call. You can disable this draw call by setting to zero
-        instanceDataIn[k].z, // offset in the index buffer
-        instanceDataIn[k].x, // offset in the vertex buffer. Note that you can use this to "reindex" submeshses - all indicies in this draw will be decremented by this amount
+        instanceDrawDataIn[k].z, // offset in the index buffer
+        instanceDrawDataIn[k].x, // offset in the vertex buffer. Note that you can use this to "reindex" submeshses - all indicies in this draw will be decremented by this amount
         k// offset in the instance buffer. If you are drawing more than 1 instance per call see gpudrivenrendering for how to handle
         );
 

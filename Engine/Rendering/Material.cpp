@@ -9,6 +9,10 @@
 
 namespace Engine {
 
+    Material Material::Default;
+    Material Material::Debug;
+
+
     const bgfx::ProgramHandle &Material::getHandle() const {
         return handle;
     }

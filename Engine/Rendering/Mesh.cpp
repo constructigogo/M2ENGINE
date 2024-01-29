@@ -45,11 +45,10 @@ void BaseMesh::initFromScene(const aiScene *pScene, const std::string &Filename)
     for (unsigned int i = 0; i < subMeshes.size(); i++) {
         const aiMesh *paiMesh = pScene->mMeshes[i];
         initMesh(i, paiMesh);
-
-
     }
 
     refreshBuffers();
+    refreshBBox();
 }
 
 void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
@@ -73,7 +72,7 @@ void BaseMesh::initMesh(unsigned int Index, const aiMesh *paiMesh) {
         glm::vec2 glTex(pTexCoord->x, pTexCoord->y);
 
         vertexesData[i].position = glPos;
-        vertexesData[i].normal = -glNorm;
+        vertexesData[i].normal = glNorm;
         vertexesData[i].tangent = -glTang;
         vertexesData[i].texCoord = glTex;
         vertexesData[i].m_abgr = 0;
@@ -117,6 +116,10 @@ void BaseMesh::addSubMesh(BaseMesh::SubMesh &toAdd) {
     vertexesAllData = toAdd.vertexesData;
 
     refreshBuffers();
+    refreshBBox();
+}
+void BaseMesh::setName(std::string newName) {
+    name = std::move(newName);
 }
 
 const std::string &BaseMesh::getName() const {
@@ -127,13 +130,14 @@ void BaseMesh::initMeshAsSingle(const aiMesh *paimesh) {
     subMeshes.resize(1);
     initMesh(0, paimesh);
 
-    auto current = subMeshes[0];
     auto aabb = paimesh->mAABB;
     glm::vec3 min(aabb.mMin.x, aabb.mMin.y, aabb.mMin.z);
     glm::vec3 max(aabb.mMax.x, aabb.mMax.y, aabb.mMax.z);
     boundingBox = Box(min, max);
 
     refreshBuffers();
+    refreshBBox();
+
 }
 
 BaseMesh::BaseMesh(const std::string &name) : name(name) {}
@@ -159,6 +163,31 @@ void BaseMesh::refreshBuffers() {
     bind();
 }
 
+void BaseMesh::refreshBBox() {
+    float xmin = std::numeric_limits<float>::max();
+    float xmax = std::numeric_limits<float>::min();
+
+    float ymin = std::numeric_limits<float>::max();
+    float ymax = std::numeric_limits<float>::min();
+
+    float zmin = std::numeric_limits<float>::max();
+    float zmax = std::numeric_limits<float>::min();
+
+    for (auto & vert : vertexesAllData) {
+        const glm::vec3& pos = vert.position;
+        xmin=std::min(xmin,pos.x);
+        xmax=std::max(xmax,pos.x);
+        ymin=std::min(ymin,pos.y);
+        ymax=std::max(ymax,pos.y);
+        zmin=std::min(zmin,pos.z);
+        zmax=std::max(zmax,pos.z);
+    }
+
+    //boundingBox=Box(glm::vec3(xmin,ymin,zmin),glm::vec3(xmax,ymax,zmax));
+    //boundingBox=Box(boundingBox.getLower()*0.33f,boundingBox.getUpper()*0.33f);
+}
+
+
 void BaseMesh::bind() {
     if (!bgfx::isValid(VBH) && !bgfx::isValid(IBH)) {
         VBH = bgfx::createVertexBuffer(
@@ -177,6 +206,7 @@ void BaseMesh::release() {
         IBH = BGFX_INVALID_HANDLE;
     }
 }
+
 
 
 void

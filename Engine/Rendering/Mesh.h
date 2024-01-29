@@ -28,6 +28,7 @@ namespace Engine {
 
         ~BaseMesh();
 
+        void setName(std::string newName);
         const std::string &getName() const;
 
         void bind();
@@ -237,6 +238,7 @@ namespace Engine {
         void loadMesh(const std::string &Filename, bool simpleImport = false);
 
         void refreshBuffers();
+        void refreshBBox();
 
         std::vector<vertexData> vertexesAllData;
         std::vector<uint32_t> indicesAllData;
