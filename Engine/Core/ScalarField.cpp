@@ -44,13 +44,20 @@ namespace Engine {
         return glm::vec3(glm::normalize(res), glm::length(res));
     }
 
-    ScalarField ScalarField::buildGradientNorm() {
+    ScalarField ScalarField::buildGradient() const {
         ScalarField res(_sizeX, _sizeY);
+#pragma omp parallel for
         for (int x = 0; x < _sizeX; ++x) {
             for (int y = 0; y < _sizeY; ++y) {
                 res.at(x, y) = gradientAt(x, y).z;
             }
         }
+        return res;
+    }
+
+    ScalarField ScalarField::buildGradientNorm() const {
+        ScalarField res = buildGradient();
+        res.normalize();
         return res;
     }
 
@@ -69,6 +76,7 @@ namespace Engine {
             return (v - min) / (max - min);
         });
 
+#pragma omp parallel for
         for (int x = 0; x < _sizeX; ++x) {
             for (int y = 0; y < _sizeY; ++y) {
                 float &val = at(x, y);
@@ -78,6 +86,7 @@ namespace Engine {
     }
 
     void ScalarField::clamp(float min, float max) {
+#pragma omp parallel for
         for (int x = 0; x < _sizeX; ++x) {
             for (int y = 0; y < _sizeY; ++y) {
                 float &val = at(x, y);

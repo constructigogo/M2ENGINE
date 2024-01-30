@@ -12,11 +12,11 @@ namespace Engine {
     public:
         HeightField(int sizeX, int sizeY, float scale=1.0) : ScalarField(sizeX, sizeY), scale(scale) {}
 
+        HeightField thermalErosion(float angle, float dt, int steps);
+
         float heightAt(int x, int y) const;
 
         float slopeAt(int x, int y);
-
-        float averageSlopeAt(int x, int y);
 
         glm::vec3 normalAt(int x, int y) const;
 

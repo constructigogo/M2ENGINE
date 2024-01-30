@@ -98,7 +98,8 @@ namespace Engine {
         int w = scalarField.gridWidth();
         int h = scalarField.gridHeight();
         ENGINE_TRACE("[MeshBuilder] : Creating Landscape single Mesh with res x:{} y:{}", w, h);
-        ScalarField laplacianNorm = scalarField.buildLaplacianNorm();
+        //ScalarField laplacianNorm = scalarField.buildLaplacianNorm();
+        ScalarField laplacianNorm = scalarField.buildGradientNorm();
 #pragma omp parallel for
         for (int x = 0; x < w; ++x) {
             for (int y = 0; y < h; ++y) {
@@ -109,7 +110,7 @@ namespace Engine {
                 //ENGINE_TRACE(laplacianNorm.at(x, y));
                 //ENGINE_TRACE(scalarField.at(x, y));
                 //data[index].m_abgr = 0xFF000000 + (uint32_t) (0x00FFFFFF * scalarField.at(x, y));
-                uint8_t col = 255 * (1.0 - laplacianNorm.at(x, y));
+                uint8_t col = 255 * (laplacianNorm.at(x, y));
                 data[index].m_abgr = (0xFF000000) + (col << 16) + (col << 8) + (col << 0);
             }
         }
@@ -121,15 +122,6 @@ namespace Engine {
                 indices.push_back(index);
                 indices.push_back(index + w);
                 indices.push_back(index + 1);
-                glm::vec3 norm = glm::normalize(glm::cross(
-                        glm::normalize(data[index + w].position -
-                                       data[index].position),
-                        glm::normalize(data[index + 1].position -
-                                       data[index].position)
-                ));
-                //data[index].normal = norm;
-                //data[index + 1].normal = norm;
-                //data[index + w].normal = norm;
                 //lower right
                 indices.push_back(index + 1);
                 indices.push_back(index + w);

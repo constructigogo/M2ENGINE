@@ -5,7 +5,7 @@
 #pragma once
 
 #include <vector>
-
+#include <assert.h>
 namespace Engine {
 
     template<typename T>
@@ -16,18 +16,22 @@ namespace Engine {
         }
 
         inline int index(int x, int y) const{
+            assert(isInside(x,y));
             return x + y * _sizeX;
         }
 
         T &at(int x, int y) {
+            assert(isInside(x,y));
             return _gridData[index(x, y)];
         }
 
         const T& at(int x, int y) const {
+            assert(isInside(x,y));
             return _gridData[index(x, y)];
         }
 
         void setAt(T value,int x, int y){
+            assert(isInside(x,y));
             _gridData[index(x,y)]=value;
         }
 

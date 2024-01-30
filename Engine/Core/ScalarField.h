@@ -16,7 +16,8 @@ namespace Engine {
         glm::vec3 gradientAt(int x, int y) const;
         float laplacianAt(int x, int y) const;
 
-        ScalarField buildGradientNorm();
+        ScalarField buildGradient() const;
+        ScalarField buildGradientNorm() const;
         ScalarField buildLaplacian() const;
         ScalarField buildLaplacianNorm() const;
 

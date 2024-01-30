@@ -38,8 +38,8 @@ namespace Engine {
 #define APP_DEBUG(...)
 #define ENGINE_DEBUG(...)
 #else
-#define APP_DEBUG(...) Engine::Log::GetClientLogger()->debug(__VA_ARGS__)
-#define ENGINE_DEBUG(...) Engine::Log::GetCoreLogger()->debug(__VA_ARGS__)
+#define APP_DEBUG(...) SPDLOG_LOGGER_DEBUG(Engine::Log::GetClientLogger(),__VA_ARGS__)
+#define ENGINE_DEBUG(...) SPDLOG_LOGGER_DEBUG(Engine::Log::GetClientLogger(),__VA_ARGS__)
 
 #endif
 #endif //ENGINE_LOG_H

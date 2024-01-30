@@ -3,10 +3,7 @@
 //
 
 #include "Image.h"
-#ifndef STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
-#endif
-#include "../../libraries/bgfx.cmake/bimg/3rdparty/stb/stb_image.h"
+
 namespace Engine{
     Image::Image(std::string &fileName) {
         loadFromFile(fileName);
