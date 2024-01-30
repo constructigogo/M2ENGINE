@@ -398,3 +398,7 @@ void Data::trackMesh(std::shared_ptr<BaseMesh> mesh, const std::string &name) {
     meshCache[name]=std::move(mesh);
     loadableMesh.emplace(name);
 }
+
+void Data::invalidateCache() {
+    isCached=false;
+}

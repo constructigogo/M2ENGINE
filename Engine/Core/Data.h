@@ -40,6 +40,7 @@ namespace Engine {
         static void exportToImage(ScalarField SF); // TODO
 
         static std::pair<bgfx::VertexBufferHandle,bgfx::IndexBufferHandle> buildIndirectCache();
+        static void invalidateCache();
 
         static bx::AllocatorI * allocator;
         static bx::FileReaderI* s_fileReader;

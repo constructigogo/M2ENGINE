@@ -10,6 +10,7 @@
 #include "../Components/CMeshRenderer.h"
 #include "../Rendering/MeshBuilder.h"
 #include "Data.h"
+#include "../Components/CLandscape.h"
 
 namespace Engine {
     Object *Scene::createObject() {
@@ -55,18 +56,21 @@ namespace Engine {
             scale.y = 1;
         }
 
+        auto sHF =std::make_shared<HeightField>(hf);
+
 
         std::string name = "landscape" + std::to_string(uid++);
-        auto msh = MeshBuilder::Polygonize(hf);
+        auto msh = MeshBuilder::Polygonize(*sHF);
         msh->setName(name);
         Data::trackMesh(msh, name);
         auto inst = createObject("Landscape");
-
         auto transform = inst->getComponent<CTransform>();
         transform->setScale(scale);
         auto mRenderer = inst->addComponent<CMeshRenderer>()
                 ->setMesh(msh, STATIC, false)
                 ->setMaterial(Material::Default.createInstance());
+        auto cLandscape = inst->addComponent<CLandscape>()
+                ->setHf(sHF);
     }
 
     void

@@ -98,9 +98,9 @@ public:
                 ->setMaterial(debugMaterial.createInstance());
         */
         HeightField landscape = Data::loadHeightFieldFromImage("mymap.png",30);
-        editorScene->setLandscapeAsSingle(landscape,0.1,0.1,0.1);
-        landscape = landscape.thermalErosion(45.0,0.001,1000);
-        editorScene->setLandscapeAsSingle(landscape,0.1,0.1,0.1);
+        //editorScene->setLandscapeAsSingle(landscape,0.1,0.1,0.1);
+        //landscape = landscape.thermalErosion(45.0,0.001,1000);
+        //editorScene->setLandscapeAsSingle(landscape,0.1,0.1,0.1);
 
         for (int i = 0; i < 0; ++i) {
             auto inst = editorScene->createObject();
@@ -120,8 +120,8 @@ public:
         //testMesh->addComponent<CRigidBody>();
 
 
-        //auto res = Data::loadScene("data/exterior.obj");
-        //editorScene->addObjects(res);
+        auto res = Data::loadScene("data/exterior.obj");
+        editorScene->addObjects(res);
 
         /*
         auto imp = editorScene->createObject();

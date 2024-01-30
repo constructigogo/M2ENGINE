@@ -59,9 +59,7 @@ namespace Engine {
         HeightField next(*this);
         for (int step = 0; step < steps; ++step) {
             ENGINE_TRACE("Thermal Erosion step {}/{}",step+1,steps);
-            //ScalarField gradient = current.buildGradient();
             ScalarField laplacian = current.buildLaplacian();
-
             for (int x = 0; x < _sizeX; ++x) {
                 for (int y = 0; y < _sizeY; ++y) {
                     float h = current.heightAt(x, y);
@@ -72,7 +70,9 @@ namespace Engine {
                             if (ox == 0 && oy == 0) continue;
                             int ex = x + ox;
                             int ey = y + oy;
+
                             if (!isInside(ex, ey)) continue;
+
                             float localH = current.heightAt(ex, ey);
                             float slope = h - localH;
                             if (slope > tAngle && slope > maxSlope) {
