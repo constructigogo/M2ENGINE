@@ -46,8 +46,9 @@ namespace Engine {
 
         static void unregisterStatic(CMeshRenderer *);
 
-        static void registerEmitter(CParticleContainer*);
-        static void unregisterEmitter(CParticleContainer*);
+        static void registerEmitter(CParticleContainer *);
+
+        static void unregisterEmitter(CParticleContainer *);
 
     private:
 
@@ -64,7 +65,7 @@ namespace Engine {
             glm::vec4 bmax;
         };
 
-        struct ParticleData{
+        struct ParticleData {
             glm::vec3 position;
         };
 
@@ -83,6 +84,7 @@ namespace Engine {
 
 
         void RENDER_DownscaleZ();
+
         void RENDER_Occluding();
 
 
@@ -91,13 +93,13 @@ namespace Engine {
         static std::vector<CMeshRenderer *> renderList;
         static std::vector<CParticleContainer *> emittersList;
 
-        int ZDepthRes=512;
+        int ZDepthRes = 512;
 
         bgfx::FrameBufferHandle m_shadowMapFB = BGFX_INVALID_HANDLE;
         bgfx::FrameBufferHandle m_ZDepthBuffer = BGFX_INVALID_HANDLE;
         bgfx::FrameBufferHandle m_ZBuffer = BGFX_INVALID_HANDLE;
 
-        int m_ZMipCount=0;
+        int m_ZMipCount = 0;
 
         bgfx::TextureHandle shadowMapTexture;
         bgfx::TextureHandle ZPrepassTexture;
@@ -155,30 +157,30 @@ namespace Engine {
         glm::mat4x4 proj;
         int width;
         int height;
-        int drawCountThisFrame=0;
+        int drawCountThisFrame = 0;
 
         uint32_t m_hiZwidth;
         uint32_t m_hiZheight;
 
-        bool drawDebugShapes= false;
+        bool drawDebugShapes = false;
 
-        bool firstFrame=true;
+        bool firstFrame = true;
         int shadowmap_size = 1024;
     };
 
     inline bool isCulled(const glm::mat4x4 &VP, const glm::mat4x4 &M, const Box &bbox) {
 
-        const auto & verts = bbox.getVertices();
-        std::array<glm::vec4,8> tv{};
+        const auto &verts = bbox.getVertices();
+        std::array<glm::vec4, 8> tv{};
         for (int i = 0; i < 8; ++i) {
-            tv[i] = VP*M*glm::vec4(verts[i],1.0f);
+            tv[i] = VP * M * glm::vec4(verts[i], 1.0f);
         }
-        bool left = std::all_of(tv.begin(), tv.end(),[](const glm::vec4& v){return v.x < -v.w;});
-        bool right = std::all_of(tv.begin(), tv.end(),[](const glm::vec4& v){return v.x > v.w;});
-        bool up = std::all_of(tv.begin(), tv.end(),[](const glm::vec4& v){return v.y < -v.w;});
-        bool down = std::all_of(tv.begin(), tv.end(),[](const glm::vec4& v){return v.y > v.w;});
-        bool front = std::all_of(tv.begin(), tv.end(),[](const glm::vec4& v){return v.z < -v.w;});
-        bool far = std::all_of(tv.begin(), tv.end(),[](const glm::vec4& v){return v.z > v.w;});
+        bool left = std::all_of(tv.begin(), tv.end(), [](const glm::vec4 &v) { return v.x < -v.w; });
+        bool right = std::all_of(tv.begin(), tv.end(), [](const glm::vec4 &v) { return v.x > v.w; });
+        bool up = std::all_of(tv.begin(), tv.end(), [](const glm::vec4 &v) { return v.y < -v.w; });
+        bool down = std::all_of(tv.begin(), tv.end(), [](const glm::vec4 &v) { return v.y > v.w; });
+        bool front = std::all_of(tv.begin(), tv.end(), [](const glm::vec4 &v) { return v.z < -v.w; });
+        bool far = std::all_of(tv.begin(), tv.end(), [](const glm::vec4 &v) { return v.z > v.w; });
         bool isAllOutside = left || right || up || down || front || far;
 
         return isAllOutside;

@@ -232,7 +232,7 @@ std::vector<Object *> Data::loadScene(const std::string &fileName) {
             auto matInst = material.createInstance();
             rend->setMaterial(matInst);
 
-
+            /*
             ENGINE_TRACE("Material instance from [" + material.getName() + "] as " +
                          std::string(pScene->mMaterials[matIdx]->GetName().C_Str()));
             aiString textureName;//Filename of the texture using the aiString assimp structure
@@ -279,6 +279,7 @@ std::vector<Object *> Data::loadScene(const std::string &fileName) {
                 matInst->setSpecColor({1.0, 1.0, 1.0});
                 matInst->setSpecularStr(shininess);
             }
+            */
 
 
             meshCache[name] = mesh;
