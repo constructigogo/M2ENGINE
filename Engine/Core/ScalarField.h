@@ -12,6 +12,7 @@ namespace Engine {
     class ScalarField : public Grid<float> {
     public:
         ScalarField(int sizeX, int sizeY);
+        ScalarField(int sizeX, int sizeY, float defaultVal);
 
         glm::vec3 gradientAt(int x, int y) const;
         float laplacianAt(int x, int y) const;

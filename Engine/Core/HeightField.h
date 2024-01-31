@@ -13,6 +13,10 @@ namespace Engine {
         HeightField(int sizeX, int sizeY, float scale=1.0) : ScalarField(sizeX, sizeY), scale(scale) {}
 
         HeightField thermalErosion(float angle, float dt, int steps);
+        HeightField hillSlope(float k, float dt, int steps);
+        HeightField streamPower(float u, float k, float dt, int steps);
+        ScalarField buildStreamArea();
+
 
         float heightAt(int x, int y) const;
 

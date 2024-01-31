@@ -58,7 +58,7 @@ namespace Engine {
         HeightField current(*this);
         HeightField next(*this);
         for (int step = 0; step < steps; ++step) {
-            ENGINE_TRACE("Thermal Erosion step {}/{}",step+1,steps);
+            ENGINE_TRACE("Thermal Erosion step {}/{}", step + 1, steps);
             ScalarField laplacian = current.buildLaplacian();
             for (int x = 0; x < _sizeX; ++x) {
                 for (int y = 0; y < _sizeY; ++y) {
@@ -82,12 +82,12 @@ namespace Engine {
                             }
                         }
                     }
-                    if (maxSlope!=0.0){
+                    if (maxSlope != 0.0) {
                         int ex = x + bx;
                         int ey = y + by;
                         float volume = dt * (maxSlope - tAngle);
-                        next.at(x,y) -= volume - dt*laplacian.at(x,y);
-                        next.at(ex,ey) += volume;
+                        next.at(x, y) -= volume - dt * laplacian.at(x, y);
+                        next.at(ex, ey) += volume;
                     }
                 }
             }
@@ -97,6 +97,89 @@ namespace Engine {
         ENGINE_DEBUG("Finished thermal erosion");
 
         return next;
+    }
+
+    ScalarField HeightField::buildStreamArea() {
+        ScalarField gradient = buildGradient();
+        ScalarField neight(_sizeX, _sizeY);
+        ScalarField StreamArea(_sizeX, _sizeY,1.0f);
+
+        float totalSlope = 0.0f;
+
+//#pragma omp parallel for
+        for (int x = 0; x < _sizeX; ++x) {
+            for (int y = 0; y < _sizeY; ++y) {
+                float actual = heightAt(x, y);
+                for (int ox = -1; ox <= 1; ++ox) {
+                    for (int oy = -1; oy <= 1; ++oy) {
+                        if (ox == 0 && oy == 0) continue;
+                        int ex = x + ox;
+                        int ey = y + oy;
+                        if (!isInside(ex, ey)) continue;
+
+                        float nActual = heightAt(ex, ey);
+
+                        if (nActual < actual) {
+                            float nSlope = gradient.at(x, y) + actual - nActual;
+                            totalSlope += actual - nActual;
+                            gradient.at(x, y) = nSlope;
+                            neight.at(x, y)++;
+                        }
+                    }
+                }
+            }
+        }
+
+#pragma omp parallel for
+        for (int x = 0; x < _sizeX; ++x) {
+            for (int y = 0; y < _sizeY; ++y) {
+                StreamArea.at(x,y)=1.0f;
+            }
+        }
+#pragma omp parallel for
+        for (int x = 0; x < _sizeX; ++x) {
+            for (int y = 0; y < _sizeY; ++y) {
+                StreamArea.at(x,y)=StreamArea.at(x,y) * gradient.at(x,y) / std::max(1.0f, std::abs(totalSlope));
+            }
+        }
+
+        return StreamArea;
+    }
+
+    HeightField HeightField::hillSlope(float k, float dt, int steps) {
+        HeightField res(*this);
+
+        for (int step = 0; step < steps; ++step) {
+            ENGINE_TRACE("Hill Slope step {}/{}", step + 1, steps);
+            ScalarField laplacian = res.buildLaplacian();
+#pragma omp parallel for
+            for (int x = 0; x < _sizeX; ++x) {
+                for (int y = 0; y < _sizeY; ++y) {
+                    float volume = k * dt * laplacian.at(x, y);
+                    res.at(x, y) += volume;
+                }
+            }
+        }
+        return res;
+    }
+
+    HeightField HeightField::streamPower(float u, float k, float dt, int steps) {
+        HeightField res(*this);
+
+        for (int step = 0; step < steps; ++step) {
+            ENGINE_TRACE("Stream power step {}/{}", step + 1, steps);
+            //ScalarField laplacian = res.buildLaplacian();
+            ScalarField streamArea = buildStreamArea();
+            ScalarField gradient = buildGradient();
+#pragma omp parallel for
+            for (int x = 0; x < _sizeX; ++x) {
+                for (int y = 0; y < _sizeY; ++y) {
+                    float volume = dt * k * sqrtf(streamArea.at(x, y) * gradient.at(x, y));
+                    res.at(x, y) -= volume;
+                }
+            }
+        }
+        return res;
     }
 
 

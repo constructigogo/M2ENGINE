@@ -11,6 +11,10 @@ namespace Engine {
         _cachedMin = 0;
         _cachedMax = 0;
     }
+    ScalarField::ScalarField(int sizeX, int sizeY, float defaultVal) : Grid(sizeX, sizeY, defaultVal) {
+        _cachedMin = 0;
+        _cachedMax = 0;
+    }
 
     glm::vec3 ScalarField::gradientAt(int x, int y) const {
 
@@ -147,6 +151,8 @@ namespace Engine {
         res.normalize();
         return res;
     }
+
+
 
 
 } // Engine
