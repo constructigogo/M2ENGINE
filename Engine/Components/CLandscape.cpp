@@ -52,6 +52,17 @@ namespace Engine {
             Data::invalidateCache();
             _rend->setMesh(msh,STATIC);
         }
+        if(ImGui::Button("Reset")){
+            ENGINE_DEBUG("Reset Button");
+            HeightField landscape = Data::loadHeightFieldFromImage("mymap.png",30);
+
+            _hf = std::make_shared<HeightField>(landscape);
+            auto msh = MeshBuilder::Polygonize(*_hf);
+            std::string name="generatedLandscapeTherm"+std::to_string(count++);
+            Data::trackMesh(msh,name);
+            Data::invalidateCache();
+            _rend->setMesh(msh,STATIC);
+        }
 
     }
 

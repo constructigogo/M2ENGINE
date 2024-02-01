@@ -110,7 +110,8 @@ namespace Engine {
                 //ENGINE_TRACE(laplacianNorm.at(x, y));
                 //ENGINE_TRACE(scalarField.at(x, y));
                 //data[index].m_abgr = 0xFF000000 + (uint32_t) (0x00FFFFFF * scalarField.at(x, y));
-                uint8_t col = 255 * (laplacianNorm.at(x, y));
+                //uint8_t col = 255 * (laplacianNorm.at(x, y));
+                uint8_t col = 255 * (scalarField.at(x,y));
                 data[index].m_abgr = (0xFF000000) + (col << 16) + (col << 8) + (col << 0);
             }
         }
